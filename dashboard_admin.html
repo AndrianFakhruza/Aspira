@@ -391,19 +391,28 @@
         // --- FUNGSI COPY TO CLIPBOARD ---
 
         function copyToClipboard(button, textToCopy) {
+            // Cek dukungan API Clipboard
+            if (!navigator.clipboard) {
+                customAlert('Browser Anda tidak mendukung fitur salin.', 'error');
+                return;
+            }
+
             navigator.clipboard.writeText(textToCopy).then(() => {
-                // Simpan ikon dan kelas asli
                 const originalIcon = button.innerHTML;
                 const originalClasses = button.className;
 
                 // Ubah menjadi ikon centang dan warna hijau
                 button.innerHTML = '<i class="fas fa-check"></i>';
-                button.className = originalClasses.replace('text-blue-500', 'text-green-500').replace('hover:text-blue-700', 'hover:text-green-700');
+                // Gunakan replace untuk mengganti warna teks yang ada (biru) menjadi hijau
+                button.classList.remove('text-blue-500', 'hover:text-blue-700');
+                button.classList.add('text-green-500', 'hover:text-green-700');
                 
                 // Ubah kembali setelah 2 detik
                 setTimeout(() => {
+                    // Kembalikan ikon dan kelas warna semula
                     button.innerHTML = originalIcon;
-                    button.className = originalClasses;
+                    button.classList.remove('text-green-500', 'hover:text-green-700');
+                    button.classList.add('text-blue-500', 'hover:text-blue-700');
                 }, 2000);
                 
             }).catch(err => {
@@ -425,7 +434,6 @@
                         ...form,
                         form_id: form.form_id, 
                         responses: form.responses_count || 0, 
-                        // Perbaikan link: Gunakan link yang sudah lengkap dari API, jika ada
                         link: form.form_link_unique ? `${window.location.origin}/aspira/${form.form_link_unique}` : `form_public.html?id=${form.form_id}`, 
                         created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                     }));
@@ -498,15 +506,19 @@
             }
             paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, allForms.length)} hingga ${Math.min(currentPage * itemsPerPage, allForms.length)} dari ${allForms.length} Formulir`;
 
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Sebelumnya';
-            prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => {
-                currentPage--;
-                renderFormList(currentPage);
-            };
-            paginationButtonsContainer.appendChild(prevButton);
+            // --- Logika Tombol 'Sebelumnya' ---
+            if (currentPage > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Sebelumnya';
+                prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
+                prevButton.onclick = () => {
+                    currentPage--;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(prevButton);
+            }
+            // --- Akhir Logika 'Sebelumnya' ---
+
 
             for (let i = 1; i <= totalPages; i++) {
                 const pageButton = document.createElement('button');
@@ -524,15 +536,18 @@
                 paginationButtonsContainer.appendChild(pageButton);
             }
 
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Selanjutnya';
-            nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => {
-                currentPage++;
-                renderFormList(currentPage);
-            };
-            paginationButtonsContainer.appendChild(nextButton);
+            // --- Logika Tombol 'Selanjutnya' ---
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Selanjutnya';
+                nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
+                nextButton.onclick = () => {
+                    currentPage++;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(nextButton);
+            }
+            // --- Akhir Logika 'Selanjutnya' ---
         }
 
         // Fungsi baru untuk memicu Modal Konfirmasi Hapus
