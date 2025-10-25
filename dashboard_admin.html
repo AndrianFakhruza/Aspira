@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* PENTING: Memastikan HTML dan BODY menggunakan tinggi penuh untuk centering vertikal */
+        html, body {
+            height: 100%;
+        }
+        
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -38,6 +43,7 @@
         #customDeleteModal, #customAlertModal {
             transition: opacity 0.3s ease-in-out;
         }
+        /* Memastikan flex centering aktif */
         #customDeleteModal .flex, #customAlertModal .flex {
             align-items: center;
             justify-content: center;
@@ -218,7 +224,7 @@
             <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10" id="alert-icon-container">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10" id="alert-icon-container">
                             <i class="fas fa-info-circle text-yellow-600" id="alert-icon"></i>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
