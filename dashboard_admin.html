@@ -388,6 +388,33 @@
 
         // --- AKHIR FUNGSI CUSTOM MODAL ---
 
+        // --- FUNGSI COPY TO CLIPBOARD ---
+
+        function copyToClipboard(button, textToCopy) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // Simpan ikon dan kelas asli
+                const originalIcon = button.innerHTML;
+                const originalClasses = button.className;
+
+                // Ubah menjadi ikon centang dan warna hijau
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.className = originalClasses.replace('text-blue-500', 'text-green-500').replace('hover:text-blue-700', 'hover:text-green-700');
+                
+                // Ubah kembali setelah 2 detik
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.className = originalClasses;
+                }, 2000);
+                
+            }).catch(err => {
+                console.error('Gagal menyalin link: ', err);
+                customAlert('Gagal menyalin link ke clipboard.', 'error');
+            });
+        }
+
+        // --- AKHIR FUNGSI COPY TO CLIPBOARD ---
+
+
         async function fetchFormList() {
             try {
                 const response = await fetch(`${API_BASE_URL}?action=get_forms`);
@@ -398,6 +425,7 @@
                         ...form,
                         form_id: form.form_id, 
                         responses: form.responses_count || 0, 
+                        // Perbaikan link: Gunakan link yang sudah lengkap dari API, jika ada
                         link: form.form_link_unique ? `${window.location.origin}/aspira/${form.form_link_unique}` : `form_public.html?id=${form.form_id}`, 
                         created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                     }));
@@ -434,15 +462,19 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">${form.responses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${form.created_at}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <a href="${form.link}" target="_blank" class="text-blue-500 hover:text-blue-700 action-btn w-7 h-7 rounded-full" title="Tautan Publik">
-                                <i class="fas fa-link"></i>
-                            </a>
+                            
+                            <button onclick="copyToClipboard(this, '${form.link}')" class="text-blue-500 hover:text-blue-700 action-btn w-7 h-7 rounded-full" title="Salin Link Publik">
+                                <i class="fas fa-copy"></i>
+                            </button>
+
                             <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900 action-btn w-7 h-7 rounded-full" title="Analisis Respon">
                                 <i class="fas fa-chart-bar"></i>
                             </a>
+
                             <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900 action-btn w-7 h-7 rounded-full" title="Edit Formulir">
                                 <i class="fas fa-edit"></i>
                             </a>
+
                             <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 action-btn w-7 h-7 rounded-full" title="Hapus Formulir">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
@@ -481,7 +513,7 @@
                 pageButton.textContent = i;
                 pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100', 'pagination-btn');
                 if (i === currentPage) {
-                    pageButton.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'hover:shadow-none'); // Override hover style for active button
+                    pageButton.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'hover:shadow-none'); 
                 } else {
                     pageButton.classList.add('text-gray-700');
                 }
