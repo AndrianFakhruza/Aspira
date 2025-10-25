@@ -209,11 +209,11 @@
         </main>
     </div>
 
-    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
+    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeDeleteModal()"></div>
 
-            <div class="inline-block align-middle bg-white modal-content text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white modal-content text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full relative z-50">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -247,11 +247,11 @@
             </div>
         </div>
     </div>
-    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
+    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeAlertModal()"></div>
 
-            <div class="inline-block align-middle bg-white modal-content text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
+            <div class="inline-block align-middle bg-white modal-content text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full relative z-50">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10" id="alert-icon-container">
