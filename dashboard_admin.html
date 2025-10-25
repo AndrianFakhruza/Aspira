@@ -42,18 +42,27 @@
         /* --- STYLING MODAL KHUSUS (Meniru Desain Dialog) --- */
         #customDeleteModal, #customAlertModal {
             transition: opacity 0.3s ease-in-out;
-            /* Mengganti opacity Tailwind dengan class kustom untuk backdrop */
         }
 
         /* Styling Backdrop Blur */
         .modal-backdrop {
             background: rgba(255, 255, 255, 0.4); /* Background lebih terang */
             backdrop-filter: blur(8px); /* Efek blur yang diinginkan */
-            z-index: 49; /* Sedikit di bawah modal content (z-50) */
+            z-index: 40; /* Z-INDEX RENDAH AGAR DIALOG CONTENT DI ATASNYA */
+        }
+        
+        /* Modal Container (Parent) */
+        .modal-container {
+            z-index: 50; /* Z-INDEX TINGGI AGAR DI ATAS BACKDROP */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
         
         /* Centering modal content */
-        #customDeleteModal .flex, #customAlertModal .flex {
+        .modal-container .flex {
             align-items: center; 
             justify-content: center;
         }
@@ -200,7 +209,7 @@
         </main>
     </div>
 
-    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
+    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeDeleteModal()"></div>
 
@@ -238,7 +247,7 @@
             </div>
         </div>
     </div>
-    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
+    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-container" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeAlertModal()"></div>
 
