@@ -325,9 +325,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
             const urlParams = new URLSearchParams(window.location.search);
-            const formId = urlParams.get('id');
+            const formId = urlParams.get('id'); // <<< MEMBACA ID DARI URL
             if (formId) {
-                loadFormStructure(formId);
+                loadFormStructure(formId); // <<< MEMUAT DATA JIKA ADA ID
             }
         });
 
@@ -385,9 +385,9 @@
 
         // --- AKHIR FUNGSI BANNER ---
 
+        // <<< FUNGSI PENTING: MEMUAT STRUKTUR FORM UNTUK EDIT MODE >>>
         async function loadFormStructure(formId) {
             try {
-                // Fetch data dari API
                 const response = await fetch(`${API_BASE_URL}?action=get_form_structure&id=${formId}`);
                 const result = await response.json();
                 
@@ -412,9 +412,11 @@
                     
                 } else {
                     console.error('Gagal memuat formulir:', result.message || 'Error tidak diketahui atau form structure kosong.');
+                    openValidationModal('Gagal memuat data formulir dari database. Cek console log.');
                 }
             } catch (error) {
                 console.error('Error loading form:', error);
+                openValidationModal('Error koneksi saat memuat formulir. Pastikan API berjalan.');
             }
         }
         
@@ -467,7 +469,6 @@
                 renderFormPreview();
                 setActiveField(id);
             } else if (field && field.options.length === 1) {
-                // Menggunakan Custom Validation Modal
                 openValidationModal('Minimal harus ada satu pilihan.');
             }
         }
@@ -608,7 +609,7 @@
             }
         }
         
-        // --- FUNGSI MODAL KUSTOM (Validation, Delete, & Success) ---
+        // --- FUNGSI MODAL KUSTOM (Delete, Success, Validation) ---
 
         function openDeleteModal(event, id) {
             event.stopPropagation();
@@ -643,7 +644,6 @@
         function openSuccessModal(result) {
             const modal = document.getElementById('customSuccessModal');
             
-            // Log URL publik ke console untuk debugging
             const newFormId = result.form_id || new URLSearchParams(window.location.search).get('id');
             if (newFormId) {
                 const url = `${window.location.origin}/aspira/form_public.html?id=${newFormId}`;
@@ -686,23 +686,6 @@
             window.location.href = 'dashboard_admin.html';
         }
 
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const textToCopy = element.textContent || element.innerText;
-            
-            const tempInput = document.createElement('textarea');
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            
-            openValidationModal('Link berhasil disalin ke clipboard!');
-        }
-        
-        // --- AKHIR FUNGSI MODAL KUSTOM ---
-
-
         // FUNGSI saveForm()
         async function saveForm() {
             const formTitle = document.getElementById('form-title').value;
@@ -710,7 +693,6 @@
             const formBannerData = document.getElementById('form-banner-url').value; 
 
             if (!formTitle || formFields.length === 0) {
-                // MENGGANTI ALERT() DENGAN CUSTOM MODAL VALIDASI
                 openValidationModal('Judul formulir dan minimal satu field harus diisi.');
                 return;
             }
@@ -759,7 +741,6 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Tampilkan modal sukses
                     openSuccessModal(result);
                     
                 } else {

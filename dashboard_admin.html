@@ -254,8 +254,8 @@
         let allForms = [];
         let currentPage = 1;
         const itemsPerPage = 5;
-        let formIdToDelete = null; // Variable untuk menyimpan ID formulir yang akan dihapus
-        let alertCallback = null; // Variable untuk menyimpan fungsi callback setelah alert ditutup
+        let formIdToDelete = null; 
+        let alertCallback = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
@@ -267,7 +267,6 @@
             const adminUsername = sessionStorage.getItem('adminUsername');
             
             if (!adminRole) {
-                // Mengganti alert standar dengan customAlert
                 customAlert('Sesi berakhir, silakan login kembali.', 'error', () => {
                     window.location.href = 'admin_login.html';
                 });
@@ -302,11 +301,10 @@
             const title = document.getElementById('alert-title');
             const msg = document.getElementById('alert-message');
             
-            alertCallback = callback; // Set callback
+            alertCallback = callback;
 
             msg.textContent = message;
             
-            // Reset colors and icons
             iconContainer.className = 'mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10';
             icon.className = 'fas';
 
@@ -318,7 +316,7 @@
                 iconContainer.classList.add('bg-green-100');
                 icon.classList.add('fa-check-circle', 'text-green-600');
                 title.textContent = 'Berhasil';
-            } else { // info/default (Sesi habis, dll)
+            } else { 
                 iconContainer.classList.add('bg-yellow-100');
                 icon.classList.add('fa-info-circle', 'text-yellow-600');
                 title.textContent = 'Informasi';
@@ -337,7 +335,7 @@
                 document.body.classList.remove('overflow-hidden');
                 if (alertCallback) {
                     alertCallback();
-                    alertCallback = null; // Reset callback
+                    alertCallback = null;
                 }
             }, 300);
         }
@@ -371,12 +369,10 @@
                         ...form,
                         form_id: form.form_id, 
                         responses: form.responses_count || 0, 
-                        // Menggunakan form_link_unique yang sudah lengkap dari API, jika ada
                         link: form.form_link_unique ? `${window.location.origin}/aspira/${form.form_link_unique}` : `form_public.html?id=${form.form_id}`, 
                         created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                     }));
                     
-                    // PENGISIAN DATA KPI:
                     document.getElementById('total-forms').textContent = allForms.length;
                     const totalResponses = allForms.reduce((sum, form) => sum + (parseInt(form.responses) || 0), 0);
                     document.getElementById('total-responses').textContent = totalResponses;
