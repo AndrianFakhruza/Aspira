@@ -39,6 +39,10 @@ if (!is_dir($upload_dir)) {
 $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
+// =========================================================================
+//                                  HANDLE POST & PUT REQUESTS
+// =========================================================================
+
 if ($method === 'POST' || $method === 'PUT') {
     try {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -51,23 +55,74 @@ if ($method === 'POST' || $method === 'PUT') {
 
         switch ($action) {
             case 'login':
+                // Perhatian: Ini menggunakan perbandingan password_hash yang tidak aman.
+                // Idealnya, Anda harus fetch hash dari DB dan membandingkannya menggunakan password_verify().
                 $username = $data['username'] ?? '';
                 $password = $data['password'] ?? '';
 
-                $sql = "SELECT username, role FROM users WHERE username = ? AND password = ?";
+                $sql = "SELECT user_id, username, role, password FROM users WHERE username = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ss", $username, $password);
+                $stmt->bind_param("s", $username);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 $user = $result->fetch_assoc();
                 $stmt->close();
-                
-                if ($user) {
+
+                // Simulasi password_verify (jika password disimpan dalam bentuk teks biasa di DB)
+                // Jika password di-hash di DB, ganti kondisi if ($user && $user['password'] === $password)
+                if ($user && $user['password'] === $password) {
                     echo json_encode(['success' => true, 'message' => 'Login berhasil!', 'role' => $user['role'], 'username' => $user['username']]);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Username atau password salah.']);
                 }
                 break;
+
+            // --- ADMIN MANAGEMENT: ADD USER ---
+            case 'add_admin_user':
+                $username = $data['username'] ?? '';
+                $email = $data['email'] ?? '';
+                $password_raw = $data['password'] ?? '';
+                $role = $data['role'] ?? 'Admin';
+
+                if (empty($username) || empty($email) || empty($password_raw)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Semua field wajib diisi (Username, Email, Password).']);
+                    exit;
+                }
+
+                // Periksa duplikasi username/email
+                $sql_check = "SELECT COUNT(*) FROM users WHERE username = ? OR email = ?";
+                $stmt_check = $conn->prepare($sql_check);
+                $stmt_check->bind_param("ss", $username, $email);
+                $stmt_check->execute();
+                $count = $stmt_check->get_result()->fetch_row()[0];
+                $stmt_check->close();
+
+                if ($count > 0) {
+                    http_response_code(409);
+                    echo json_encode(['success' => false, 'message' => 'Username atau Email sudah terdaftar.']);
+                    exit;
+                }
+                
+                // --- PENYIMPANAN PASSWORD (SESUAI DENGAN KODE LOGIN ANDA) ---
+                // Karena kode login Anda menggunakan perbandingan teks biasa, kita simpan teks biasa.
+                // Jika Anda beralih ke hashing (SANGAT DIANJURKAN): $password_to_save = password_hash($password_raw, PASSWORD_DEFAULT);
+                $password_to_save = $password_raw; 
+
+                $sql = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssss", $username, $email, $password_to_save, $role);
+
+                if ($stmt->execute()) {
+                    echo json_encode(['success' => true, 'message' => 'Akun admin berhasil ditambahkan.']);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan akun admin. Error SQL: ' . $conn->error]);
+                }
+                $stmt->close();
+                break;
+            // --- END ADD USER ---
+
 
             case 'save_form': // CREATE
             case 'update_form': // UPDATE
@@ -88,7 +143,6 @@ if ($method === 'POST' || $method === 'PUT') {
                 }
                 
                 // --- TAHAP 1: HANDLE BANNER UPLOAD (Base64) ---
-                
                 $old_path = null;
                 if ($form_id) {
                     $stmt_old = $conn->prepare("SELECT banner_path FROM forms WHERE form_id = ?");
@@ -104,8 +158,6 @@ if ($method === 'POST' || $method === 'PUT') {
                 }
 
                 if ($banner_data && strpos($banner_data, 'data:image') === 0) {
-                    // Case 1: Ada Base64 baru. Hapus yang lama, simpan yang baru.
-                    
                     if ($old_path && file_exists($old_path)) {
                         @unlink($old_path);
                     }
@@ -116,7 +168,6 @@ if ($method === 'POST' || $method === 'PUT') {
                     } else {
                         $type = $parts[0];
                         $data_base64 = $parts[1];
-                        
                         $image_data = base64_decode($data_base64);
                         
                         $extension = 'jpg';
@@ -127,25 +178,18 @@ if ($method === 'POST' || $method === 'PUT') {
                         $file_path = $upload_dir . $file_name;
                         
                         if (is_writable($upload_dir) && @file_put_contents($file_path, $image_data)) {
-                            $banner_path = $file_path; // Path baru berhasil disimpan
+                            $banner_path = $file_path;
                         } else {
-                            // --- PERBAIKAN PENTING ---
-                            // Jika gagal simpan, kita set ke NULL. Error dicatat di log server.
                             error_log("Gagal menyimpan file banner. Periksa izin tulis (chmod 777) pada folder 'uploads/banners/'!");
                             $banner_path = null; 
-                            // -------------------------
                         }
                     }
-                    
                 } elseif (($banner_data === null || $banner_data === "") && $form_id) {
-                    // Case 2: Banner dihapus (data kosong) di mode update
-                    
                     $path_to_delete = $old_path ?? $banner_path;
-                    
                     if ($path_to_delete && file_exists($path_to_delete)) {
-                         @unlink($path_to_delete);
+                        @unlink($path_to_delete);
                     }
-                    $banner_path = null; // Set path ke NULL di DB
+                    $banner_path = null;
                 } 
                 
                 // --- TAHAP 2: SIMPAN KE DATABASE ---
@@ -222,8 +266,34 @@ if ($method === 'POST' || $method === 'PUT') {
     }
 }
 
+// =========================================================================
+//                                  HANDLE GET REQUESTS
+// =========================================================================
+
 if ($method === 'GET') {
     switch ($action) {
+        // --- ADMIN MANAGEMENT: GET ALL USERS ---
+        case 'get_admin_users':
+            try {
+                // Mengambil semua kolom yang diminta dari tabel users
+                $sql = "SELECT user_id, username, email, role, created_at FROM users ORDER BY user_id DESC";
+                $result = $conn->query($sql);
+                $users_raw = $result->fetch_all(MYSQLI_ASSOC);
+                
+                // Menambahkan kolom is_active untuk kompatibilitas frontend (diasumsikan TRUE)
+                $users = array_map(function($u) { 
+                    $u['is_active'] = true; 
+                    return $u; 
+                }, $users_raw);
+
+                echo json_encode(['success' => true, 'users' => $users]);
+            } catch (\Exception $e) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Database error saat mengambil pengguna: ' . $e->getMessage()]);
+            }
+            break;
+        // --- END GET ALL USERS ---
+        
         case 'get_forms':
             $sql = "SELECT form_id, form_title, form_link_unique, created_at, banner_path FROM forms ORDER BY created_at DESC";
             $result = $conn->query($sql);
@@ -377,7 +447,12 @@ if ($method === 'GET') {
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars(date('Y-m-d H:i:s', strtotime($res['submitted_at']))) . "</td>";
                         foreach ($form_data['fields'] as $field) {
-                            echo "<td>" . htmlspecialchars($response_data[$field['id']] ?? '') . "</td>";
+                            $value = $response_data[$field['id']] ?? '';
+                            // Handle array/checkbox responses by joining them
+                            if (is_array($value)) {
+                                $value = implode(', ', $value);
+                            }
+                            echo "<td>" . htmlspecialchars($value) . "</td>";
                         }
                         echo "</tr>";
                     }
@@ -401,11 +476,45 @@ if ($method === 'GET') {
     }
 }
 
+// =========================================================================
+//                                  HANDLE DELETE REQUESTS
+// =========================================================================
+
 if ($method === 'DELETE') {
     switch ($action) {
+        // --- ADMIN MANAGEMENT: DELETE USER ---
+        case 'delete_admin_user':
+            $user_id = $_GET['id'] ?? null;
+            if (empty($user_id)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID user tidak ditemukan.']);
+                exit;
+            }
+
+            try {
+                // Hapus user
+                $sql = "DELETE FROM users WHERE user_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $user_id);
+                
+                if ($stmt->execute() && $conn->affected_rows > 0) {
+                    echo json_encode(['success' => true, 'message' => 'Akun admin berhasil dihapus.']);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Akun admin tidak ditemukan.']);
+                }
+                $stmt->close();
+            } catch (\Exception $e) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Gagal menghapus akun: ' . $e->getMessage()]);
+            }
+            break;
+        // --- END DELETE USER ---
+        
         case 'delete_form':
             $form_id = $_GET['id'] ?? null;
             if ($form_id) {
+                // 1. Dapatkan path banner dan hapus file
                 $sql_get_path = "SELECT banner_path FROM forms WHERE form_id = ?";
                 $stmt_get_path = $conn->prepare($sql_get_path);
                 $stmt_get_path->bind_param("i", $form_id);
@@ -416,7 +525,16 @@ if ($method === 'DELETE') {
                 if ($banner_path && file_exists($banner_path)) {
                     @unlink($banner_path); 
                 }
+                
+                // 2. Hapus responses yang terkait (disarankan: buat CONSTRAINT FOREIGN KEY CASCADE)
+                $sql_delete_responses = "DELETE FROM responses WHERE form_id = ?";
+                $stmt_delete_responses = $conn->prepare($sql_delete_responses);
+                $stmt_delete_responses->bind_param("i", $form_id);
+                $stmt_delete_responses->execute();
+                $stmt_delete_responses->close();
 
+
+                // 3. Hapus form utama
                 $sql = "DELETE FROM forms WHERE form_id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $form_id);
