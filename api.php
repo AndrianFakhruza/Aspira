@@ -1,0 +1,439 @@
+<?php
+// TAMPILKAN SEMUA ERROR (Hanya untuk debugging)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, PUT, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit();
+}
+
+// --- KONFIGURASI DATABASE ---
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "aspira";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Koneksi database gagal: ' . $conn->connect_error]);
+    exit();
+}
+
+// --- KONFIGURASI DAN SETUP BANNER ---
+$upload_dir = 'uploads/banners/'; 
+if (!is_dir($upload_dir)) {
+    if (!mkdir($upload_dir, 0777, true)) { 
+        error_log("Gagal membuat direktori upload: " . $upload_dir);
+    }
+}
+// ------------------------------------
+
+$action = $_GET['action'] ?? null;
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST' || $method === 'PUT') {
+    try {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Data JSON tidak valid. Error: ' . json_last_error_msg()]);
+            exit;
+        }
+
+        switch ($action) {
+            case 'login':
+                $username = $data['username'] ?? '';
+                $password = $data['password'] ?? '';
+
+                $sql = "SELECT username, role FROM users WHERE username = ? AND password = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ss", $username, $password);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $user = $result->fetch_assoc();
+                $stmt->close();
+                
+                if ($user) {
+                    echo json_encode(['success' => true, 'message' => 'Login berhasil!', 'role' => $user['role'], 'username' => $user['username']]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Username atau password salah.']);
+                }
+                break;
+
+            case 'save_form': // CREATE
+            case 'update_form': // UPDATE
+                $form_id = $data['form_id'] ?? null;
+                
+                $form_structure_data = $data['form_structure'] ?? [];
+                $form_title = $form_structure_data['title'] ?? null;
+                $form_description = $form_structure_data['description'] ?? null;
+                $form_structure_json = json_encode($form_structure_data);
+                
+                $banner_data = $data['banner_data'] ?? null;
+                $banner_path = $data['banner_url'] ?? null;
+
+                if (empty($form_title)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Judul formulir wajib diisi.']);
+                    exit;
+                }
+                
+                // --- TAHAP 1: HANDLE BANNER UPLOAD (Base64) ---
+                
+                $old_path = null;
+                if ($form_id) {
+                    $stmt_old = $conn->prepare("SELECT banner_path FROM forms WHERE form_id = ?");
+                    $stmt_old->bind_param("i", $form_id);
+                    $stmt_old->execute();
+                    $old_path_result = $stmt_old->get_result()->fetch_assoc();
+                    $old_path = $old_path_result['banner_path'] ?? null;
+                    $stmt_old->close();
+                    
+                    if ($old_path && empty($banner_data)) {
+                        $banner_path = $old_path;
+                    }
+                }
+
+                if ($banner_data && strpos($banner_data, 'data:image') === 0) {
+                    // Case 1: Ada Base64 baru. Hapus yang lama, simpan yang baru.
+                    
+                    if ($old_path && file_exists($old_path)) {
+                        @unlink($old_path);
+                    }
+
+                    $parts = explode(',', $banner_data, 2); 
+                    if (count($parts) < 2) {
+                        $banner_path = $old_path; 
+                    } else {
+                        $type = $parts[0];
+                        $data_base64 = $parts[1];
+                        
+                        $image_data = base64_decode($data_base64);
+                        
+                        $extension = 'jpg';
+                        if (strpos($type, 'png') !== false) $extension = 'png';
+                        if (strpos($type, 'jpeg') !== false) $extension = 'jpg';
+
+                        $file_name = uniqid('banner_') . '.' . $extension;
+                        $file_path = $upload_dir . $file_name;
+                        
+                        if (is_writable($upload_dir) && @file_put_contents($file_path, $image_data)) {
+                            $banner_path = $file_path; // Path baru berhasil disimpan
+                        } else {
+                            // --- PERBAIKAN PENTING ---
+                            // Jika gagal simpan, kita set ke NULL. Error dicatat di log server.
+                            error_log("Gagal menyimpan file banner. Periksa izin tulis (chmod 777) pada folder 'uploads/banners/'!");
+                            $banner_path = null; 
+                            // -------------------------
+                        }
+                    }
+                    
+                } elseif (($banner_data === null || $banner_data === "") && $form_id) {
+                    // Case 2: Banner dihapus (data kosong) di mode update
+                    
+                    $path_to_delete = $old_path ?? $banner_path;
+                    
+                    if ($path_to_delete && file_exists($path_to_delete)) {
+                         @unlink($path_to_delete);
+                    }
+                    $banner_path = null; // Set path ke NULL di DB
+                } 
+                
+                // --- TAHAP 2: SIMPAN KE DATABASE ---
+
+                if ($action === 'save_form') { // CREATE
+                    $temp_link = 'TEMP';
+                    $sql = "INSERT INTO forms (form_title, form_description, form_structure, banner_path, form_link_unique) VALUES (?, ?, ?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("sssss", $form_title, $form_description, $form_structure_json, $banner_path, $temp_link);
+                    
+                    if ($stmt->execute()) {
+                        $last_id = $conn->insert_id;
+                        $unique_link_updated = 'form_public.html?id=' . $last_id;
+                        
+                        $update_sql = "UPDATE forms SET form_link_unique = ? WHERE form_id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("si", $unique_link_updated, $last_id);
+                        $update_stmt->execute();
+                        $update_stmt->close();
+                        
+                        echo json_encode(['success' => true, 'message' => 'Formulir berhasil disimpan.', 'form_link' => $unique_link_updated, 'form_id' => $last_id]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'Gagal menyimpan formulir. Error SQL: ' . $conn->error]);
+                    }
+                    $stmt->close();
+
+                } elseif ($action === 'update_form') { // UPDATE
+                    $sql = "UPDATE forms SET form_title = ?, form_description = ?, form_structure = ?, banner_path = ? WHERE form_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssssi", $form_title, $form_description, $form_structure_json, $banner_path, $form_id);
+                    
+                    if ($stmt->execute()) {
+                        echo json_encode(['success' => true, 'message' => 'Formulir berhasil diperbarui.']);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'Gagal memperbarui formulir. Error SQL: ' . $conn->error]);
+                    }
+                    $stmt->close();
+                }
+                break;
+
+            case 'submit_feedback':
+                $form_id = $data['form_id'] ?? null;
+                $data_responden = json_encode($data); 
+                
+                if ($form_id) {
+                    $submitted_at = date('Y-m-d H:i:s');
+                    $sql = "INSERT INTO responses (form_id, data_responden, submitted_at) VALUES (?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("iss", $form_id, $data_responden, $submitted_at);
+                    if ($stmt->execute()) {
+                        echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan.']);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback.']);
+                    }
+                    $stmt->close();
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+                }
+                break;
+
+            default:
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Aksi POST tidak dikenal.']);
+                break;
+        }
+    } catch (\Throwable $e) {
+        http_response_code(500);
+        error_log("FATAL PHP ERROR: " . $e->getMessage() . " on line " . $e->getLine());
+        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan server internal. Detail: ' . $e->getMessage()]);
+    }
+}
+
+if ($method === 'GET') {
+    switch ($action) {
+        case 'get_forms':
+            $sql = "SELECT form_id, form_title, form_link_unique, created_at, banner_path FROM forms ORDER BY created_at DESC";
+            $result = $conn->query($sql);
+            $forms = [];
+            if ($result->num_rows > 0) {
+                while($row = $result->fetch_assoc()) {
+                    if (!isset($row['form_id'])) continue; 
+
+                    $sql_responses_count = "SELECT COUNT(*) as responses_count FROM responses WHERE form_id = ?";
+                    $stmt_responses_count = $conn->prepare($sql_responses_count);
+                    $stmt_responses_count->bind_param("i", $row['form_id']);
+                    $stmt_responses_count->execute();
+                    $responses_count = $stmt_responses_count->get_result()->fetch_assoc()['responses_count'];
+                    $stmt_responses_count->close();
+                    
+                    $row['responses_count'] = $responses_count;
+                    $forms[] = $row;
+                }
+            }
+            echo json_encode(['success' => true, 'forms' => $forms]);
+            break;
+        
+        case 'get_form_structure':
+            $form_id = $_GET['id'] ?? null;
+            if ($form_id) {
+                $sql = "SELECT form_title, form_description, form_structure, banner_path FROM forms WHERE form_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $form_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $form = $result->fetch_assoc();
+                $stmt->close();
+                
+                if ($form) {
+                    $form_data = json_decode($form['form_structure'], true);
+                    echo json_encode([
+                        'success' => true, 
+                        'form' => [
+                            'form_id' => $form_id, 
+                            'title' => $form_data['title'] ?? $form['form_title'], 
+                            'description' => $form_data['description'] ?? $form['form_description'], 
+                            'fields' => $form_data['fields'] ?? [],
+                            'banner_url' => $form['banner_path'] ?? null 
+                        ]
+                    ]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Formulir tidak ditemukan.']);
+                }
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+            }
+            break;
+        
+        case 'get_form_and_responses':
+            $form_id = $_GET['id'] ?? null;
+            if ($form_id) {
+                $sql_form_structure = "SELECT form_structure FROM forms WHERE form_id = ?";
+                $stmt_form_structure = $conn->prepare($sql_form_structure);
+                $stmt_form_structure->bind_param("i", $form_id);
+                $stmt_form_structure->execute();
+                $form_result = $stmt_form_structure->get_result();
+                $form_data = $form_result->fetch_assoc();
+                $stmt_form_structure->close();
+
+                if (!$form_data) {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Formulir tidak ditemukan.']);
+                    exit();
+                }
+
+                $form_structure = json_decode($form_data['form_structure'], true);
+                $form_title = $form_structure['title'] ?? 'Formulir Tanpa Judul';
+                $form_fields = $form_structure['fields'] ?? [];
+
+                $sql_total = "SELECT COUNT(*) as total FROM responses WHERE form_id = ?";
+                $stmt_total = $conn->prepare($sql_total);
+                $stmt_total->bind_param("i", $form_id);
+                $stmt_total->execute();
+                $total_responses = $stmt_total->get_result()->fetch_assoc()['total'];
+                $stmt_total->close();
+
+                $sql_responses = "SELECT data_responden, submitted_at FROM responses WHERE form_id = ? ORDER BY submitted_at DESC";
+                $stmt_responses = $conn->prepare($sql_responses);
+                $stmt_responses->bind_param("i", $form_id);
+                $stmt_responses->execute();
+                $all_responses_raw = $stmt_responses->get_result()->fetch_all(MYSQLI_ASSOC);
+                $stmt_responses->close();
+
+                $responses_data = [];
+                foreach ($all_responses_raw as $res) {
+                    $data_decoded = json_decode($res['data_responden'], true);
+                    $data_decoded['submitted_at'] = $res['submitted_at'];
+                    $responses_data[] = $data_decoded;
+                }
+
+                echo json_encode([
+                    'success' => true, 
+                    'form_title' => $form_title, 
+                    'form_fields' => $form_fields, 
+                    'total_responses' => $total_responses, 
+                    'responses' => $responses_data
+                ]);
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+            }
+            break;
+        
+        case 'export_excel':
+            $form_id = $_GET['id'] ?? null;
+            if ($form_id) {
+                $sql_form = "SELECT form_title, form_structure FROM forms WHERE form_id = ?";
+                $stmt_form = $conn->prepare($sql_form);
+                $stmt_form->bind_param("i", $form_id);
+                $stmt_form->execute();
+                $form = $stmt_form->get_result()->fetch_assoc();
+                $stmt_form->close();
+                
+                if ($form) {
+                    $form_data = json_decode($form['form_structure'], true);
+                    $form_title_clean = preg_replace('/[^a-zA-Z0-9-]/', '_', $form['form_title']);
+                    $filename = "feedback_{$form_title_clean}_" . date('Ymd_His') . ".xls";
+
+                    header('Content-Type: application/vnd.ms-excel');
+                    header('Content-Disposition: attachment; filename="' . $filename . '"');
+                    
+                    $output = fopen('php://output', 'w');
+                    
+                    $headers = ['Waktu Submit'];
+                    foreach ($form_data['fields'] as $field) {
+                        $headers[] = $field['label'];
+                    }
+                    
+                    echo "<table><thead><tr>";
+                    foreach($headers as $header) {
+                        echo "<th>" . htmlspecialchars($header) . "</th>";
+                    }
+                    echo "</tr></thead><tbody>";
+
+                    $sql_responses = "SELECT data_responden, submitted_at FROM responses WHERE form_id = ?";
+                    $stmt_responses = $conn->prepare($sql_responses);
+                    $stmt_responses->bind_param("i", $form_id);
+                    $stmt_responses->execute();
+                    $all_responses_raw = $stmt_responses->get_result()->fetch_all(MYSQLI_ASSOC);
+                    $stmt_responses->close();
+                    
+                    foreach ($all_responses_raw as $res) {
+                        $response_data = json_decode($res['data_responden'], true);
+                        echo "<tr>";
+                        echo "<td>" . htmlspecialchars(date('Y-m-d H:i:s', strtotime($res['submitted_at']))) . "</td>";
+                        foreach ($form_data['fields'] as $field) {
+                            echo "<td>" . htmlspecialchars($response_data[$field['id']] ?? '') . "</td>";
+                        }
+                        echo "</tr>";
+                    }
+                    echo "</tbody></table>";
+                    
+                    fclose($output);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Formulir tidak ditemukan.']);
+                }
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+            }
+            break;
+        
+        default:
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Aksi GET tidak dikenal.']);
+            break;
+    }
+}
+
+if ($method === 'DELETE') {
+    switch ($action) {
+        case 'delete_form':
+            $form_id = $_GET['id'] ?? null;
+            if ($form_id) {
+                $sql_get_path = "SELECT banner_path FROM forms WHERE form_id = ?";
+                $stmt_get_path = $conn->prepare($sql_get_path);
+                $stmt_get_path->bind_param("i", $form_id);
+                $stmt_get_path->execute();
+                $banner_path = $stmt_get_path->get_result()->fetch_assoc()['banner_path'] ?? null;
+                $stmt_get_path->close();
+
+                if ($banner_path && file_exists($banner_path)) {
+                    @unlink($banner_path); 
+                }
+
+                $sql = "DELETE FROM forms WHERE form_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $form_id);
+                if ($stmt->execute()) {
+                    echo json_encode(['success' => true, 'message' => 'Formulir berhasil dihapus.']);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Gagal menghapus formulir.']);
+                }
+                $stmt->close();
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+            }
+            break;
+    }
+}
+
+$conn->close();
+?>
