@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .navbar-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+
+        .btn-gradient {
+            background-image: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
+        }
+        .btn-gradient:hover {
+            background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(30, 64, 175, 0.4);
+        }
+        
+        .sidebar-link.active {
+            background-color: #1e40af;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(30, 64, 175, 0.4);
+        }
+
+        .sidebar-container {
+            width: 256px;
+            transition: width 0.3s ease;
+        }
+        .sidebar-container.collapsed {
+            width: 80px;
+        }
+        .sidebar-container.collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar-container.collapsed .toggle-button-wrapper .fa-arrow-left {
+            transform: rotate(180deg);
+        }
+
+        .toggle-button-wrapper {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%) translateX(50%);
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        .sidebar-container.collapsed .toggle-button-wrapper {
+            transform: translateY(-50%) translateX(50%);
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="flex h-screen bg-gray-50">
+        
+        <aside id="sidebar" class="sidebar-container navbar-gradient text-white flex flex-col relative h-full">
+            
+            <div class="toggle-button-wrapper">
+                <button onclick="toggleSidebar(event)" class="w-8 h-8 flex items-center justify-center p-2 rounded-full navbar-gradient text-white shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <i id="toggle-icon" class="fas fa-arrow-left text-sm transition-transform duration-300"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-3 p-4 border-b border-blue-700/50">
+                <div class="flex-shrink-0">
+                    <div class="bg-white p-2 rounded-lg border border-gray-200">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex flex-col sidebar-text flex-grow">
+                    <span class="font-extrabold text-sm tracking-wider leading-tight text-white">ASPIRA</span>
+                    <span class="font-bold text-xs text-red-300 leading-tight">PERTA ARUN GAS</span>
+                </div>
+            </div>
+
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="#" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-home w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="form_builder.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-magic w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Form Builder</span>
+                </a>
+                <a href="analysis_report.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Analisis & Laporan</span>
+                </a>
+                <a href="admin_management.html" id="admin-management-link" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Manajemen Admin</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-blue-700/50">
+                <button class="w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl text-red-300 hover:bg-red-500 hover:text-white transition-colors duration-200" onclick="logout()">
+                    <i class="fas fa-sign-out-alt w-5 h-5 mr-2"></i>
+                    <span class="sidebar-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">
+                Selamat Datang, <span id="admin-name" class="text-blue-600">Admin</span>!
+            </h1>
+            <p class="text-gray-500 mb-8">Ringkasan cepat dan daftar formulir yang perlu Anda kelola.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 flex flex-col">
+                    <p class="text-sm text-gray-500 font-medium">Total Formulir Aktif</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-forms">...</p>
+                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 flex flex-col">
+                    <p class="text-sm text-gray-500 font-medium">Total Respon Diterima</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-responses">...</p>
+                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Daftar Formulir CSR</h2>
+                    <a href="form_builder.html" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
+                        <i class="fas fa-plus mr-1"></i> Buat Form Baru
+                    </a>
+                </div>
+                <div class="h-1 w-16 bg-gradient-to-r from-blue-600 to-blue-500 mb-6 rounded-full"></div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Form</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Respon</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Dibuat</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="form-list" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 flex flex-col sm:flex-row justify-between items-center" id="pagination-controls">
+                    <span class="text-sm text-gray-500 mb-2 sm:mb-0" id="pagination-info"></span>
+                    <div class="flex space-x-2" id="pagination-buttons">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        let allForms = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            fetchFormList();
+        });
+
+        function checkSession() {
+            const adminRole = sessionStorage.getItem('adminRole');
+            const adminUsername = sessionStorage.getItem('adminUsername');
+            
+            if (!adminRole) {
+                alert("Sesi berakhir, silakan login kembali.");
+                window.location.href = 'admin_login.html';
+                return;
+            }
+
+            document.getElementById('admin-name').textContent = adminUsername;
+            
+            if (adminRole !== 'Super Admin') {
+                const adminLink = document.getElementById('admin-management-link');
+                if (adminLink) {
+                    adminLink.classList.add('hidden');
+                }
+            }
+        }
+        
+        function toggleSidebar(event) {
+            if (event) event.stopPropagation();
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            const icon = document.getElementById('toggle-icon');
+            icon.classList.toggle('fa-arrow-left');
+            icon.classList.toggle('fa-arrow-right');
+        }
+
+        async function fetchFormList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=get_forms`);
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    allForms = result.forms.map(form => ({
+                        ...form,
+                        form_id: form.form_id, 
+                        responses: form.responses_count || 0, 
+                        link: `form_public.html?id=${form.form_id}`, 
+                        created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+                    }));
+                    
+                    // PENGISIAN DATA KPI:
+                    document.getElementById('total-forms').textContent = allForms.length;
+                    const totalResponses = allForms.reduce((sum, form) => sum + (parseInt(form.responses) || 0), 0);
+                    document.getElementById('total-responses').textContent = totalResponses;
+                    
+                    renderFormList(currentPage);
+                } else {
+                    console.error('Gagal mengambil data formulir:', result.message);
+                    document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Gagal memuat data formulir.</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Terjadi kesalahan koneksi:', error);
+                document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error koneksi server.</td></tr>`;
+            }
+        }
+
+        function renderFormList(page) {
+            const tableBody = document.getElementById('form-list');
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedItems = allForms.slice(startIndex, endIndex);
+
+            tableBody.innerHTML = '';
+            if (allForms.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Belum ada formulir yang dibuat.</td></tr>`;
+            } else {
+                paginatedItems.forEach(form => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${form.form_title}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">${form.responses}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${form.created_at}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <a href="${form.link}" target="_blank" class="text-blue-500 hover:text-blue-700">
+                                <i class="fas fa-link"></i>
+                            </a>
+                            <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900">Analisis</a>
+                            <a href="form_builder.html?edit=${form.form_id}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                            <button onclick="deleteForm(${form.form_id})" class="text-red-600 hover:text-red-900">Hapus</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            renderPaginationButtons();
+        }
+
+        function renderPaginationButtons() {
+            const totalPages = Math.ceil(allForms.length / itemsPerPage);
+            const paginationButtonsContainer = document.getElementById('pagination-buttons');
+            const paginationInfo = document.getElementById('pagination-info');
+            paginationButtonsContainer.innerHTML = '';
+
+            if (allForms.length === 0) {
+                paginationInfo.textContent = `Menampilkan 0 dari 0 Formulir`;
+                return;
+            }
+            paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, allForms.length)} hingga ${Math.min(currentPage * itemsPerPage, allForms.length)} dari ${allForms.length} Formulir`;
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Sebelumnya';
+            prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100');
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                currentPage--;
+                renderFormList(currentPage);
+            };
+            paginationButtonsContainer.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100');
+                if (i === currentPage) {
+                    pageButton.classList.add('bg-blue-500', 'text-white');
+                } else {
+                    pageButton.classList.add('text-gray-700');
+                }
+                pageButton.onclick = () => {
+                    currentPage = i;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Selanjutnya';
+            nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100');
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                currentPage++;
+                renderFormList(currentPage);
+            };
+            paginationButtonsContainer.appendChild(nextButton);
+        }
+
+        async function deleteForm(formId) {
+            if (confirm(`Apakah Anda yakin ingin menghapus Formulir #${formId}? Semua data respon akan ikut terhapus.`)) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}?action=delete_form&id=${formId}`, {
+                        method: 'DELETE'
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        alert(`Formulir #${formId} berhasil dihapus.`);
+                        fetchFormList(); 
+                    } else {
+                        alert(`Gagal menghapus formulir: ${result.message}`);
+                    }
+                } catch (error) {
+                    alert(`Terjadi kesalahan server: ${error.message}`);
+                }
+            }
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('adminRole');
+            sessionStorage.removeItem('adminUsername');
+            window.location.href = 'admin_login.html';
+        }
+    </script>
+</body>
+</html>
