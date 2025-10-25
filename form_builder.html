@@ -199,7 +199,8 @@
                         <div class="mb-6">
                             <input type="text" id="form-title" placeholder="Judul Formulir (misal: Survey Kepuasan Pelanggan)" class="w-full text-xl font-bold mb-2 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <textarea id="form-description" placeholder="Deskripsi Formulir" rows="3" class="w-full text-gray-600 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                        </div>
+                            
+                            </div>
                         
                         <div id="form-fields-container" class="space-y-6 min-h-48 border-2 border-dashed border-gray-300 p-4 rounded-xl bg-gray-50">
                             <p class="text-center text-gray-500 pt-10">Tarik atau Klik elemen dari sebelah kiri untuk memulai.</p>
@@ -607,7 +608,7 @@
             }
         }
         
-        // --- FUNGSI MODAL KUSTOM (Delete & Success) ---
+        // --- FUNGSI MODAL KUSTOM (Validation, Delete, & Success) ---
 
         function openDeleteModal(event, id) {
             event.stopPropagation();
@@ -642,6 +643,7 @@
         function openSuccessModal(result) {
             const modal = document.getElementById('customSuccessModal');
             
+            // Log URL publik ke console untuk debugging
             const newFormId = result.form_id || new URLSearchParams(window.location.search).get('id');
             if (newFormId) {
                 const url = `${window.location.origin}/aspira/form_public.html?id=${newFormId}`;
