@@ -22,6 +22,7 @@
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
 
+        /* --- ANIMASI TOMBOL UTAMA (.btn-gradient) --- */
         .btn-gradient {
             background-image: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             transition: all 0.3s ease-in-out;
@@ -29,10 +30,39 @@
         }
         .btn-gradient:hover {
             background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(30, 64, 175, 0.4);
+            transform: translateY(-3px); /* Bergerak ke atas */
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.6); /* Shadow membesar */
         }
+        /* --- AKHIR ANIMASI TOMBOL UTAMA --- */
         
+        /* --- ANIMASI CARD KPI (.kpi-card) --- */
+        .kpi-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: default;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px); /* Card bergerak ke atas */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Shadow lebih menonjol */
+        }
+        /* --- AKHIR ANIMASI CARD KPI --- */
+        
+        /* --- ANIMASI TOMBOL AKSI & PAGINASI (New) --- */
+        .action-btn, .pagination-btn {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            display: inline-flex; /* Penting untuk centering ikon */
+            align-items: center;
+            justify-content: center;
+        }
+        .action-btn:hover, .pagination-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05); /* Sedikit naik dan membesar */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .action-btn:active, .pagination-btn:active:not(:disabled) {
+            transform: translateY(0px) scale(1);
+        }
+        /* --- AKHIR ANIMASI TOMBOL AKSI & PAGINASI --- */
+
+
         .sidebar-link.active {
             background-color: #1e40af;
             color: #fff;
@@ -43,7 +73,6 @@
         #customDeleteModal, #customAlertModal {
             transition: opacity 0.3s ease-in-out;
         }
-        /* Memastikan flex centering aktif */
         #customDeleteModal .flex, #customAlertModal .flex {
             align-items: center;
             justify-content: center;
@@ -134,12 +163,12 @@
             <p class="text-gray-500 mb-8">Ringkasan cepat dan daftar formulir yang perlu Anda kelola.</p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 flex flex-col kpi-card">
                     <p class="text-sm text-gray-500 font-medium">Total Formulir Aktif</p>
                     <p class="text-3xl font-bold text-gray-900 mt-1" id="total-forms">...</p>
                     <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 flex flex-col kpi-card">
                     <p class="text-sm text-gray-500 font-medium">Total Respon Diterima</p>
                     <p class="text-3xl font-bold text-gray-900 mt-1" id="total-responses">...</p>
                     <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
@@ -405,12 +434,18 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">${form.responses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${form.created_at}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <a href="${form.link}" target="_blank" class="text-blue-500 hover:text-blue-700">
+                            <a href="${form.link}" target="_blank" class="text-blue-500 hover:text-blue-700 action-btn w-7 h-7 rounded-full" title="Tautan Publik">
                                 <i class="fas fa-link"></i>
                             </a>
-                            <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900">Analisis</a>
-                            <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                            <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900">Hapus</button>
+                            <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900 action-btn w-7 h-7 rounded-full" title="Analisis Respon">
+                                <i class="fas fa-chart-bar"></i>
+                            </a>
+                            <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900 action-btn w-7 h-7 rounded-full" title="Edit Formulir">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 action-btn w-7 h-7 rounded-full" title="Hapus Formulir">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -433,7 +468,7 @@
 
             const prevButton = document.createElement('button');
             prevButton.textContent = 'Sebelumnya';
-            prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100');
+            prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
             prevButton.disabled = currentPage === 1;
             prevButton.onclick = () => {
                 currentPage--;
@@ -444,9 +479,9 @@
             for (let i = 1; i <= totalPages; i++) {
                 const pageButton = document.createElement('button');
                 pageButton.textContent = i;
-                pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100');
+                pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100', 'pagination-btn');
                 if (i === currentPage) {
-                    pageButton.classList.add('bg-blue-500', 'text-white');
+                    pageButton.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'hover:shadow-none'); // Override hover style for active button
                 } else {
                     pageButton.classList.add('text-gray-700');
                 }
@@ -459,7 +494,7 @@
 
             const nextButton = document.createElement('button');
             nextButton.textContent = 'Selanjutnya';
-            nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100');
+            nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
             nextButton.disabled = currentPage === totalPages;
             nextButton.onclick = () => {
                 currentPage++;
