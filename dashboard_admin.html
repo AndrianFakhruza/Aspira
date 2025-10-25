@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* PENTING: Memastikan HTML dan BODY menggunakan tinggi penuh untuk centering vertikal */
+        html, body {
+            height: 100%;
+        }
+        
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -38,9 +43,10 @@
         #customDeleteModal, #customAlertModal {
             transition: opacity 0.3s ease-in-out;
         }
+        /* Memastikan flex centering aktif */
         #customDeleteModal .flex, #customAlertModal .flex {
-            align-items: center;
-            justify-content: center;
+            align-items: center; /* Setara dengan align-items: center; */
+            justify-content: center; /* Setara dengan justify-content: center; */
         }
 
         .sidebar-container {
@@ -248,8 +254,8 @@
         let allForms = [];
         let currentPage = 1;
         const itemsPerPage = 5;
-        let formIdToDelete = null; // Variable untuk menyimpan ID formulir yang akan dihapus
-        let alertCallback = null; // Variable untuk menyimpan fungsi callback setelah alert ditutup
+        let formIdToDelete = null; 
+        let alertCallback = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
