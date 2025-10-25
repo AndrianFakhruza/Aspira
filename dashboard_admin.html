@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin</title>
+    <title>Dashboard Admin - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
@@ -32,6 +32,15 @@
             background-color: #1e40af;
             color: #fff;
             box-shadow: 0 4px 6px rgba(30, 64, 175, 0.4);
+        }
+
+        /* Centering for all custom modals */
+        #customDeleteModal, #customAlertModal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #customDeleteModal .flex, #customAlertModal .flex {
+            align-items: center;
+            justify-content: center;
         }
 
         .sidebar-container {
@@ -163,12 +172,84 @@
             </div>
         </main>
     </div>
-    
+
+    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
+
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-trash-alt text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="delete-modal-title">
+                                Konfirmasi Penghapusan
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Anda yakin ingin menghapus formulir: <strong id="form-title-to-delete"></strong>?
+                                    Semua data respon akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                            onclick="confirmDelete()">
+                        Hapus Permanen
+                    </button>
+                    <button type="button" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
+                            onclick="closeDeleteModal()">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAlertModal()"></div>
+
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10" id="alert-icon-container">
+                            <i class="fas fa-info-circle text-yellow-600" id="alert-icon"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="alert-title">
+                                Informasi
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500" id="alert-message">
+                                    Pesan default.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                            onclick="closeAlertModal()">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
         let allForms = [];
         let currentPage = 1;
         const itemsPerPage = 5;
+        let formIdToDelete = null; // Variable untuk menyimpan ID formulir yang akan dihapus
+        let alertCallback = null; // Variable untuk menyimpan fungsi callback setelah alert ditutup
 
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
@@ -180,8 +261,10 @@
             const adminUsername = sessionStorage.getItem('adminUsername');
             
             if (!adminRole) {
-                alert("Sesi berakhir, silakan login kembali.");
-                window.location.href = 'admin_login.html';
+                // Mengganti alert standar dengan customAlert
+                customAlert('Sesi berakhir, silakan login kembali.', 'error', () => {
+                    window.location.href = 'admin_login.html';
+                });
                 return;
             }
 
@@ -204,6 +287,74 @@
             icon.classList.toggle('fa-arrow-right');
         }
 
+        // --- FUNGSI CUSTOM MODAL ---
+
+        function customAlert(message, type = 'info', callback = null) {
+            const modal = document.getElementById('customAlertModal');
+            const iconContainer = document.getElementById('alert-icon-container');
+            const icon = document.getElementById('alert-icon');
+            const title = document.getElementById('alert-title');
+            const msg = document.getElementById('alert-message');
+            
+            alertCallback = callback; // Set callback
+
+            msg.textContent = message;
+            
+            // Reset colors and icons
+            iconContainer.className = 'mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10';
+            icon.className = 'fas';
+
+            if (type === 'error') {
+                iconContainer.classList.add('bg-red-100');
+                icon.classList.add('fa-exclamation-triangle', 'text-red-600');
+                title.textContent = 'Terjadi Kesalahan';
+            } else if (type === 'success') {
+                iconContainer.classList.add('bg-green-100');
+                icon.classList.add('fa-check-circle', 'text-green-600');
+                title.textContent = 'Berhasil';
+            } else { // info/default (Sesi habis, dll)
+                iconContainer.classList.add('bg-yellow-100');
+                icon.classList.add('fa-info-circle', 'text-yellow-600');
+                title.textContent = 'Informasi';
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.style.opacity = '1', 10);
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById('customAlertModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                if (alertCallback) {
+                    alertCallback();
+                    alertCallback = null; // Reset callback
+                }
+            }, 300);
+        }
+
+        function openDeleteModal(formId, formTitle) {
+            formIdToDelete = formId;
+            document.getElementById('form-title-to-delete').textContent = formTitle;
+            const modal = document.getElementById('customDeleteModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.style.opacity = '1', 10);
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('customDeleteModal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            document.body.classList.remove('overflow-hidden');
+            formIdToDelete = null;
+        }
+
+        // --- AKHIR FUNGSI CUSTOM MODAL ---
+
         async function fetchFormList() {
             try {
                 const response = await fetch(`${API_BASE_URL}?action=get_forms`);
@@ -214,7 +365,8 @@
                         ...form,
                         form_id: form.form_id, 
                         responses: form.responses_count || 0, 
-                        link: `form_public.html?id=${form.form_id}`, 
+                        // Menggunakan form_link_unique yang sudah lengkap dari API, jika ada
+                        link: form.form_link_unique ? `${window.location.origin}/aspira/${form.form_link_unique}` : `form_public.html?id=${form.form_id}`, 
                         created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                     }));
                     
@@ -255,8 +407,8 @@
                                 <i class="fas fa-link"></i>
                             </a>
                             <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900">Analisis</a>
-                            <a href="form_builder.html?edit=${form.form_id}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                            <button onclick="deleteForm(${form.form_id})" class="text-red-600 hover:text-red-900">Hapus</button>
+                            <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                            <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900">Hapus</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -314,23 +466,33 @@
             paginationButtonsContainer.appendChild(nextButton);
         }
 
-        async function deleteForm(formId) {
-            if (confirm(`Apakah Anda yakin ingin menghapus Formulir #${formId}? Semua data respon akan ikut terhapus.`)) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}?action=delete_form&id=${formId}`, {
-                        method: 'DELETE'
-                    });
-                    const result = await response.json();
-                    
-                    if (response.ok && result.success) {
-                        alert(`Formulir #${formId} berhasil dihapus.`);
-                        fetchFormList(); 
-                    } else {
-                        alert(`Gagal menghapus formulir: ${result.message}`);
-                    }
-                } catch (error) {
-                    alert(`Terjadi kesalahan server: ${error.message}`);
+        // Fungsi baru untuk memicu Modal Konfirmasi Hapus
+        function deleteFormConfirmation(formId, formTitle) {
+            openDeleteModal(formId, formTitle);
+        }
+
+        // Fungsi yang dipanggil oleh tombol "Hapus Permanen" di modal
+        async function confirmDelete() {
+            const id = formIdToDelete;
+            if (!id) return;
+            
+            closeDeleteModal(); 
+
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=delete_form&id=${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    customAlert(`Formulir #${id} berhasil dihapus.`, 'success', fetchFormList); 
+                } else {
+                    customAlert(`Gagal menghapus formulir: ${result.message || 'Error tidak diketahui.'}`, 'error');
                 }
+            } catch (error) {
+                console.error('Delete error:', error);
+                customAlert('Terjadi kesalahan koneksi saat menghapus formulir.', 'error');
             }
         }
         
