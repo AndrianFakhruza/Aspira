@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis & Laporan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .navbar-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+
+        .sidebar-link.active {
+            background-color: #1e40af;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(30, 64, 175, 0.4);
+        }
+
+        .sidebar-container {
+            width: 256px;
+            transition: width 0.3s ease;
+        }
+        .sidebar-container.collapsed {
+            width: 80px;
+        }
+        .sidebar-container.collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar-container.collapsed .toggle-button-wrapper .fa-arrow-left {
+            transform: rotate(180deg);
+        }
+
+        .toggle-button-wrapper {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%) translateX(50%);
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="flex h-screen bg-gray-50">
+        
+        <aside id="sidebar" class="sidebar-container navbar-gradient text-white flex flex-col relative h-full">
+            <div class="toggle-button-wrapper">
+                <button onclick="toggleSidebar(event)" class="w-8 h-8 flex items-center justify-center p-2 rounded-full navbar-gradient text-white shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <i id="toggle-icon" class="fas fa-arrow-left text-sm transition-transform duration-300"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-3 p-4 border-b border-blue-700/50">
+                <div class="flex-shrink-0">
+                    <div class="bg-white p-2 rounded-lg border border-gray-200">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex flex-col sidebar-text flex-grow">
+                    <span class="font-extrabold text-sm tracking-wider leading-tight text-white">ASPIRA</span>
+                    <span class="font-bold text-xs text-red-300 leading-tight">PERTA ARUN GAS</span>
+                </div>
+            </div>
+
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard_admin.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-home w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="form_builder.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-magic w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Form Builder</span>
+                </a>
+                <a href="analysis_report.html" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Analisis & Laporan</span>
+                </a>
+                <a href="admin_management.html" id="admin-management-link" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                    <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
+                    <span class="sidebar-text">Manajemen Admin</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-blue-700/50">
+                <button class="w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl text-red-300 hover:bg-red-500 hover:text-white transition-colors duration-200" onclick="logout()">
+                    <i class="fas fa-sign-out-alt w-5 h-5 mr-2"></i>
+                    <span class="sidebar-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
+            
+            <div class="flex justify-between items-start mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    Analisis Feedback
+                </h1>
+                
+                <div id="form-selection" class="bg-white p-4 rounded-xl shadow-md border border-gray-100 flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+                    <label for="form-select" class="text-sm font-medium text-gray-700 hidden md:block">Pilih Formulir:</label>
+                    <select id="form-select" onchange="loadFormData(this.value)" class="p-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-white">
+                        <option value="" disabled selected>Memuat daftar formulir...</option>
+                    </select>
+                </div>
+                </div>
+            
+            <div id="initial-instruction" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-6 rounded-lg shadow-md mb-8">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18.441 10.435a.75.75 0 01-1.06 0L10 3.059 2.619 10.435a.75.75 0 01-1.06-1.06l7.986-7.985a.75.75 0 011.06 0l7.986 7.985a.75.75 0 010 1.06zM3.47 11.5a.75.75 0 00-1.06 1.06l4.986 4.986a.75.75 0 001.06 0l11.01-11.01a.75.75 0 00-1.06-1.06L9 14.94L3.47 9.47a.75.75 0 00-1.06 0z" clip-rule="evenodd"></path></svg>
+                    <p class="font-bold">Mulai Analisis</p>
+                </div>
+                <p class="mt-2 text-sm">Silakan **pilih salah satu Formulir** dari kotak *dropdown* di kanan atas untuk memuat laporan analisis dan daftar feedback responden.</p>
+            </div>
+            
+            <div id="report-content" class="hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4" id="report-title"></h2>
+                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                    <p class="text-gray-600">Total Respon: <span id="total-responses" class="font-semibold text-blue-600">0</span></p>
+                    <button onclick="exportToExcel()" class="bg-green-600 text-white font-medium py-2 px-4 rounded-xl text-sm hover:bg-green-700 transition duration-150">
+                        <i class="fas fa-file-excel mr-1"></i> Export Excel
+                    </button>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 mt-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Daftar Feedback Responden</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Submit</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="response-list" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Pilih formulir untuk melihat respon.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pagination-controls" class="mt-4 flex justify-between items-center"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="responseDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeResponseDetail()"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-start border-b pb-3 mb-4">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
+                            Detail Respon
+                        </h3>
+                        
+                        <button type="button" 
+                                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                                onclick="closeResponseDetail()">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </div>
+
+                    <div id="response-detail-content" class="space-y-4">
+                        <p>Memuat detail...</p>
+                    </div>
+
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            onclick="closeResponseDetail()">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        let formId = null;
+        let allResponses = [];
+        let formFields = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            fetchFormListForDropdown();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialFormId = urlParams.get('id');
+            if (initialFormId) {
+                setTimeout(() => {
+                    const selectElement = document.getElementById('form-select');
+                    if (selectElement) {
+                        selectElement.value = initialFormId;
+                        loadFormData(initialFormId);
+                    }
+                }, 500);
+            }
+        });
+        
+        function checkSession() {
+            const adminRole = sessionStorage.getItem('adminRole');
+            if (!adminRole) {
+                alert("Sesi berakhir, silakan login kembali.");
+                window.location.href = 'admin_login.html';
+            }
+        }
+
+        function toggleSidebar(event) {
+            if (event) event.stopPropagation();
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            const icon = document.getElementById('toggle-icon');
+            icon.classList.toggle('fa-arrow-left');
+            icon.classList.toggle('fa-arrow-right');
+        }
+
+        async function fetchFormListForDropdown() {
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=get_forms`);
+                const result = await response.json();
+                const select = document.getElementById('form-select');
+                select.innerHTML = '<option value="" disabled selected>Pilih formulir</option>';
+
+                if (response.ok && result.success && result.forms.length > 0) {
+                    result.forms.forEach(form => {
+                        const option = document.createElement('option');
+                        option.value = form.form_id;
+                        // HANYA menampilkan judul
+                        option.textContent = form.form_title; 
+                        select.appendChild(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="" disabled selected>Tidak ada formulir aktif</option>';
+                }
+            } catch (error) {
+                console.error('Gagal mengambil daftar formulir:', error);
+                document.getElementById('form-select').innerHTML = '<option value="" disabled selected>Error koneksi server</option>';
+            }
+        }
+
+        async function loadFormData(selectedFormId) {
+            if (!selectedFormId) return;
+            
+            // Sembunyikan instruksi awal saat data dimuat
+            document.getElementById('initial-instruction').classList.add('hidden');
+            
+            formId = selectedFormId;
+            document.getElementById('report-content').classList.add('hidden');
+            document.getElementById('response-list').innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Memuat data respon...</td></tr>`;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=get_form_and_responses&id=${formId}`);
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    document.getElementById('report-title').textContent = result.form_title;
+                    document.getElementById('total-responses').textContent = result.total_responses;
+                    formFields = result.form_fields;
+                    allResponses = result.responses;
+                    
+                    document.getElementById('report-content').classList.remove('hidden');
+                    renderResponseList(1);
+
+                } else {
+                    alert('Gagal memuat laporan: ' + (result.message || 'Error tidak diketahui.'));
+                    document.getElementById('report-content').classList.add('hidden');
+                    document.getElementById('initial-instruction').classList.remove('hidden'); // Tampilkan lagi jika gagal
+                }
+            } catch (error) {
+                console.error('Load data error:', error);
+                alert('Terjadi kesalahan saat memuat data laporan.');
+                document.getElementById('initial-instruction').classList.remove('hidden'); // Tampilkan lagi jika error
+            }
+        }
+
+        function renderResponseList(page) {
+            currentPage = page;
+            const tableBody = document.getElementById('response-list');
+            const totalResponses = allResponses.length;
+            const totalPages = Math.ceil(totalResponses / itemsPerPage);
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedItems = allResponses.slice(startIndex, endIndex);
+
+            tableBody.innerHTML = '';
+            
+            if (totalResponses === 0) {
+                tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Belum ada respon untuk formulir ini.</td></tr>`;
+            } else {
+                paginatedItems.forEach((response, index) => {
+                    const row = document.createElement('tr');
+                    const responseNumber = startIndex + index + 1;
+                    
+                    const submittedAt = new Date(response.submitted_at);
+                    const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                    // Memanggil fungsi showResponseDetail dengan objek respon dari array
+                    const responseIndexInAll = startIndex + index;
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${responseNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick='showResponseDetail(allResponses[${responseIndexInAll}])' class="text-blue-600 hover:text-blue-900">Lihat Detail</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            renderPaginationButtons(totalPages);
+        }
+
+        function renderPaginationButtons(totalPages) {
+            const container = document.getElementById('pagination-controls');
+            container.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.classList.add('flex', 'space-x-2');
+
+            const prevBtn = createPaginationButton('Sebelumnya', currentPage - 1, currentPage === 1);
+            buttonsDiv.appendChild(prevBtn);
+
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = createPaginationButton(i, i, i === currentPage);
+                buttonsDiv.appendChild(pageBtn);
+            }
+
+            const nextBtn = createPaginationButton('Selanjutnya', currentPage + 1, currentPage === totalPages);
+            buttonsDiv.appendChild(nextBtn);
+
+            container.appendChild(buttonsDiv);
+        }
+
+        function createPaginationButton(text, page, isDisabled) {
+            const button = document.createElement('button');
+            button.textContent = text;
+            button.disabled = isDisabled;
+            button.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'transition-colors');
+            
+            if (isDisabled && text !== 'Sebelumnya' && text !== 'Selanjutnya') {
+                button.classList.add('bg-blue-500', 'text-white');
+            } else if (isDisabled) {
+                button.classList.add('text-gray-400');
+            } else {
+                button.classList.add('text-gray-700', 'hover:bg-gray-100');
+                button.onclick = () => renderResponseList(page);
+            }
+            return button;
+        }
+
+
+        function showResponseDetail(response) {
+            const modal = document.getElementById('responseDetailModal');
+            const contentDiv = document.getElementById('response-detail-content');
+            
+            let htmlContent = '';
+
+            const submittedAt = new Date(response.submitted_at);
+            const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            htmlContent += `
+                <div class="border-b pb-2 mb-4">
+                    <p class="text-sm font-semibold text-gray-600">Waktu Submit:</p>
+                    <p class="text-base font-bold text-blue-600">${formattedTime}</p>
+                </div>
+            `;
+            
+            formFields.forEach(field => {
+                if (field.id === 'form_id') return; 
+                
+                const value = response[field.id] || '(Kosong)';
+                htmlContent += `
+                    <div class="bg-gray-50 p-3 rounded-lg border">
+                        <p class="text-sm font-medium text-gray-700">${field.label}:</p>
+                        <p class="text-gray-900 font-semibold mt-1 whitespace-pre-wrap">${value}</p>
+                    </div>
+                `;
+            });
+
+            contentDiv.innerHTML = htmlContent;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); 
+        }
+
+        function closeResponseDetail() {
+            const modal = document.getElementById('responseDetailModal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden'); 
+        }
+        
+        function exportToExcel() {
+            if (!formId) {
+                alert('Pilih formulir terlebih dahulu.');
+                return;
+            }
+            window.location.href = `${API_BASE_URL}?action=export_excel&id=${formId}`;
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('adminRole');
+            sessionStorage.removeItem('adminUsername');
+            window.location.href = 'admin_login.html';
+        }
+    </script>
+</body>
+</html>
