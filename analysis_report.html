@@ -56,6 +56,16 @@
             transform: translateY(-2px); 
             box-shadow: 0 6px 15px rgba(30, 64, 175, 0.6);
         }
+        
+        /* CSS Tambahan untuk Lebar Kolom Tabel */
+        .w-col-no { width: 10%; }
+        .w-col-waktu { width: 60%; } /* Lebar diperbesar karena Nama dihapus */
+        .w-col-aksi { width: 30%; } /* Lebar diperbesar untuk center */
+
+        /* Override Tailwind untuk membuat semua cell di tengah */
+        .centered-table th, .centered-table td {
+            text-align: center !important;
+        }
     </style>
 </head>
 <body>
@@ -143,12 +153,12 @@
                 <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 mt-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">Daftar Feedback Responden</h2>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200 centered-table">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Submit</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-no">No</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-waktu">Waktu Submit</th>
+                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-aksi">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="response-list" class="bg-white divide-y divide-gray-200">
@@ -203,7 +213,9 @@
         let formFields = [];
         let currentPage = 1;
         const itemsPerPage = 5;
-
+        
+        // Konstanta NAME_FIELD_ID dihapus karena tidak diperlukan lagi
+        
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
             fetchFormListForDropdown();
@@ -211,7 +223,6 @@
             const urlParams = new URLSearchParams(window.location.search);
             const initialFormId = urlParams.get('id');
             if (initialFormId) {
-                // Beri sedikit waktu untuk dropdown terisi
                 setTimeout(() => {
                     const selectElement = document.getElementById('form-select');
                     if (selectElement) {
@@ -231,12 +242,10 @@
             const adminUsername = sessionStorage.getItem('adminUsername');
             
             if (!adminRole) {
-                // Redirect jika sesi tidak ditemukan
                 window.location.href = 'admin_login.html';
                 return;
             }
             
-            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
             if (adminRole !== 'Super Admin') {
                 const adminLink = document.getElementById('admin-management-link');
                 if (adminLink) {
@@ -292,6 +301,7 @@
             
             document.getElementById('initial-instruction').classList.add('hidden');
             document.getElementById('report-content').classList.add('hidden');
+            // Colspan disesuaikan menjadi 3
             document.getElementById('response-list').innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data respon...</td></tr>`;
 
             formId = selectedFormId;
@@ -304,21 +314,8 @@
                     document.getElementById('report-title').textContent = `Laporan Analisis: ${result.form_title}`;
                     document.getElementById('total-responses').textContent = result.total_responses;
                     
-                    // --- PERBAIKAN FINAL UNTUK MENGAMBIL DATA JAWABAN SECARA AMAN ---
-                    allResponses = result.responses.map(res => {
-                        // Respon API: data_responden adalah data jawaban langsung.
-                        // res: { field_id_1: 'value', ..., submitted_at: '...' }
-                        
-                        // KITA PASTIKAN SEMUA FIELD JAWABAN DI-FLATTEN KE ROOT
-                        // Karena API PHP sebelumnya sudah menggabungkan data_responden ke root:
-                        // $response_data['submitted_at'] = $res['submitted_at'];
-                        // $responses_data[] = $response_data;
-                        
-                        // Data dari API seharusnya sudah siap, jika tidak, kita lakukan deep copy
-                        return res;
-                    });
+                    allResponses = result.responses;
 
-                    // Ambil field structure
                     formFields = result.form_fields.map(field => ({
                         id: field.id,
                         label: field.label,
@@ -352,6 +349,7 @@
             tableBody.innerHTML = '';
             
             if (totalResponses === 0) {
+                // Colspan disesuaikan menjadi 3
                 tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Belum ada respon untuk formulir ini.</td></tr>`;
             } else {
                 paginatedItems.forEach((response, index) => {
@@ -363,10 +361,11 @@
 
                     const responseIndexInAll = startIndex + index;
                     
+                    // Struktur baris diubah, hanya menyisakan 3 kolom (No, Waktu Submit, Aksi)
                     row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${responseNumber}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedTime}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-col-no">${responseNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-col-waktu">${formattedTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium w-col-aksi">
                             <button onclick='showResponseDetail(allResponses[${responseIndexInAll}])' class="text-blue-600 hover:text-blue-900">Lihat Detail</button>
                         </td>
                     `;
@@ -385,7 +384,6 @@
             const buttonsDiv = document.createElement('div');
             buttonsDiv.classList.add('flex', 'space-x-2');
 
-            // Logika tombol paginasi
             const prevBtn = createPaginationButton('Sebelumnya', currentPage - 1, currentPage === 1);
             buttonsDiv.appendChild(prevBtn);
 
@@ -442,14 +440,11 @@
                 </div>
             `;
             
-            // Loop melalui formFields untuk menampilkan jawaban
             formFields.forEach(field => {
-                // Akses data langsung dari objek respons
                 const value = response[field.id]; 
                 let displayValue;
 
                 if (Array.isArray(value)) {
-                    // Untuk checkbox atau field multi-select
                     displayValue = value.join(', ');
                 } else if (value !== null && value !== undefined && value !== '') {
                     displayValue = String(value);
@@ -481,7 +476,6 @@
                 alert('Tidak ada data respon untuk diekspor. Pilih formulir terlebih dahulu.');
                 return;
             }
-            // Memanggil endpoint export_excel di API PHP
             window.open(`${API_BASE_URL}?action=export_excel&id=${formId}`, '_blank');
         }
     </script>
