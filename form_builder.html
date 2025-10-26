@@ -78,6 +78,10 @@
         #customDeleteModal, #customSuccessModal, #customValidationModal {
             transition: opacity 0.3s ease-in-out;
         }
+        #customDeleteModal .flex, #customSuccessModal .flex, #customValidationModal .flex {
+            align-items: center;
+            justify-content: center;
+        }
         .option-input {
             width: calc(100% - 30px); /* Ruang untuk tombol hapus */
         }
@@ -191,7 +195,8 @@
                                 </button>
                             </div>
 
-                            <input type="hidden" id="form-banner-url"> <div id="banner-preview" class="mt-3 hidden">
+                            <input type="hidden" id="form-banner-url"> 
+                            <div id="banner-preview" class="mt-3 hidden">
                                 <img id="banner-image" src="" alt="Banner Preview" class="w-full max-h-48 object-cover rounded-lg shadow-md">
                             </div>
                         </div>
@@ -214,7 +219,6 @@
 
     <div id="customValidationModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-validation" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeValidationModal()"></div>
 
             <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
@@ -323,19 +327,36 @@
         let fieldIdToDelete = null; 
         
         document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
+            // --- LOGIKA SESI DITAMBAHKAN DI SINI ---
+            checkSession(); 
+            // -------------------------------------
+
             const urlParams = new URLSearchParams(window.location.search);
-            const formId = urlParams.get('id'); // <<< MEMBACA ID DARI URL
+            const formId = urlParams.get('id'); 
             if (formId) {
-                loadFormStructure(formId); // <<< MEMUAT DATA JIKA ADA ID
+                loadFormStructure(formId); 
             }
         });
 
+        // =========================================================================
+        // SIDEBAR AND SESSION LOGIC (DIPERBAIKI)
+        // =========================================================================
         function checkSession() {
             const adminRole = sessionStorage.getItem('adminRole');
+            const adminUsername = sessionStorage.getItem('adminUsername');
+            
             if (!adminRole) {
-                alert("Sesi berakhir, silakan login kembali.");
+                // Gunakan redirect langsung jika tidak ada session untuk non-dashboard pages
                 window.location.href = 'admin_login.html';
+                return;
+            }
+            
+            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
+            if (adminRole !== 'Super Admin') {
+                const adminLink = document.getElementById('admin-management-link');
+                if (adminLink) {
+                    adminLink.classList.add('hidden');
+                }
             }
         }
 
@@ -348,6 +369,20 @@
             icon.classList.toggle('fa-arrow-right');
         }
 
+        function logout() {
+            sessionStorage.removeItem('adminRole');
+            sessionStorage.removeItem('adminUsername');
+            window.location.href = 'admin_login.html';
+        }
+        
+        function goToDashboard() {
+            window.location.href = 'dashboard_admin.html';
+        }
+        // =========================================================================
+        // END SIDEBAR AND SESSION LOGIC
+        // =========================================================================
+
+
         // --- FUNGSI BANNER LOKAL ---
 
         function handleFileSelect(event) {
@@ -355,7 +390,7 @@
             if (!file) return;
 
             if (file.size > 1024 * 1024) {
-                alert("Ukuran file terlalu besar. Maksimum 1MB.");
+                openValidationModal("Ukuran file terlalu besar. Maksimum 1MB.");
                 event.target.value = ''; 
                 return;
             }
@@ -509,13 +544,13 @@
                     case 'number':
                         inputHtml = `
                             <input type="text" value="${field.placeholder}" placeholder="Placeholder/Contoh Teks" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm" 
-                                   onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                                    onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
                         `;
                         break;
                     case 'textarea':
                         inputHtml = `
                             <textarea placeholder="Placeholder/Contoh Teks" rows="3" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm resize-none"
-                                      onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">${field.placeholder}</textarea>
+                                            onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">${field.placeholder}</textarea>
                         `;
                         break;
                     case 'radio':
@@ -529,7 +564,7 @@
                                 <div class="flex items-center space-x-2 mb-2">
                                     <input type="${previewType}" disabled class="flex-shrink-0">
                                     <input type="text" value="${opt}" class="option-input p-1 border rounded-lg text-sm flex-grow"
-                                           onclick="event.stopPropagation()" oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)">
+                                            onclick="event.stopPropagation()" oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)">
                                     <button onclick="deleteOption(event, '${field.id}', ${optIndex})" class="text-red-500 hover:text-red-700 p-1 flex-shrink-0" title="Hapus Opsi">
                                         <i class="fas fa-times"></i>
                                     </button>
@@ -551,7 +586,7 @@
                         if (field.type === 'select') {
                             inputHtml += `
                                 <input type="text" value="${field.placeholder || 'Pilih salah satu...'}" placeholder="Placeholder Dropdown" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm mt-3"
-                                       onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                                        onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
                             `;
                         }
                         break;
@@ -562,7 +597,7 @@
                         <span class="text-[10px] uppercase font-semibold ${field.required ? 'text-blue-500' : 'text-gray-400'}">WAJIB ISI</span>
                         <label for="req-toggle-${field.id}" class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="req-toggle-${field.id}" ${field.required ? 'checked' : ''} 
-                                   class="sr-only peer toggle-checkbox" onchange="updateFieldProperty('${field.id}', 'required', this.checked)">
+                                    class="sr-only peer toggle-checkbox" onchange="updateFieldProperty('${field.id}', 'required', this.checked)">
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all toggle-label peer-checked:bg-blue-600"></div>
                         </label>
                     </div>
@@ -571,7 +606,7 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-3">
                         <input type="text" value="${field.label}" placeholder="Judul Pertanyaan" class="font-medium text-md text-gray-700 w-full p-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent" 
-                               oninput="updateFieldProperty('${field.id}', 'label', this.value)" onclick="event.stopPropagation()">
+                                oninput="updateFieldProperty('${field.id}', 'label', this.value)" onclick="event.stopPropagation()">
                         
                         <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
                             ${requiredToggleHtml}
@@ -643,13 +678,6 @@
 
         function openSuccessModal(result) {
             const modal = document.getElementById('customSuccessModal');
-            
-            const newFormId = result.form_id || new URLSearchParams(window.location.search).get('id');
-            if (newFormId) {
-                const url = `${window.location.origin}/aspira/form_public.html?id=${newFormId}`;
-                console.log("Formulir berhasil disimpan. URL Publik:", url);
-            }
-
             modal.classList.remove('hidden');
             setTimeout(() => modal.style.opacity = '1', 10);
             document.body.classList.add('overflow-hidden');
@@ -662,7 +690,6 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 document.body.classList.remove('overflow-hidden');
-                
                 goToDashboard();
             }, 300);
         }
@@ -682,10 +709,6 @@
             document.body.classList.remove('overflow-hidden');
         }
         
-        function goToDashboard() {
-            window.location.href = 'dashboard_admin.html';
-        }
-
         // FUNGSI saveForm()
         async function saveForm() {
             const formTitle = document.getElementById('form-title').value;
@@ -705,7 +728,10 @@
 
             const payload = {
                 form_structure: formStructurePayload, 
-                banner_data: formBannerData, 
+                // Jika data dimulai dengan 'data:', berarti ini adalah Base64 baru
+                banner_data: formBannerData.startsWith('data:') ? formBannerData : null, 
+                // Jika tidak dimulai dengan 'data:' dan tidak kosong, ini adalah URL lama
+                banner_url: formBannerData && !formBannerData.startsWith('data:') ? formBannerData : null 
             };
             
             const urlParams = new URLSearchParams(window.location.search);
@@ -717,11 +743,10 @@
                 payload.form_id = formId;
             }
             
-            if (formBannerData && !formBannerData.startsWith('data:')) {
-                payload.banner_url = formBannerData;
+            // Hapus banner_data jika null agar payload lebih bersih
+            if (payload.banner_data === null) {
                 delete payload.banner_data;
             }
-
 
             try {
                 const response = await fetch(`${API_BASE_URL}?action=${action}`, {
@@ -752,12 +777,6 @@
                 console.error('Save error (Koneksi Gagal):', error);
                 openValidationModal('Terjadi kesalahan koneksi saat menyimpan formulir. Pastikan XAMPP/WAMP/Laragon Anda berjalan dan API PHP dapat diakses.');
             }
-        }
-        
-        function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'admin_login.html';
         }
     </script>
 </body>

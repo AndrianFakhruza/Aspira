@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisis & Laporan</title>
+    <title>Analisis & Laporan - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
@@ -44,6 +44,17 @@
             transform: translateY(-50%) translateX(50%);
             transition: transform 0.3s ease;
             z-index: 10;
+        }
+        
+        .btn-gradient {
+            background-image: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
+        }
+        .btn-gradient:hover {
+            background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(30, 64, 175, 0.6);
         }
     </style>
 </head>
@@ -110,11 +121,11 @@
                         <option value="" disabled selected>Memuat daftar formulir...</option>
                     </select>
                 </div>
-                </div>
+            </div>
             
             <div id="initial-instruction" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-6 rounded-lg shadow-md mb-8">
                 <div class="flex items-center">
-                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18.441 10.435a.75.75 0 01-1.06 0L10 3.059 2.619 10.435a.75.75 0 01-1.06-1.06l7.986-7.985a.75.75 0 011.06 0l7.986 7.985a.75.75 0 010 1.06zM3.47 11.5a.75.75 0 00-1.06 1.06l4.986 4.986a.75.75 0 001.06 0l11.01-11.01a.75.75 0 00-1.06-1.06L9 14.94L3.47 9.47a.75.75 0 00-1.06 0z" clip-rule="evenodd"></path></svg>
+                    <i class="fas fa-info-circle w-6 h-6 mr-3"></i>
                     <p class="font-bold">Mulai Analisis</p>
                 </div>
                 <p class="mt-2 text-sm">Silakan **pilih salah satu Formulir** dari kotak *dropdown* di kanan atas untuk memuat laporan analisis dan daftar feedback responden.</p>
@@ -170,7 +181,7 @@
                         </button>
                     </div>
 
-                    <div id="response-detail-content" class="space-y-4">
+                    <div id="response-detail-content" class="space-y-4 max-h-96 overflow-y-auto">
                         <p>Memuat detail...</p>
                     </div>
 
@@ -200,6 +211,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const initialFormId = urlParams.get('id');
             if (initialFormId) {
+                // Beri sedikit waktu untuk dropdown terisi
                 setTimeout(() => {
                     const selectElement = document.getElementById('form-select');
                     if (selectElement) {
@@ -210,12 +222,28 @@
             }
         });
         
+        // =========================================================================
+        // SIDEBAR AND SESSION LOGIC (INTEGRATED)
+        // =========================================================================
+
         function checkSession() {
             const adminRole = sessionStorage.getItem('adminRole');
+            const adminUsername = sessionStorage.getItem('adminUsername');
+            
             if (!adminRole) {
-                alert("Sesi berakhir, silakan login kembali.");
+                // Redirect jika sesi tidak ditemukan
                 window.location.href = 'admin_login.html';
+                return;
             }
+            
+            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
+            if (adminRole !== 'Super Admin') {
+                const adminLink = document.getElementById('admin-management-link');
+                if (adminLink) {
+                    adminLink.classList.add('hidden');
+                }
+            }
+            // Tambahkan nama admin di main content jika perlu, misalnya di dashboard
         }
 
         function toggleSidebar(event) {
@@ -226,6 +254,16 @@
             icon.classList.toggle('fa-arrow-left');
             icon.classList.toggle('fa-arrow-right');
         }
+        
+        function logout() {
+            sessionStorage.removeItem('adminRole');
+            sessionStorage.removeItem('adminUsername');
+            window.location.href = 'admin_login.html';
+        }
+        
+        // =========================================================================
+        // DATA FETCHING AND RENDERING
+        // =========================================================================
 
         async function fetchFormListForDropdown() {
             try {
@@ -238,7 +276,6 @@
                     result.forms.forEach(form => {
                         const option = document.createElement('option');
                         option.value = form.form_id;
-                        // HANYA menampilkan judul
                         option.textContent = form.form_title; 
                         select.appendChild(option);
                     });
@@ -254,22 +291,33 @@
         async function loadFormData(selectedFormId) {
             if (!selectedFormId) return;
             
-            // Sembunyikan instruksi awal saat data dimuat
             document.getElementById('initial-instruction').classList.add('hidden');
-            
-            formId = selectedFormId;
             document.getElementById('report-content').classList.add('hidden');
-            document.getElementById('response-list').innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Memuat data respon...</td></tr>`;
+            document.getElementById('response-list').innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data respon...</td></tr>`;
+
+            formId = selectedFormId;
 
             try {
                 const response = await fetch(`${API_BASE_URL}?action=get_form_and_responses&id=${formId}`);
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    document.getElementById('report-title').textContent = result.form_title;
+                    document.getElementById('report-title').textContent = `Laporan Analisis: ${result.form_title}`;
                     document.getElementById('total-responses').textContent = result.total_responses;
-                    formFields = result.form_fields;
-                    allResponses = result.responses;
+                    
+                    // Pastikan responses di-decode dengan benar (data_responden sudah di-decode oleh API)
+                    allResponses = result.responses.map(res => {
+                        // Respon dari API berbentuk {data_responden: {...}, submitted_at: '...'}
+                        // Kita ekstrak data_responden ke level root untuk kemudahan akses
+                        return { ...res.data_responden, submitted_at: res.submitted_at };
+                    });
+
+                    // Ambil field structure
+                    formFields = result.form_fields.map(field => ({
+                        id: field.id,
+                        label: field.label,
+                        type: field.type // Hanya field yang dibutuhkan untuk modal
+                    }));
                     
                     document.getElementById('report-content').classList.remove('hidden');
                     renderResponseList(1);
@@ -277,12 +325,12 @@
                 } else {
                     alert('Gagal memuat laporan: ' + (result.message || 'Error tidak diketahui.'));
                     document.getElementById('report-content').classList.add('hidden');
-                    document.getElementById('initial-instruction').classList.remove('hidden'); // Tampilkan lagi jika gagal
+                    document.getElementById('initial-instruction').classList.remove('hidden'); 
                 }
             } catch (error) {
                 console.error('Load data error:', error);
-                alert('Terjadi kesalahan saat memuat data laporan.');
-                document.getElementById('initial-instruction').classList.remove('hidden'); // Tampilkan lagi jika error
+                alert('Terjadi kesalahan saat memuat data laporan (Koneksi Server).');
+                document.getElementById('initial-instruction').classList.remove('hidden');
             }
         }
 
@@ -307,7 +355,6 @@
                     const submittedAt = new Date(response.submitted_at);
                     const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-                    // Memanggil fungsi showResponseDetail dengan objek respon dari array
                     const responseIndexInAll = startIndex + index;
                     
                     row.innerHTML = `
@@ -332,6 +379,7 @@
             const buttonsDiv = document.createElement('div');
             buttonsDiv.classList.add('flex', 'space-x-2');
 
+            // Logika tombol paginasi (sama seperti di dashboard_admin.html)
             const prevBtn = createPaginationButton('Sebelumnya', currentPage - 1, currentPage === 1);
             buttonsDiv.appendChild(prevBtn);
 
@@ -380,21 +428,32 @@
 
             const submittedAt = new Date(response.submitted_at);
             const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
             htmlContent += `
-                <div class="border-b pb-2 mb-4">
+                <div class="border-b pb-2 mb-4 bg-blue-50 p-3 rounded-lg">
                     <p class="text-sm font-semibold text-gray-600">Waktu Submit:</p>
                     <p class="text-base font-bold text-blue-600">${formattedTime}</p>
                 </div>
             `;
             
+            // Loop melalui formFields untuk menampilkan jawaban
             formFields.forEach(field => {
-                if (field.id === 'form_id') return; 
+                const value = response[field.id]; 
+                let displayValue;
+
+                if (Array.isArray(value)) {
+                    // Untuk checkbox atau field multi-select
+                    displayValue = value.join(', ');
+                } else if (value !== null && value !== undefined && value !== '') {
+                    displayValue = String(value);
+                } else {
+                    displayValue = '(Kosong)';
+                }
                 
-                const value = response[field.id] || '(Kosong)';
                 htmlContent += `
                     <div class="bg-gray-50 p-3 rounded-lg border">
                         <p class="text-sm font-medium text-gray-700">${field.label}:</p>
-                        <p class="text-gray-900 font-semibold mt-1 whitespace-pre-wrap">${value}</p>
+                        <p class="text-gray-900 font-semibold mt-1 whitespace-pre-wrap">${displayValue}</p>
                     </div>
                 `;
             });
@@ -411,17 +470,12 @@
         }
         
         function exportToExcel() {
-            if (!formId) {
-                alert('Pilih formulir terlebih dahulu.');
+            if (!formId || allResponses.length === 0) {
+                alert('Tidak ada data respon untuk diekspor. Pilih formulir terlebih dahulu.');
                 return;
             }
-            window.location.href = `${API_BASE_URL}?action=export_excel&id=${formId}`;
-        }
-        
-        function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'admin_login.html';
+            // Memanggil endpoint export_excel di API PHP
+            window.open(`${API_BASE_URL}?action=export_excel&id=${formId}`, '_blank');
         }
     </script>
 </body>
