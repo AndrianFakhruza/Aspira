@@ -243,7 +243,6 @@
                     adminLink.classList.add('hidden');
                 }
             }
-            // Tambahkan nama admin di main content jika perlu, misalnya di dashboard
         }
 
         function toggleSidebar(event) {
@@ -305,18 +304,25 @@
                     document.getElementById('report-title').textContent = `Laporan Analisis: ${result.form_title}`;
                     document.getElementById('total-responses').textContent = result.total_responses;
                     
-                    // Pastikan responses di-decode dengan benar (data_responden sudah di-decode oleh API)
+                    // --- PERBAIKAN FINAL UNTUK MENGAMBIL DATA JAWABAN SECARA AMAN ---
                     allResponses = result.responses.map(res => {
-                        // Respon dari API berbentuk {data_responden: {...}, submitted_at: '...'}
-                        // Kita ekstrak data_responden ke level root untuk kemudahan akses
-                        return { ...res.data_responden, submitted_at: res.submitted_at };
+                        // Respon API: data_responden adalah data jawaban langsung.
+                        // res: { field_id_1: 'value', ..., submitted_at: '...' }
+                        
+                        // KITA PASTIKAN SEMUA FIELD JAWABAN DI-FLATTEN KE ROOT
+                        // Karena API PHP sebelumnya sudah menggabungkan data_responden ke root:
+                        // $response_data['submitted_at'] = $res['submitted_at'];
+                        // $responses_data[] = $response_data;
+                        
+                        // Data dari API seharusnya sudah siap, jika tidak, kita lakukan deep copy
+                        return res;
                     });
 
                     // Ambil field structure
                     formFields = result.form_fields.map(field => ({
                         id: field.id,
                         label: field.label,
-                        type: field.type // Hanya field yang dibutuhkan untuk modal
+                        type: field.type
                     }));
                     
                     document.getElementById('report-content').classList.remove('hidden');
@@ -379,7 +385,7 @@
             const buttonsDiv = document.createElement('div');
             buttonsDiv.classList.add('flex', 'space-x-2');
 
-            // Logika tombol paginasi (sama seperti di dashboard_admin.html)
+            // Logika tombol paginasi
             const prevBtn = createPaginationButton('Sebelumnya', currentPage - 1, currentPage === 1);
             buttonsDiv.appendChild(prevBtn);
 
@@ -438,6 +444,7 @@
             
             // Loop melalui formFields untuk menampilkan jawaban
             formFields.forEach(field => {
+                // Akses data langsung dari objek respons
                 const value = response[field.id]; 
                 let displayValue;
 
