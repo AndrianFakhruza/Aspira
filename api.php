@@ -40,7 +40,7 @@ $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
 // =========================================================================
-//                                  HANDLE POST & PUT REQUESTS
+//                      HANDLE POST & PUT REQUESTS
 // =========================================================================
 
 if ($method === 'POST' || $method === 'PUT') {
@@ -55,8 +55,6 @@ if ($method === 'POST' || $method === 'PUT') {
 
         switch ($action) {
             case 'login':
-                // Perhatian: Ini menggunakan perbandingan password_hash yang tidak aman.
-                // Idealnya, Anda harus fetch hash dari DB dan membandingkannya menggunakan password_verify().
                 $username = $data['username'] ?? '';
                 $password = $data['password'] ?? '';
 
@@ -68,8 +66,6 @@ if ($method === 'POST' || $method === 'PUT') {
                 $user = $result->fetch_assoc();
                 $stmt->close();
 
-                // Simulasi password_verify (jika password disimpan dalam bentuk teks biasa di DB)
-                // Jika password di-hash di DB, ganti kondisi if ($user && $user['password'] === $password)
                 if ($user && $user['password'] === $password) {
                     echo json_encode(['success' => true, 'message' => 'Login berhasil!', 'role' => $user['role'], 'username' => $user['username']]);
                 } else {
@@ -90,7 +86,6 @@ if ($method === 'POST' || $method === 'PUT') {
                     exit;
                 }
 
-                // Periksa duplikasi username/email
                 $sql_check = "SELECT COUNT(*) FROM users WHERE username = ? OR email = ?";
                 $stmt_check = $conn->prepare($sql_check);
                 $stmt_check->bind_param("ss", $username, $email);
@@ -104,9 +99,6 @@ if ($method === 'POST' || $method === 'PUT') {
                     exit;
                 }
                 
-                // --- PENYIMPANAN PASSWORD (SESUAI DENGAN KODE LOGIN ANDA) ---
-                // Karena kode login Anda menggunakan perbandingan teks biasa, kita simpan teks biasa.
-                // Jika Anda beralih ke hashing (SANGAT DIANJURKAN): $password_to_save = password_hash($password_raw, PASSWORD_DEFAULT);
                 $password_to_save = $password_raw; 
 
                 $sql = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
@@ -234,18 +226,22 @@ if ($method === 'POST' || $method === 'PUT') {
 
             case 'submit_feedback':
                 $form_id = $data['form_id'] ?? null;
-                $data_responden = json_encode($data); 
+                $response_data_array = $data['response_data'] ?? [];
                 
                 if ($form_id) {
                     $submitted_at = date('Y-m-d H:i:s');
+                    
+                    $data_responden_json = json_encode($response_data_array, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); 
+                    
                     $sql = "INSERT INTO responses (form_id, data_responden, submitted_at) VALUES (?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("iss", $form_id, $data_responden, $submitted_at);
+                    $stmt->bind_param("iss", $form_id, $data_responden_json, $submitted_at);
+                    
                     if ($stmt->execute()) {
                         echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan.']);
                     } else {
                         http_response_code(500);
-                        echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback.']);
+                        echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback. Error SQL: ' . $conn->error]);
                     }
                     $stmt->close();
                 } else {
@@ -267,7 +263,7 @@ if ($method === 'POST' || $method === 'PUT') {
 }
 
 // =========================================================================
-//                                  HANDLE GET REQUESTS
+//                      HANDLE GET REQUESTS
 // =========================================================================
 
 if ($method === 'GET') {
@@ -275,12 +271,10 @@ if ($method === 'GET') {
         // --- ADMIN MANAGEMENT: GET ALL USERS ---
         case 'get_admin_users':
             try {
-                // Mengambil semua kolom yang diminta dari tabel users
                 $sql = "SELECT user_id, username, email, role, created_at FROM users ORDER BY user_id DESC";
                 $result = $conn->query($sql);
                 $users_raw = $result->fetch_all(MYSQLI_ASSOC);
                 
-                // Menambahkan kolom is_active untuk kompatibilitas frontend (diasumsikan TRUE)
                 $users = array_map(function($u) { 
                     $u['is_active'] = true; 
                     return $u; 
@@ -328,14 +322,26 @@ if ($method === 'GET') {
                 $stmt->close();
                 
                 if ($form) {
-                    $form_data = json_decode($form['form_structure'], true);
+                    // Cek jika form_structure kosong atau null, beri default array kosong
+                    $form_structure_json = $form['form_structure'] ?? '{"fields": []}'; 
+                    $form_structure_decoded = json_decode($form_structure_json, true);
+                    
+                    // Pastikan dekode berhasil, jika gagal, gunakan default
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                         $form_structure_decoded = ['title' => $form['form_title'], 'description' => $form['form_description'], 'fields' => []];
+                    }
+                    
+                    // Pastikan fields adalah array, jika tidak, beri default array kosong
+                    $fields = $form_structure_decoded['fields'] ?? [];
+
                     echo json_encode([
                         'success' => true, 
                         'form' => [
                             'form_id' => $form_id, 
-                            'title' => $form_data['title'] ?? $form['form_title'], 
-                            'description' => $form_data['description'] ?? $form['form_description'], 
-                            'fields' => $form_data['fields'] ?? [],
+                            // Ambil title/description dari decoded structure jika ada, jika tidak, ambil dari kolom DB
+                            'title' => $form_structure_decoded['title'] ?? $form['form_title'] ?? 'Formulir Tanpa Judul', 
+                            'description' => $form_structure_decoded['description'] ?? $form['form_description'] ?? '', 
+                            'fields' => $fields,
                             'banner_url' => $form['banner_path'] ?? null 
                         ]
                     ]);
@@ -387,7 +393,7 @@ if ($method === 'GET') {
                 $responses_data = [];
                 foreach ($all_responses_raw as $res) {
                     $data_decoded = json_decode($res['data_responden'], true);
-                    $data_decoded['submitted_at'] = $res['submitted_at'];
+                    $data_decoded['submitted_at'] = $res['submitted_at']; 
                     $responses_data[] = $data_decoded;
                 }
 
@@ -443,12 +449,14 @@ if ($method === 'GET') {
                     $stmt_responses->close();
                     
                     foreach ($all_responses_raw as $res) {
-                        $response_data = json_decode($res['data_responden'], true);
+                        $response_data_raw = json_decode($res['data_responden'], true);
+                        // Data actual berada di dalam key 'response_data'
+                        $response_data = $response_data_raw['response_data'] ?? $response_data_raw; 
+                        
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars(date('Y-m-d H:i:s', strtotime($res['submitted_at']))) . "</td>";
                         foreach ($form_data['fields'] as $field) {
-                            $value = $response_data[$field['id']] ?? '';
-                            // Handle array/checkbox responses by joining them
+                            $value = $response_data[$field['id']] ?? ''; 
                             if (is_array($value)) {
                                 $value = implode(', ', $value);
                             }
@@ -477,7 +485,7 @@ if ($method === 'GET') {
 }
 
 // =========================================================================
-//                                  HANDLE DELETE REQUESTS
+//                      HANDLE DELETE REQUESTS
 // =========================================================================
 
 if ($method === 'DELETE') {
@@ -526,7 +534,7 @@ if ($method === 'DELETE') {
                     @unlink($banner_path); 
                 }
                 
-                // 2. Hapus responses yang terkait (disarankan: buat CONSTRAINT FOREIGN KEY CASCADE)
+                // 2. Hapus responses yang terkait
                 $sql_delete_responses = "DELETE FROM responses WHERE form_id = ?";
                 $stmt_delete_responses = $conn->prepare($sql_delete_responses);
                 $stmt_delete_responses->bind_param("i", $form_id);
