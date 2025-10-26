@@ -159,7 +159,8 @@
                             </tr>
                         </thead>
                         <tbody id="admin-list" class="bg-white divide-y divide-gray-200">
-                            </tbody>
+                            <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data admin...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -282,27 +283,44 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
         });
+        
+        // =========================================================================
+        // SESSION AND UTILITY FUNCTIONS
+        // =========================================================================
 
         function checkSession() {
             const adminRole = sessionStorage.getItem('adminRole');
             const adminUsername = sessionStorage.getItem('adminUsername');
             
+            // 1. Pengecekan sesi dasar
+            if (!adminRole) {
+                window.location.href = 'admin_login.html'; 
+                return;
+            }
+
+            // 2. Pengecekan Super Admin
             if (adminRole !== 'Super Admin') {
                 customAlert('Akses Ditolak. Halaman ini hanya untuk Super Admin.', 'error', () => {
-                    // Berikan waktu sejenak agar modal terlihat, lalu redirect
                     setTimeout(() => {
-                        window.location.href = 'dashboard_admin.html'; 
-                    }, 500); 
+                        window.location.href = 'dashboard_admin.html';
+                    }, 500);
                 });
                 return;
             }
             
+            // 3. Jika Lolos, set user dan panggil fetch data
             currentAdmin = { username: adminUsername, role: adminRole };
-            document.getElementById('admin-name').textContent = adminUsername;
-            fetchAdminList();
-        }
+            
+            // Catatan: Jika Anda ingin menampilkan nama admin di halaman ini, 
+            // pastikan Anda memiliki elemen dengan ID 'admin-name' di main content.
+            // const adminNameEl = document.getElementById('admin-name');
+            // if (adminNameEl) {
+            //      adminNameEl.textContent = adminUsername;
+            // }
 
-        // --- SIDEBAR & MODAL UTILITIES ---
+            // PENTING: Panggil fungsi fetch list HANYA setelah yakin user adalah Super Admin
+            fetchAdminList(); 
+        }
 
         function toggleSidebar(event) {
             if (event) event.stopPropagation();
@@ -398,11 +416,12 @@
         }
 
 
-        // --- INTEGRASI DATABASE DENGAN STRUKTUR KOLOM BARU ---
+        // =========================================================================
+        // CORE INTEGRATION LOGIC
+        // =========================================================================
 
         async function fetchAdminList() {
             const tableBody = document.getElementById('admin-list');
-            // Menampilkan loading state di awal
             tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data admin...</td></tr>`;
 
             try {
@@ -412,12 +431,10 @@
                 if (response.ok && result.success && Array.isArray(result.users)) {
                     renderAdminList(result.users);
                 } else {
-                    // Menampilkan pesan error jika API gagal
                     tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">${result.message || 'Gagal memuat data pengguna admin. Periksa API.'}</td></tr>`;
                 }
             } catch (error) {
-                // Menampilkan error koneksi
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error koneksi server saat mengambil data. URL: ${API_BASE_URL}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error koneksi server saat mengambil data.</td></tr>`;
                 console.error('Fetch Admin List Error:', error);
             }
         }
@@ -427,20 +444,21 @@
             tableBody.innerHTML = '';
 
             if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada akun admin lain yang terdaftar.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada akun admin terdaftar.</td></tr>`;
                 return;
             }
 
             users.forEach(user => {
-                // Diasumsikan: user_id = admin_id; is_active = (misalnya) 1 jika aktif, 0 jika nonaktif (atau Anda bisa memproses created_at)
-                // Karena database Anda hanya memiliki 'user_id', kita gunakan itu
-                const adminId = user.user_id; 
                 const isCurrentUser = user.username === currentAdmin.username;
-                const isActive = true; // Mengasumsikan aktif karena tidak ada kolom status. Ubah jika ada logika lain.
+                // Mengasumsikan is_active TRUE karena tidak ada kolom status di DB
+                const isActive = user.is_active !== false; 
                 
                 const statusClass = isActive ? 'text-green-600' : 'text-red-500';
                 const statusText = isActive ? 'Aktif' : 'Nonaktif';
                 
+                // Gunakan user_id sebagai identifier
+                const adminId = user.user_id; 
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${isCurrentUser ? 'text-blue-600 font-bold' : 'text-gray-900'}">${user.username} ${isCurrentUser ? '(Anda)' : ''}</td>
@@ -470,7 +488,7 @@
             
             const formData = {
                 username: form.username.value,
-                email: form.email.value, // Menggunakan kolom email
+                email: form.email.value, 
                 password: form.password.value,
                 role: form.role.value
             };
