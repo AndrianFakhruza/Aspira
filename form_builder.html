@@ -506,7 +506,10 @@
             }
         }
         
-        // PERBAIKAN: Fungsi ini sekarang hanya mengupdate data dan elemen DOM spesifik
+        /**
+         * PERBAIKAN: Fungsi ini sekarang hanya mengupdate data dan elemen DOM spesifik.
+         * Ini memperbaiki masalah fokus saat mengedit Nilai Opsi.
+         */
         function updateOptionValue(event, id, optionIndex, value) {
             event.stopPropagation();
             const field = formFields.find(f => f.id === id);
@@ -542,8 +545,9 @@
                 switch (field.type) {
                     case 'text':
                     case 'number':
+                        // DIUBAH: Menggunakan type="text" untuk input placeholder di builder (agar bisa ketik teks)
                         inputHtml = `
-                            <input type="${field.type}" 
+                            <input type="text" 
                                    id="placeholder-input-${field.id}"
                                    value="${field.placeholder}" 
                                    placeholder="Placeholder/Contoh Teks" 
@@ -651,8 +655,8 @@
         }
 
         /**
-         * PERBAIKAN: Fungsi ini sekarang menangani update Placeholder secara terpisah 
-         * untuk menghindari re-render yang tidak perlu.
+         * PERBAIKAN UTAMA: updateFieldProperty sekarang menangani update Placeholder secara inline
+         * dengan memperbarui nilai data dan DOM input yang bersangkutan, tanpa re-render penuh.
          */
         function updateFieldProperty(id, property, value) {
              const fieldIndex = formFields.findIndex(f => f.id === id);
@@ -660,7 +664,7 @@
 
              if (property === 'required') {
                  formFields[fieldIndex][property] = !!value;
-                 // Render ulang untuk update tampilan toggle
+                 // Render ulang untuk update tampilan toggle (wajib render)
                  renderFormPreview(); 
                  setActiveField(id);
              } else if (property === 'label') {
@@ -672,11 +676,16 @@
                  formFields[fieldIndex][property] = value;
                  
                  // Update DOM secara manual untuk input Placeholder Text/Textarea/Select
-                 const inputId = `placeholder-input-${id}` + (formFields[fieldIndex].type === 'select' ? '-select' : '');
+                 let inputId;
+                 if (formFields[fieldIndex].type === 'select') {
+                    inputId = `placeholder-input-${id}-select`;
+                 } else {
+                    inputId = `placeholder-input-${id}`;
+                 }
+
                  const inputElement = document.getElementById(inputId);
                  
                  if (inputElement) {
-                     // Ini mungkin input (text/number/select) atau textarea
                      inputElement.value = value;
                  }
                  // TIDAK PERLU renderFormPreview()

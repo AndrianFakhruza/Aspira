@@ -40,7 +40,7 @@ $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
 // =========================================================================
-//                      HANDLE POST & PUT REQUESTS
+//                      HANDLE POST & PUT REQUESTS
 // =========================================================================
 
 if ($method === 'POST' || $method === 'PUT') {
@@ -226,28 +226,92 @@ if ($method === 'POST' || $method === 'PUT') {
 
             case 'submit_feedback':
                 $form_id = $data['form_id'] ?? null;
-                $response_data_array = $data['response_data'] ?? [];
+                $raw_response_data = $data['response_data'] ?? [];
                 
-                if ($form_id) {
-                    $submitted_at = date('Y-m-d H:i:s');
-                    
-                    $data_responden_json = json_encode($response_data_array, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); 
-                    
-                    $sql = "INSERT INTO responses (form_id, data_responden, submitted_at) VALUES (?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("iss", $form_id, $data_responden_json, $submitted_at);
-                    
-                    if ($stmt->execute()) {
-                        echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan.']);
-                    } else {
-                        http_response_code(500);
-                        echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback. Error SQL: ' . $conn->error]);
-                    }
-                    $stmt->close();
-                } else {
+                if (!$form_id) {
                     http_response_code(400);
                     echo json_encode(['success' => false, 'message' => 'Form ID tidak valid.']);
+                    exit();
                 }
+
+                // --- 1. AMBIL STRUKTUR FORM UNTUK MAPPING ---
+                $sql_form = "SELECT form_title, form_structure FROM forms WHERE form_id = ?";
+                $stmt_form = $conn->prepare($sql_form);
+                $stmt_form->bind_param("i", $form_id);
+                $stmt_form->execute();
+                $form_record = $stmt_form->get_result()->fetch_assoc();
+                $stmt_form->close();
+                
+                if (!$form_record) {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Formulir tidak ditemukan.']);
+                    exit();
+                }
+
+                $form_structure = json_decode($form_record['form_structure'], true);
+                $form_title = $form_record['form_title'] ?? ($form_structure['title'] ?? 'Formulir Tanpa Judul');
+                $fields_definition = $form_structure['fields'] ?? [];
+                
+                // --- 2. BUAT MAP ID -> LABEL ---
+                $id_to_label_map = [];
+                foreach ($fields_definition as $field) {
+                    // Bersihkan label: hanya alfanumerik dan spasi, lalu ganti spasi dengan underscore
+                    $clean_label = preg_replace('/[^a-zA-Z0-9\s]/', '', $field['label']);
+                    $json_safe_label = str_replace(' ', '_', trim($clean_label));
+                    
+                    if (!empty($json_safe_label)) {
+                        $id_to_label_map[$field['id']] = $json_safe_label;
+                    }
+                }
+
+                // --- 3. LAKUKAN PEMETAAN DATA JAWABAN ---
+                $mapped_response_data = [];
+                foreach ($raw_response_data as $field_id => $answer_value) {
+                    // Gunakan label bersih, jika tidak ada, gunakan ID asli (fallback)
+                    $new_key = $id_to_label_map[$field_id] ?? $field_id;
+                    $mapped_response_data[$new_key] = $answer_value;
+                }
+                
+                $submission_time = date('Y-m-d H:i:s');
+                
+                // --- 4. SIMPAN DATA ASLI KE DATABASE (Gunakan raw_response_data untuk kompatibilitas DB) ---
+                $data_responden_json = json_encode($raw_response_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); 
+                
+                $sql = "INSERT INTO responses (form_id, data_responden, submitted_at) VALUES (?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("iss", $form_id, $data_responden_json, $submission_time);
+                
+                if ($stmt->execute()) {
+                    // --- 5. SIAPKAN DAN KIRIM PAYLOAD BERSIH KE WEBHOOK N8N ---
+                    $payload_for_webhook = [
+                        'form_id' => $form_id,
+                        'form_title' => $form_title,
+                        'submitted_at' => date('Y-m-d\TH:i:s.v\Z'), // Format ISO 8601 dengan milidetik
+                        'response_data' => $mapped_response_data, // Data yang sudah di-mapping
+                    ];
+                    
+                    // GANTI DENGAN URL WEBHOOK N8N ANDA YANG SESUNGGUHNYA
+                    $webhook_url = 'http://localhost:5678/webhook-test/csr-notifier'; 
+                    
+                    $ch = curl_init($webhook_url);
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload_for_webhook));
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                    
+                    $webhook_response = curl_exec($ch);
+                    $webhook_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    
+                    // Respon sukses ke klien
+                    echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan dan notifikasi dikirim.']);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback. Error SQL: ' . $conn->error]);
+                }
+                $stmt->close();
+                
                 break;
 
             default:
@@ -263,7 +327,7 @@ if ($method === 'POST' || $method === 'PUT') {
 }
 
 // =========================================================================
-//                      HANDLE GET REQUESTS
+//                      HANDLE GET REQUESTS
 // =========================================================================
 
 if ($method === 'GET') {
@@ -328,7 +392,7 @@ if ($method === 'GET') {
                     
                     // Pastikan dekode berhasil, jika gagal, gunakan default
                     if (json_last_error() !== JSON_ERROR_NONE) {
-                         $form_structure_decoded = ['title' => $form['form_title'], 'description' => $form['form_description'], 'fields' => []];
+                           $form_structure_decoded = ['title' => $form['form_title'], 'description' => $form['form_description'], 'fields' => []];
                     }
                     
                     // Pastikan fields adalah array, jika tidak, beri default array kosong
@@ -485,7 +549,7 @@ if ($method === 'GET') {
 }
 
 // =========================================================================
-//                      HANDLE DELETE REQUESTS
+//                      HANDLE DELETE REQUESTS
 // =========================================================================
 
 if ($method === 'DELETE') {
