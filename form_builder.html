@@ -202,10 +202,10 @@
                         </div>
                         
                         <div class="mb-6">
-                            <input type="text" id="form-title" placeholder="Judul Formulir (misal: Survey Kepuasan Pelanggan)" class="w-full text-xl font-bold mb-2 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <textarea id="form-description" placeholder="Deskripsi Formulir" rows="3" class="w-full text-gray-600 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            <input type="text" id="form-title" placeholder="Judul Formulir (misal: Survey Kepuasan Pelanggan)" class="w-full text-xl font-bold mb-2 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateFormMetadata(this.value, 'title')">
+                            <textarea id="form-description" placeholder="Deskripsi Formulir" rows="3" class="w-full text-gray-600 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateFormMetadata(this.value, 'description')"></textarea>
                             
-                            </div>
+                        </div>
                         
                         <div id="form-fields-container" class="space-y-6 min-h-48 border-2 border-dashed border-gray-300 p-4 rounded-xl bg-gray-50">
                             <p class="text-center text-gray-500 pt-10">Tarik atau Klik elemen dari sebelah kiri untuk memulai.</p>
@@ -339,19 +339,17 @@
         });
 
         // =========================================================================
-        // SIDEBAR AND SESSION LOGIC (DIPERBAIKI)
+        // SIDEBAR AND SESSION LOGIC
         // =========================================================================
         function checkSession() {
             const adminRole = sessionStorage.getItem('adminRole');
             const adminUsername = sessionStorage.getItem('adminUsername');
             
             if (!adminRole) {
-                // Gunakan redirect langsung jika tidak ada session untuk non-dashboard pages
                 window.location.href = 'admin_login.html';
                 return;
             }
             
-            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
             if (adminRole !== 'Super Admin') {
                 const adminLink = document.getElementById('admin-management-link');
                 if (adminLink) {
@@ -507,12 +505,14 @@
                 openValidationModal('Minimal harus ada satu pilihan.');
             }
         }
-
+        
+        // PERBAIKAN: Fungsi ini sekarang hanya mengupdate data dan elemen DOM spesifik
         function updateOptionValue(event, id, optionIndex, value) {
             event.stopPropagation();
             const field = formFields.find(f => f.id === id);
             if (field) {
                 field.options[optionIndex] = value;
+                // Tidak memanggil renderFormPreview() di sini!
             }
         }
         // --- AKHIR FUNGSI OPSI INLINE ---
@@ -543,14 +543,24 @@
                     case 'text':
                     case 'number':
                         inputHtml = `
-                            <input type="text" value="${field.placeholder}" placeholder="Placeholder/Contoh Teks" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm" 
-                                    onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                            <input type="${field.type}" 
+                                   id="placeholder-input-${field.id}"
+                                   value="${field.placeholder}" 
+                                   placeholder="Placeholder/Contoh Teks" 
+                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm" 
+                                   onclick="event.stopPropagation()" 
+                                   oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
                         `;
                         break;
                     case 'textarea':
                         inputHtml = `
-                            <textarea placeholder="Placeholder/Contoh Teks" rows="3" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm resize-none"
-                                            onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">${field.placeholder}</textarea>
+                            <textarea 
+                                   id="placeholder-input-${field.id}"
+                                   placeholder="Placeholder/Contoh Teks" 
+                                   rows="3" 
+                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm resize-none"
+                                   onclick="event.stopPropagation()" 
+                                   oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">${field.placeholder}</textarea>
                         `;
                         break;
                     case 'radio':
@@ -563,8 +573,12 @@
                             optionsListHtml += `
                                 <div class="flex items-center space-x-2 mb-2">
                                     <input type="${previewType}" disabled class="flex-shrink-0">
-                                    <input type="text" value="${opt}" class="option-input p-1 border rounded-lg text-sm flex-grow"
-                                            onclick="event.stopPropagation()" oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)">
+                                    <input type="text" 
+                                           id="option-input-${field.id}-${optIndex}"
+                                           value="${opt}" 
+                                           class="option-input p-1 border rounded-lg text-sm flex-grow"
+                                           onclick="event.stopPropagation()" 
+                                           oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)">
                                     <button onclick="deleteOption(event, '${field.id}', ${optIndex})" class="text-red-500 hover:text-red-700 p-1 flex-shrink-0" title="Hapus Opsi">
                                         <i class="fas fa-times"></i>
                                     </button>
@@ -585,8 +599,13 @@
                         `;
                         if (field.type === 'select') {
                             inputHtml += `
-                                <input type="text" value="${field.placeholder || 'Pilih salah satu...'}" placeholder="Placeholder Dropdown" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm mt-3"
-                                        onclick="event.stopPropagation()" oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                                <input type="text" 
+                                       id="placeholder-input-${field.id}-select"
+                                       value="${field.placeholder || 'Pilih salah satu...'}" 
+                                       placeholder="Placeholder Dropdown" 
+                                       class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm mt-3"
+                                       onclick="event.stopPropagation()" 
+                                       oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
                             `;
                         }
                         break;
@@ -631,18 +650,46 @@
             activeFieldId = id;
         }
 
+        /**
+         * PERBAIKAN: Fungsi ini sekarang menangani update Placeholder secara terpisah 
+         * untuk menghindari re-render yang tidak perlu.
+         */
         function updateFieldProperty(id, property, value) {
-            if (property === 'required') {
-                value = !!value;
-            }
-            
-            const fieldIndex = formFields.findIndex(f => f.id === id);
-            if (fieldIndex !== -1) {
-                formFields[fieldIndex][property] = value;
-                renderFormPreview();
-                setActiveField(id); 
-            }
-        }
+             const fieldIndex = formFields.findIndex(f => f.id === id);
+             if (fieldIndex === -1) return;
+
+             if (property === 'required') {
+                 formFields[fieldIndex][property] = !!value;
+                 // Render ulang untuk update tampilan toggle
+                 renderFormPreview(); 
+                 setActiveField(id);
+             } else if (property === 'label') {
+                 // Langsung update nilai data
+                 formFields[fieldIndex][property] = value;
+                 // TIDAK PERLU renderFormPreview()
+             } else if (property === 'placeholder') {
+                 // Langsung update nilai data
+                 formFields[fieldIndex][property] = value;
+                 
+                 // Update DOM secara manual untuk input Placeholder Text/Textarea/Select
+                 const inputId = `placeholder-input-${id}` + (formFields[fieldIndex].type === 'select' ? '-select' : '');
+                 const inputElement = document.getElementById(inputId);
+                 
+                 if (inputElement) {
+                     // Ini mungkin input (text/number/select) atau textarea
+                     inputElement.value = value;
+                 }
+                 // TIDAK PERLU renderFormPreview()
+             } else {
+                 // Untuk properti lain yang mungkin ditambahkan
+                 formFields[fieldIndex][property] = value;
+             }
+         }
+         
+         function updateFormMetadata(value, property) {
+             // Fungsi ini tidak melakukan apa-apa karena form title/description 
+             // dibaca langsung dari DOM saat saveForm.
+         }
         
         // --- FUNGSI MODAL KUSTOM (Delete, Success, Validation) ---
 
