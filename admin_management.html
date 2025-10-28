@@ -106,7 +106,7 @@
             </div>
 
             <nav class="flex-grow p-4 space-y-2">
-                <a href="dashboard_admin.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                <a href="index.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
                     <i class="fas fa-home w-5 h-5 mr-3"></i>
                     <span class="sidebar-text">Dashboard</span>
                 </a>
@@ -302,7 +302,7 @@
             if (adminRole !== 'Super Admin') {
                 customAlert('Akses Ditolak. Halaman ini hanya untuk Super Admin.', 'error', () => {
                     setTimeout(() => {
-                        window.location.href = 'dashboard_admin.html';
+                        window.location.href = 'index.html';
                     }, 500);
                 });
                 return;

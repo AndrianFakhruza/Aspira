@@ -3,6 +3,17 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// --- MEMUAT PHPMailer ---
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// PASTIKAN PATH INI SESUAI DENGAN LOKASI FILE PHPMailer DI SERVER ANDA
+require 'vendor/phpmailer/phpmailer/src/Exception.php'; 
+require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require 'vendor/phpmailer/phpmailer/src/SMTP.php';
+// -------------------------
+
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, PUT, OPTIONS');
@@ -12,6 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit();
 }
+
+// =========================================================================
+//                         KONFIGURASI UMUM & DB
+// =========================================================================
 
 // --- KONFIGURASI DATABASE ---
 $servername = "localhost";
@@ -27,6 +42,17 @@ if ($conn->connect_error) {
     exit();
 }
 
+// --- KONFIGURASI SMTP GMAIL (KREDENSIAL DARI USER) ---
+$smtp_config = [
+    'host'     => 'smtp.gmail.com',
+    'username' => 'fakhruzaandrian561@gmail.com', // EMAIL ADMIN
+    'password' => 'rdwt imxd tcst rxf',            // SANDI APLIKASI 16 KARAKTER
+    'port'     => 587,
+    'secure'   => PHPMailer::ENCRYPTION_STARTTLS,
+    'admin_email' => 'fakhruzaandrian561@gmail.com', // PENERIMA NOTIFIKASI
+    'admin_name' => 'Admin System Aspira' 
+];
+
 // --- KONFIGURASI DAN SETUP BANNER ---
 $upload_dir = 'uploads/banners/'; 
 if (!is_dir($upload_dir)) {
@@ -38,6 +64,41 @@ if (!is_dir($upload_dir)) {
 
 $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
+
+// =========================================================================
+//                       FUNGSI BANTU UNTUK MENGIRIM EMAIL
+// =========================================================================
+function send_smtp_email($to_email, $to_name, $subject, $body_html, $smtp_config) {
+    $mail = new PHPMailer(true);
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = $smtp_config['host'];
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $smtp_config['username'];
+        $mail->Password   = $smtp_config['password'];
+        $mail->SMTPSecure = $smtp_config['secure'];
+        $mail->Port       = $smtp_config['port'];
+        $mail->CharSet    = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom($smtp_config['username'], $smtp_config['admin_name']);
+        $mail->addAddress($to_email, $to_name); 
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $body_html;
+        $mail->AltBody = strip_tags($body_html); // Versi teks biasa
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        // Log error ke server log
+        error_log("Gagal mengirim email ke {$to_email}. Error: {$mail->ErrorInfo}");
+        return false;
+    }
+}
 
 // =========================================================================
 //                      HANDLE POST & PUT REQUESTS
@@ -72,8 +133,6 @@ if ($method === 'POST' || $method === 'PUT') {
                     echo json_encode(['success' => false, 'message' => 'Username atau password salah.']);
                 }
                 break;
-
-            // --- ADMIN MANAGEMENT: ADD USER ---
             case 'add_admin_user':
                 $username = $data['username'] ?? '';
                 $email = $data['email'] ?? '';
@@ -113,11 +172,9 @@ if ($method === 'POST' || $method === 'PUT') {
                 }
                 $stmt->close();
                 break;
-            // --- END ADD USER ---
 
-
-            case 'save_form': // CREATE
-            case 'update_form': // UPDATE
+            case 'save_form': 
+            case 'update_form':
                 $form_id = $data['form_id'] ?? null;
                 
                 $form_structure_data = $data['form_structure'] ?? [];
@@ -248,33 +305,63 @@ if ($method === 'POST' || $method === 'PUT') {
                     exit();
                 }
 
-                $form_structure = json_decode($form_record['form_structure'], true);
+                $form_structure = json_decode($form_record['form_structure'] ?? '[]', true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $form_structure = ['fields' => []];
+                }
+
                 $form_title = $form_record['form_title'] ?? ($form_structure['title'] ?? 'Formulir Tanpa Judul');
                 $fields_definition = $form_structure['fields'] ?? [];
                 
                 // --- 2. BUAT MAP ID -> LABEL ---
                 $id_to_label_map = [];
+                $respondent_email = '';
+                $respondent_name = 'Responden'; 
+
                 foreach ($fields_definition as $field) {
-                    // Bersihkan label: hanya alfanumerik dan spasi, lalu ganti spasi dengan underscore
-                    $clean_label = preg_replace('/[^a-zA-Z0-9\s]/', '', $field['label']);
-                    $json_safe_label = str_replace(' ', '_', trim($clean_label));
+                    $label_raw = trim($field['label'] ?? '');
                     
-                    if (!empty($json_safe_label)) {
-                        $id_to_label_map[$field['id']] = $json_safe_label;
+                    if (!empty($label_raw)) {
+                        $clean_label = preg_replace('/\s+/', '_', $label_raw);
+                        $json_safe_label = preg_replace('/[^a-zA-Z0-9_]/', '', $clean_label);
+                        
+                        if (!empty($json_safe_label)) {
+                            $id_to_label_map[$field['id']] = $json_safe_label;
+                            
+                            // Ekstraksi Email dan Nama (Berdasarkan Label yang Dibersihkan)
+                            if (strtolower($json_safe_label) === 'email' && isset($raw_response_data[$field['id']])) {
+                                $respondent_email = $raw_response_data[$field['id']];
+                            }
+                            if ((strtolower($json_safe_label) === 'nama' || strtolower($json_safe_label) === 'namalengkap') && isset($raw_response_data[$field['id']])) {
+                                $respondent_name = $raw_response_data[$field['id']];
+                            }
+                        }
                     }
                 }
 
-                // --- 3. LAKUKAN PEMETAAN DATA JAWABAN ---
+                // --- 3. LAKUKAN PEMETAAN DATA JAWABAN (digunakan untuk konten email) ---
                 $mapped_response_data = [];
+                $email_content_table = '<h3>Detail Respon:</h3><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">';
+                
                 foreach ($raw_response_data as $field_id => $answer_value) {
-                    // Gunakan label bersih, jika tidak ada, gunakan ID asli (fallback)
-                    $new_key = $id_to_label_map[$field_id] ?? $field_id;
-                    $mapped_response_data[$new_key] = $answer_value;
+                    $label = $id_to_label_map[$field_id] ?? $field_id;
+                    $display_label = str_replace('_', ' ', $label);
+                    
+                    if (is_array($answer_value)) {
+                         $answer_display = implode(', ', $answer_value);
+                    } else {
+                         $answer_display = htmlspecialchars($answer_value);
+                    }
+
+                    $email_content_table .= "<tr><td><b>{$display_label}</b></td><td>{$answer_display}</td></tr>";
+
+                    $mapped_response_data[$label] = $answer_value;
                 }
+                $email_content_table .= '</table>';
                 
                 $submission_time = date('Y-m-d H:i:s');
                 
-                // --- 4. SIMPAN DATA ASLI KE DATABASE (Gunakan raw_response_data untuk kompatibilitas DB) ---
+                // --- 4. SIMPAN DATA KE DATABASE ---
                 $data_responden_json = json_encode($raw_response_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); 
                 
                 $sql = "INSERT INTO responses (form_id, data_responden, submitted_at) VALUES (?, ?, ?)";
@@ -282,30 +369,40 @@ if ($method === 'POST' || $method === 'PUT') {
                 $stmt->bind_param("iss", $form_id, $data_responden_json, $submission_time);
                 
                 if ($stmt->execute()) {
-                    // --- 5. SIAPKAN DAN KIRIM PAYLOAD BERSIH KE WEBHOOK N8N ---
-                    $payload_for_webhook = [
-                        'form_id' => $form_id,
-                        'form_title' => $form_title,
-                        'submitted_at' => date('Y-m-d\TH:i:s.v\Z'), // Format ISO 8601 dengan milidetik
-                        'response_data' => $mapped_response_data, // Data yang sudah di-mapping
-                    ];
                     
-                    // GANTI DENGAN URL WEBHOOK N8N ANDA YANG SESUNGGUHNYA
-                    $webhook_url = 'http://localhost:5678/webhook-test/csr-notifier'; 
+                    // --- 5. KIRIM EMAIL KONFIRMASI KE RESPONDEN (Jika email valid) ---
+                    if (filter_var($respondent_email, FILTER_VALIDATE_EMAIL)) {
+                        $subject_user = "Konfirmasi Pengisian Form: {$form_title}";
+                        $body_user = "
+                            <html>
+                            <body style='font-family: Arial, sans-serif;'>
+                                <h2>Terima kasih, {$respondent_name}!</h2>
+                                <p>Formulir **{$form_title}** Anda telah berhasil kami terima pada {$submission_time} WIB.</p>
+                                {$email_content_table}
+                                <p>Kami akan segera memproses data Anda.</p>
+                                <p>Hormat kami,<br>{$smtp_config['admin_name']}</p>
+                            </body>
+                            </html>
+                        ";
+                        send_smtp_email($respondent_email, $respondent_name, $subject_user, $body_user, $smtp_config);
+                    }
                     
-                    $ch = curl_init($webhook_url);
-                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload_for_webhook));
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                    
-                    $webhook_response = curl_exec($ch);
-                    $webhook_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close($ch);
-                    
-                    // Respon sukses ke klien
-                    echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan dan notifikasi dikirim.']);
+                    // --- 6. KIRIM EMAIL NOTIFIKASI KE ADMIN ---
+                    $subject_admin = "[NOTIFIKASI] Feedback Baru Masuk untuk Form: {$form_title}";
+                    $body_admin = "
+                        <html>
+                        <body style='font-family: Arial, sans-serif;'>
+                            <h2>Feedback Baru Masuk!</h2>
+                            <p>Telah masuk satu feedback baru untuk formulir **{$form_title}** pada {$submission_time} WIB.</p>
+                            <p>Diisi oleh: {$respondent_name} ({$respondent_email})</p>
+                            {$email_content_table}
+                            <p>Silakan cek panel admin untuk detail selengkapnya.</p>
+                        </body>
+                        </html>
+                    ";
+                    send_smtp_email($smtp_config['admin_email'], $smtp_config['admin_name'], $subject_admin, $body_admin, $smtp_config);
+
+                    echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan dan konfirmasi email dikirim.']);
                 } else {
                     http_response_code(500);
                     echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback. Error SQL: ' . $conn->error]);
@@ -332,7 +429,6 @@ if ($method === 'POST' || $method === 'PUT') {
 
 if ($method === 'GET') {
     switch ($action) {
-        // --- ADMIN MANAGEMENT: GET ALL USERS ---
         case 'get_admin_users':
             try {
                 $sql = "SELECT user_id, username, email, role, created_at FROM users ORDER BY user_id DESC";
@@ -350,7 +446,6 @@ if ($method === 'GET') {
                 echo json_encode(['success' => false, 'message' => 'Database error saat mengambil pengguna: ' . $e->getMessage()]);
             }
             break;
-        // --- END GET ALL USERS ---
         
         case 'get_forms':
             $sql = "SELECT form_id, form_title, form_link_unique, created_at, banner_path FROM forms ORDER BY created_at DESC";
@@ -386,23 +481,19 @@ if ($method === 'GET') {
                 $stmt->close();
                 
                 if ($form) {
-                    // Cek jika form_structure kosong atau null, beri default array kosong
                     $form_structure_json = $form['form_structure'] ?? '{"fields": []}'; 
                     $form_structure_decoded = json_decode($form_structure_json, true);
                     
-                    // Pastikan dekode berhasil, jika gagal, gunakan default
                     if (json_last_error() !== JSON_ERROR_NONE) {
                            $form_structure_decoded = ['title' => $form['form_title'], 'description' => $form['form_description'], 'fields' => []];
                     }
                     
-                    // Pastikan fields adalah array, jika tidak, beri default array kosong
                     $fields = $form_structure_decoded['fields'] ?? [];
 
                     echo json_encode([
                         'success' => true, 
                         'form' => [
                             'form_id' => $form_id, 
-                            // Ambil title/description dari decoded structure jika ada, jika tidak, ambil dari kolom DB
                             'title' => $form_structure_decoded['title'] ?? $form['form_title'] ?? 'Formulir Tanpa Judul', 
                             'description' => $form_structure_decoded['description'] ?? $form['form_description'] ?? '', 
                             'fields' => $fields,
@@ -422,7 +513,8 @@ if ($method === 'GET') {
         case 'get_form_and_responses':
             $form_id = $_GET['id'] ?? null;
             if ($form_id) {
-                $sql_form_structure = "SELECT form_structure FROM forms WHERE form_id = ?";
+                // --- 1. AMBIL STRUKTUR FORM ---
+                $sql_form_structure = "SELECT form_title, form_structure FROM forms WHERE form_id = ?";
                 $stmt_form_structure = $conn->prepare($sql_form_structure);
                 $stmt_form_structure->bind_param("i", $form_id);
                 $stmt_form_structure->execute();
@@ -436,9 +528,24 @@ if ($method === 'GET') {
                     exit();
                 }
 
-                $form_structure = json_decode($form_data['form_structure'], true);
-                $form_title = $form_structure['title'] ?? 'Formulir Tanpa Judul';
+                $form_structure = json_decode($form_data['form_structure'] ?? '[]', true);
+                $form_title = $form_data['form_title'] ?? ($form_structure['title'] ?? 'Formulir Tanpa Judul');
                 $form_fields = $form_structure['fields'] ?? [];
+
+                // --- 2. BUAT MAPPER ID ke LABEL (Hardened Mapping) ---
+                $id_to_label_map = [];
+                foreach ($form_fields as $field) {
+                    $label_raw = trim($field['label'] ?? '');
+                    
+                    if (!empty($label_raw)) {
+                        $clean_label = preg_replace('/\s+/', '_', $label_raw);
+                        $json_safe_label = preg_replace('/[^a-zA-Z0-9_]/', '', $clean_label);
+                        
+                        if (!empty($json_safe_label)) {
+                            $id_to_label_map[$field['id']] = $json_safe_label;
+                        }
+                    }
+                }
 
                 $sql_total = "SELECT COUNT(*) as total FROM responses WHERE form_id = ?";
                 $stmt_total = $conn->prepare($sql_total);
@@ -447,6 +554,7 @@ if ($method === 'GET') {
                 $total_responses = $stmt_total->get_result()->fetch_assoc()['total'];
                 $stmt_total->close();
 
+                // --- 3. AMBIL DAN MAP RESPON ---
                 $sql_responses = "SELECT data_responden, submitted_at FROM responses WHERE form_id = ? ORDER BY submitted_at DESC";
                 $stmt_responses = $conn->prepare($sql_responses);
                 $stmt_responses->bind_param("i", $form_id);
@@ -456,9 +564,17 @@ if ($method === 'GET') {
 
                 $responses_data = [];
                 foreach ($all_responses_raw as $res) {
-                    $data_decoded = json_decode($res['data_responden'], true);
-                    $data_decoded['submitted_at'] = $res['submitted_at']; 
-                    $responses_data[] = $data_decoded;
+                    $data_decoded = json_decode($res['data_responden'] ?? '[]', true);
+                    
+                    // Lakukan mapping dari Field ID ke Label
+                    $mapped_response = [];
+                    foreach ($data_decoded as $field_id => $answer_value) {
+                        $new_key = $id_to_label_map[$field_id] ?? $field_id; 
+                        $mapped_response[$new_key] = $answer_value;
+                    }
+
+                    $mapped_response['submitted_at'] = $res['submitted_at']; 
+                    $responses_data[] = $mapped_response;
                 }
 
                 echo json_encode([
@@ -485,7 +601,7 @@ if ($method === 'GET') {
                 $stmt_form->close();
                 
                 if ($form) {
-                    $form_data = json_decode($form['form_structure'], true);
+                    $form_data = json_decode($form['form_structure'] ?? '[]', true);
                     $form_title_clean = preg_replace('/[^a-zA-Z0-9-]/', '_', $form['form_title']);
                     $filename = "feedback_{$form_title_clean}_" . date('Ymd_His') . ".xls";
 
@@ -513,8 +629,7 @@ if ($method === 'GET') {
                     $stmt_responses->close();
                     
                     foreach ($all_responses_raw as $res) {
-                        $response_data_raw = json_decode($res['data_responden'], true);
-                        // Data actual berada di dalam key 'response_data'
+                        $response_data_raw = json_decode($res['data_responden'] ?? '[]', true);
                         $response_data = $response_data_raw['response_data'] ?? $response_data_raw; 
                         
                         echo "<tr>";
@@ -554,7 +669,6 @@ if ($method === 'GET') {
 
 if ($method === 'DELETE') {
     switch ($action) {
-        // --- ADMIN MANAGEMENT: DELETE USER ---
         case 'delete_admin_user':
             $user_id = $_GET['id'] ?? null;
             if (empty($user_id)) {
@@ -564,7 +678,6 @@ if ($method === 'DELETE') {
             }
 
             try {
-                // Hapus user
                 $sql = "DELETE FROM users WHERE user_id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $user_id);
@@ -581,7 +694,6 @@ if ($method === 'DELETE') {
                 echo json_encode(['success' => false, 'message' => 'Gagal menghapus akun: ' . $e->getMessage()]);
             }
             break;
-        // --- END DELETE USER ---
         
         case 'delete_form':
             $form_id = $_GET['id'] ?? null;
