@@ -85,6 +85,26 @@
         .option-input {
             width: calc(100% - 30px); /* Ruang untuk tombol hapus */
         }
+        
+        /* Gaya untuk field permanen */
+        .field-card.permanent .delete-btn {
+            display: none !important;
+        }
+        .field-card.permanent .required-toggle-wrapper {
+             /* Gaya untuk label WAJIB ISI (karena toggle di-disable) */
+            border-radius: 6px;
+            padding: 2px 6px;
+            background-color: #d1e5f8; /* blue-100 */
+        }
+        /* Menyembunyikan slider toggle untuk field permanen */
+        .field-card.permanent .required-toggle-wrapper input[type="checkbox"] {
+            display: none; 
+        }
+        .field-card.permanent .required-toggle-wrapper .toggle-label {
+             display: none; 
+        }
+
+
     </style>
 </head>
 <body>
@@ -241,8 +261,8 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                            onclick="closeValidationModal()">
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                onclick="closeValidationModal()">
                         Mengerti
                     </button>
                 </div>
@@ -274,13 +294,13 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                            onclick="confirmDelete()">
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                onclick="confirmDelete()">
                         Hapus Permanen
                     </button>
                     <button type="button" 
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
-                            onclick="closeDeleteModal()">
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
+                                onclick="closeDeleteModal()">
                         Batal
                     </button>
                 </div>
@@ -312,8 +332,8 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                            onclick="closeSuccessModal()">
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                onclick="closeSuccessModal()">
                         OK
                     </button>
                 </div>
@@ -325,16 +345,44 @@
         let formFields = [];
         let activeFieldId = null; 
         let fieldIdToDelete = null; 
+
+        // =========================================================================
+        // DEFENISI FIELD WAJIB PERMANEN
+        // =========================================================================
+        const PERMANENT_FIELDS = [
+          {
+            id: 'permanent_nama_lengkap', 
+            type: 'text',
+            label: 'Nama Lengkap',
+            placeholder: 'Masukkan Nama Lengkap Anda',
+            required: true,
+            is_permanent: true 
+          },
+          {
+            id: 'permanent_email',
+            type: 'text', 
+            label: 'Email',
+            placeholder: 'Masukkan Alamat Email Anda',
+            required: true,
+            is_permanent: true
+          }
+        ];
+        // =========================================================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            // --- LOGIKA SESI DITAMBAHKAN DI SINI ---
+            // --- LOGIKA SESI ---
             checkSession(); 
-            // -------------------------------------
+            // ------------------
 
             const urlParams = new URLSearchParams(window.location.search);
             const formId = urlParams.get('id'); 
+            
             if (formId) {
                 loadFormStructure(formId); 
+            } else {
+                // Inisialisasi fields dengan fields permanen jika ini adalah form baru
+                formFields = initializeFormFields([]); 
+                renderFormPreview();
             }
         });
 
@@ -379,6 +427,17 @@
         // =========================================================================
         // END SIDEBAR AND SESSION LOGIC
         // =========================================================================
+
+        // --- FUNGSI FIELD PERMANEN ---
+        function initializeFormFields(existingFields = []) {
+            // 1. Filter field permanen dari data lama yang mungkin ada di DB, tapi kita tetap ingin versi terbarunya
+            const nonPermanentExistingFields = existingFields.filter(field => !field.is_permanent && !PERMANENT_FIELDS.some(p => p.id === field.id));
+
+            // 2. Gunakan versi PERMANENT_FIELDS yang paling baru sebagai dasar, lalu tambahkan yang non-permanen
+            const finalFields = [...PERMANENT_FIELDS, ...nonPermanentExistingFields];
+            
+            return finalFields;
+        }
 
 
         // --- FUNGSI BANNER LOKAL ---
@@ -439,8 +498,9 @@
                         document.getElementById('remove-banner-btn').classList.remove('hidden');
                     }
                     
-                    // Isi data fields
-                    formFields = Array.isArray(result.form.fields) ? result.form.fields : [];
+                    // --- MENGGABUNGKAN FIELD LAMA DENGAN FIELD PERMANEN ---
+                    formFields = initializeFormFields(Array.isArray(result.form.fields) ? result.form.fields : []);
+                    // ---------------------------------------------------
                     renderFormPreview();
                     
                 } else {
@@ -474,7 +534,8 @@
                 label: defaultLabel,
                 placeholder: defaultPlaceholder,
                 required: false,
-                options: defaultOptions
+                options: defaultOptions,
+                is_permanent: false // Field baru selalu tidak permanen
             };
             formFields.push(newField);
             renderFormPreview();
@@ -506,16 +567,12 @@
             }
         }
         
-        /**
-         * PERBAIKAN: Fungsi ini sekarang hanya mengupdate data dan elemen DOM spesifik.
-         * Ini memperbaiki masalah fokus saat mengedit Nilai Opsi.
-         */
         function updateOptionValue(event, id, optionIndex, value) {
             event.stopPropagation();
             const field = formFields.find(f => f.id === id);
             if (field) {
                 field.options[optionIndex] = value;
-                // Tidak memanggil renderFormPreview() di sini!
+                // Tidak memanggil renderFormPreview()
             }
         }
         // --- AKHIR FUNGSI OPSI INLINE ---
@@ -535,9 +592,14 @@
                 const card = document.createElement('div');
                 card.id = `card-${field.id}`;
                 card.classList.add('field-card', 'bg-white', 'p-5', 'rounded-xl', 'shadow-sm', 'border', 'border-gray-200');
+                
                 if (field.id === activeFieldId) {
                     card.classList.add('active');
                 }
+                if (field.is_permanent) {
+                    card.classList.add('permanent', 'bg-blue-50', 'border-blue-300'); // Tambahkan gaya permanen
+                }
+                
                 card.onclick = () => setActiveField(field.id);
                 
                 let inputHtml = '';
@@ -545,26 +607,27 @@
                 switch (field.type) {
                     case 'text':
                     case 'number':
-                        // DIUBAH: Menggunakan type="text" untuk input placeholder di builder (agar bisa ketik teks)
                         inputHtml = `
                             <input type="text" 
-                                   id="placeholder-input-${field.id}"
-                                   value="${field.placeholder}" 
-                                   placeholder="Placeholder/Contoh Teks" 
-                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm" 
-                                   onclick="event.stopPropagation()" 
-                                   oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                                    id="placeholder-input-${field.id}"
+                                    value="${field.placeholder}" 
+                                    placeholder="Placeholder/Contoh Teks" 
+                                    class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm" 
+                                    onclick="event.stopPropagation()" 
+                                    oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)"
+                                    ${field.is_permanent ? 'disabled' : ''}>
                         `;
                         break;
                     case 'textarea':
                         inputHtml = `
                             <textarea 
-                                   id="placeholder-input-${field.id}"
-                                   placeholder="Placeholder/Contoh Teks" 
-                                   rows="3" 
-                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm resize-none"
-                                   onclick="event.stopPropagation()" 
-                                   oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">${field.placeholder}</textarea>
+                                    id="placeholder-input-${field.id}"
+                                    placeholder="Placeholder/Contoh Teks" 
+                                    rows="3" 
+                                    class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm resize-none"
+                                    onclick="event.stopPropagation()" 
+                                    oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)"
+                                    ${field.is_permanent ? 'disabled' : ''}>${field.placeholder}</textarea>
                         `;
                         break;
                     case 'radio':
@@ -578,12 +641,13 @@
                                 <div class="flex items-center space-x-2 mb-2">
                                     <input type="${previewType}" disabled class="flex-shrink-0">
                                     <input type="text" 
-                                           id="option-input-${field.id}-${optIndex}"
-                                           value="${opt}" 
-                                           class="option-input p-1 border rounded-lg text-sm flex-grow"
-                                           onclick="event.stopPropagation()" 
-                                           oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)">
-                                    <button onclick="deleteOption(event, '${field.id}', ${optIndex})" class="text-red-500 hover:text-red-700 p-1 flex-shrink-0" title="Hapus Opsi">
+                                            id="option-input-${field.id}-${optIndex}"
+                                            value="${opt}" 
+                                            class="option-input p-1 border rounded-lg text-sm flex-grow"
+                                            onclick="event.stopPropagation()" 
+                                            oninput="updateOptionValue(event, '${field.id}', ${optIndex}, this.value)"
+                                            ${field.is_permanent ? 'disabled' : ''}>
+                                    <button onclick="deleteOption(event, '${field.id}', ${optIndex})" class="text-red-500 hover:text-red-700 p-1 flex-shrink-0" title="Hapus Opsi" ${field.is_permanent ? 'disabled' : ''}>
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
@@ -595,7 +659,7 @@
                                 <p class="text-sm font-medium text-gray-600 mb-2">Pilihan:</p>
                                 <div class="bg-gray-100 p-3 rounded-lg border border-gray-200">
                                     ${optionsListHtml}
-                                    <button onclick="addOption(event, '${field.id}')" class="text-xs text-green-500 hover:text-green-700 font-semibold mt-2 border border-green-200 p-1.5 rounded-lg w-full bg-green-50/50">
+                                    <button onclick="addOption(event, '${field.id}')" class="text-xs text-green-500 hover:text-green-700 font-semibold mt-2 border border-green-200 p-1.5 rounded-lg w-full bg-green-50/50" ${field.is_permanent ? 'disabled' : ''}>
                                         <i class="fas fa-plus mr-1"></i> Tambah Pilihan
                                     </button>
                                 </div>
@@ -604,37 +668,46 @@
                         if (field.type === 'select') {
                             inputHtml += `
                                 <input type="text" 
-                                       id="placeholder-input-${field.id}-select"
-                                       value="${field.placeholder || 'Pilih salah satu...'}" 
-                                       placeholder="Placeholder Dropdown" 
-                                       class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm mt-3"
-                                       onclick="event.stopPropagation()" 
-                                       oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)">
+                                            id="placeholder-input-${field.id}-select"
+                                            value="${field.placeholder || 'Pilih salah satu...'}" 
+                                            placeholder="Placeholder Dropdown" 
+                                            class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 text-sm mt-3"
+                                            onclick="event.stopPropagation()" 
+                                            oninput="updateFieldProperty('${field.id}', 'placeholder', this.value)"
+                                            ${field.is_permanent ? 'disabled' : ''}>
                             `;
                         }
                         break;
                 }
                 
-                const requiredToggleHtml = `
-                    <div class="flex items-center space-x-1 text-xs text-gray-600" onclick="event.stopPropagation()">
+                // === PERUBAHAN DI SINI: MENGHILANGKAN TOGGLE UNTUK FIELD PERMANEN ===
+                const requiredToggleHtml = field.is_permanent ?
+                    // Jika permanen, tampilkan hanya label Wajib Permanen
+                    `<div class="flex items-center space-x-1 text-xs text-gray-600 required-toggle-wrapper" onclick="event.stopPropagation()">
+                        <span class="text-[10px] uppercase font-semibold text-blue-700">WAJIB ISI</span>
+                    </div>`
+                    :
+                    // Jika tidak permanen, tampilkan toggle normal
+                    `<div class="flex items-center space-x-1 text-xs text-gray-600" onclick="event.stopPropagation()">
                         <span class="text-[10px] uppercase font-semibold ${field.required ? 'text-blue-500' : 'text-gray-400'}">WAJIB ISI</span>
                         <label for="req-toggle-${field.id}" class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="req-toggle-${field.id}" ${field.required ? 'checked' : ''} 
                                     class="sr-only peer toggle-checkbox" onchange="updateFieldProperty('${field.id}', 'required', this.checked)">
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all toggle-label peer-checked:bg-blue-600"></div>
                         </label>
-                    </div>
-                `;
+                    </div>`;
+                // =========================================================================
 
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-3">
                         <input type="text" value="${field.label}" placeholder="Judul Pertanyaan" class="font-medium text-md text-gray-700 w-full p-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent" 
-                                oninput="updateFieldProperty('${field.id}', 'label', this.value)" onclick="event.stopPropagation()">
+                                 oninput="updateFieldProperty('${field.id}', 'label', this.value)" onclick="event.stopPropagation()"
+                                 ${field.is_permanent ? 'disabled' : ''}>
                         
                         <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
                             ${requiredToggleHtml}
                             
-                            <button onclick="openDeleteModal(event, '${field.id}')" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors" title="Hapus Field">
+                            <button onclick="openDeleteModal(event, '${field.id}')" class="text-red-500 hover:text-red-700 p-1 rounded transition-colors delete-btn" title="Hapus Field">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -654,51 +727,37 @@
             activeFieldId = id;
         }
 
-        /**
-         * PERBAIKAN UTAMA: updateFieldProperty sekarang menangani update Placeholder secara inline
-         * dengan memperbarui nilai data dan DOM input yang bersangkutan, tanpa re-render penuh.
-         */
         function updateFieldProperty(id, property, value) {
              const fieldIndex = formFields.findIndex(f => f.id === id);
              if (fieldIndex === -1) return;
+             
+             // Tambahkan guard untuk mencegah perubahan pada field permanen
+             if (formFields[fieldIndex].is_permanent) {
+                 if (property === 'label' || property === 'placeholder' || property === 'required' || property === 'type') {
+                     // Blokir perubahan pada properti kunci field permanen
+                     openValidationModal('Field ini wajib (Nama Lengkap/Email) dan properti kuncinya tidak dapat diubah.');
+                     // Render ulang untuk mengembalikan nilai lama di UI
+                     renderFormPreview(); 
+                     setActiveField(id);
+                     return;
+                 }
+             }
 
              if (property === 'required') {
                  formFields[fieldIndex][property] = !!value;
-                 // Render ulang untuk update tampilan toggle (wajib render)
                  renderFormPreview(); 
                  setActiveField(id);
-             } else if (property === 'label') {
-                 // Langsung update nilai data
+             } else if (property === 'label' || property === 'placeholder') {
                  formFields[fieldIndex][property] = value;
-                 // TIDAK PERLU renderFormPreview()
-             } else if (property === 'placeholder') {
-                 // Langsung update nilai data
-                 formFields[fieldIndex][property] = value;
-                 
-                 // Update DOM secara manual untuk input Placeholder Text/Textarea/Select
-                 let inputId;
-                 if (formFields[fieldIndex].type === 'select') {
-                    inputId = `placeholder-input-${id}-select`;
-                 } else {
-                    inputId = `placeholder-input-${id}`;
-                 }
-
-                 const inputElement = document.getElementById(inputId);
-                 
-                 if (inputElement) {
-                     inputElement.value = value;
-                 }
-                 // TIDAK PERLU renderFormPreview()
              } else {
-                 // Untuk properti lain yang mungkin ditambahkan
                  formFields[fieldIndex][property] = value;
              }
-         }
-         
-         function updateFormMetadata(value, property) {
-             // Fungsi ini tidak melakukan apa-apa karena form title/description 
-             // dibaca langsung dari DOM saat saveForm.
-         }
+        }
+        
+        function updateFormMetadata(value, property) {
+            // Fungsi ini tidak melakukan apa-apa karena form title/description 
+            // dibaca langsung dari DOM saat saveForm.
+        }
         
         // --- FUNGSI MODAL KUSTOM (Delete, Success, Validation) ---
 
@@ -708,6 +767,14 @@
             const field = formFields.find(f => f.id === id);
 
             if (field) {
+                // GUARD: BLOKIR PENGHAPUSAN FIELD PERMANEN
+                if (field.is_permanent) {
+                    openValidationModal(`Field '${field.label}' adalah field wajib dan tidak dapat dihapus.`);
+                    fieldIdToDelete = null; // Reset ID untuk mencegah penghapusan
+                    return;
+                }
+                // AKHIR GUARD
+
                 document.getElementById('delete-field-label').textContent = `'${field.label}'`;
                 const modal = document.getElementById('customDeleteModal');
                 modal.classList.remove('hidden');
@@ -726,6 +793,13 @@
 
         function confirmDelete() {
             if (fieldIdToDelete) {
+                // Cek lagi di sini untuk memastikan field permanen tidak terhapus (Redundansi Keamanan)
+                const field = formFields.find(f => f.id === fieldIdToDelete);
+                if (field && field.is_permanent) {
+                    closeDeleteModal();
+                    return; 
+                }
+                
                 formFields = formFields.filter(f => f.id !== fieldIdToDelete);
                 renderFormPreview();
                 closeDeleteModal();
