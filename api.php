@@ -13,7 +13,6 @@ require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require 'vendor/phpmailer/phpmailer/src/SMTP.php';
 // -------------------------
 
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, PUT, OPTIONS');
@@ -42,11 +41,11 @@ if ($conn->connect_error) {
     exit();
 }
 
-// --- KONFIGURASI SMTP GMAIL (KREDENSIAL DARI USER) ---
+// --- KONFIGURASI SMTP GMAIL ---
 $smtp_config = [
     'host'     => 'smtp.gmail.com',
     'username' => 'fakhruzaandrian561@gmail.com', // EMAIL ADMIN
-    'password' => 'rdwt imxd tcst rxf',            // SANDI APLIKASI 16 KARAKTER
+    'password' => 'yvxjjyekxlykduwq',            // SANDI APLIKASI 16 KARAKTER
     'port'     => 587,
     'secure'   => PHPMailer::ENCRYPTION_STARTTLS,
     'admin_email' => 'fakhruzaandrian561@gmail.com', // PENERIMA NOTIFIKASI
@@ -66,11 +65,17 @@ $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
 // =========================================================================
-//                       FUNGSI BANTU UNTUK MENGIRIM EMAIL
+//                       FUNGSI BANTU UNTUK MENGIRIM EMAIL (DENGAN DEBUGGING)
 // =========================================================================
-function send_smtp_email($to_email, $to_name, $subject, $body_html, $smtp_config) {
+function send_smtp_email($to_email, $to_name, $subject, $body_html, $smtp_config, $is_admin_notification = false) {
     $mail = new PHPMailer(true);
     try {
+        // --- PENGATURAN DEBUGGING EMAIL ---
+        // Aktifkan logging debug ke output (untuk debugging cepat, nonaktifkan di produksi)
+        // $mail->SMTPDebug = 2; 
+        // $mail->Debugoutput = 'error_log';
+        // ----------------------------------
+        
         // Server settings
         $mail->isSMTP();
         $mail->Host       = $smtp_config['host'];
@@ -89,13 +94,14 @@ function send_smtp_email($to_email, $to_name, $subject, $body_html, $smtp_config
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $body_html;
-        $mail->AltBody = strip_tags($body_html); // Versi teks biasa
+        $mail->AltBody = strip_tags($body_html); 
 
         $mail->send();
+        error_log("EMAIL SUCCESS: Email berhasil dikirim ke " . ($is_admin_notification ? "ADMIN" : "RESPONDEN: {$to_email}"));
         return true;
     } catch (Exception $e) {
-        // Log error ke server log
-        error_log("Gagal mengirim email ke {$to_email}. Error: {$mail->ErrorInfo}");
+        // Log error yang lebih detail
+        error_log("EMAIL FAILED: Gagal mengirim email ke {$to_email}. Error: {$mail->ErrorInfo}");
         return false;
     }
 }
@@ -371,6 +377,7 @@ if ($method === 'POST' || $method === 'PUT') {
                 if ($stmt->execute()) {
                     
                     // --- 5. KIRIM EMAIL KONFIRMASI KE RESPONDEN (Jika email valid) ---
+                    $email_sent_to_respondent = false;
                     if (filter_var($respondent_email, FILTER_VALIDATE_EMAIL)) {
                         $subject_user = "Konfirmasi Pengisian Form: {$form_title}";
                         $body_user = "
@@ -384,7 +391,7 @@ if ($method === 'POST' || $method === 'PUT') {
                             </body>
                             </html>
                         ";
-                        send_smtp_email($respondent_email, $respondent_name, $subject_user, $body_user, $smtp_config);
+                        $email_sent_to_respondent = send_smtp_email($respondent_email, $respondent_name, $subject_user, $body_user, $smtp_config, false);
                     }
                     
                     // --- 6. KIRIM EMAIL NOTIFIKASI KE ADMIN ---
@@ -400,9 +407,18 @@ if ($method === 'POST' || $method === 'PUT') {
                         </body>
                         </html>
                     ";
-                    send_smtp_email($smtp_config['admin_email'], $smtp_config['admin_name'], $subject_admin, $body_admin, $smtp_config);
+                    $email_sent_to_admin = send_smtp_email($smtp_config['admin_email'], $smtp_config['admin_name'], $subject_admin, $body_admin, $smtp_config, true);
 
-                    echo json_encode(['success' => true, 'message' => 'Feedback berhasil disimpan dan konfirmasi email dikirim.']);
+                    // Menyiapkan pesan balasan ke klien (tidak peduli email gagal/sukses, karena data sudah tersimpan)
+                    $email_status_message = "Data berhasil disimpan.";
+                    if (!$email_sent_to_admin || (!$email_sent_to_respondent && filter_var($respondent_email, FILTER_VALIDATE_EMAIL))) {
+                        // Tambahkan peringatan jika email GAGAL dikirim
+                         $email_status_message .= " PERINGATAN: Ada masalah saat mengirim email notifikasi. Silakan cek error log server Anda.";
+                    } else {
+                         $email_status_message .= " Konfirmasi email berhasil dikirim.";
+                    }
+                    
+                    echo json_encode(['success' => true, 'message' => $email_status_message]);
                 } else {
                     http_response_code(500);
                     echo json_encode(['success' => false, 'message' => 'Gagal menyimpan feedback. Error SQL: ' . $conn->error]);
@@ -424,7 +440,7 @@ if ($method === 'POST' || $method === 'PUT') {
 }
 
 // =========================================================================
-//                      HANDLE GET REQUESTS
+//                      HANDLE GET REQUESTS (Sama seperti sebelumnya)
 // =========================================================================
 
 if ($method === 'GET') {
@@ -664,7 +680,7 @@ if ($method === 'GET') {
 }
 
 // =========================================================================
-//                      HANDLE DELETE REQUESTS
+//                      HANDLE DELETE REQUESTS (Sama seperti sebelumnya)
 // =========================================================================
 
 if ($method === 'DELETE') {

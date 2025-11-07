@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css"> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -80,19 +81,7 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* --- CSS KUSTOM TABEL --- */
-        .w-col-no { width: 10%; }
-        .w-col-waktu { width: 60%; } 
-        .w-col-aksi { width: 30%; } 
-
-        .centered-table th, .centered-table td {
-            text-align: center !important;
-        }
-        
-        /* ========================================================================= */
-        /* --- START: DROPDOWN CUSTOM STYLE (Final Edge) --- */
-        /* ========================================================================= */
-        
+        /* --- DROPDOWN CUSTOM STYLE --- */
         [type="checkbox"]:checked,
         [type="checkbox"]:not(:checked){
             position: absolute;
@@ -116,7 +105,7 @@
             line-height: 1.2; 
             height: 44px; 
             transition: all 200ms linear;
-            border-radius: 0.5rem; /* DIUBAH: Menyamakan dengan rounded-lg Tailwind */
+            border-radius: 0.5rem; 
             width: 300px; 
             letter-spacing: 0.5px;
             display: inline-flex;
@@ -156,7 +145,7 @@
             top: 52px; 
             left: 0;
             width: 100%;
-            border-radius: 0.5rem; /* DIUBAH: Menyamakan dengan rounded-lg Tailwind */
+            border-radius: 0.5rem; 
             box-shadow: 0 10px 30px 0 rgba(9,9,12,0.15);
             z-index: 2;
             opacity: 0;
@@ -195,7 +184,7 @@
             width: 0;  
             height: 0; 
             border-left: 8px solid transparent;
-            border-right: 8px solid transparent;  
+            border-right: 8px solid transparent; 
             border-bottom: 8px solid #fff; 
             content: '';
             display: block;
@@ -234,10 +223,19 @@
             margin-left: 8px;
         }
         
-        /* ========================================================================= */
-        /* --- END: DROPDOWN CUSTOM STYLE --- */
-        /* ========================================================================= */
-
+        /* CSS Chart Container (Optimized Size) */
+        .chart-container {
+            position: relative; 
+            width: 100%; 
+            height: 250px; 
+            margin: 0 auto;
+        }
+        @media (min-width: 1024px) {
+            .chart-container {
+                max-width: 300px; /* Diubah dari 400px */
+                height: 300px; /* Diubah dari 400px */
+            }
+        }
     </style>
 </head>
 <body>
@@ -320,100 +318,57 @@
                     <i class="fas fa-info-circle w-6 h-6 mr-3"></i>
                     <p class="font-bold">Mulai Analisis</p>
                 </div>
-                <p class="mt-2 text-sm">Silakan **pilih salah satu Formulir** dari kotak *dropdown* di kanan atas untuk memuat laporan analisis dan daftar feedback responden.</p>
+                <p class="mt-2 text-sm">Silakan **pilih salah satu Formulir** dari kotak *dropdown* di kanan atas untuk memuat laporan analisis.</p>
             </div>
             
             <div id="report-content" class="hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4" id="report-title"></h2>
+                
                 <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-100 card-shadow-hover">
-                    <p class="text-gray-600">Total Respon: <span id="total-responses" class="font-semibold text-blue-600">0</span></p>
+                    <p class="text-gray-600">Total Respon Diterima: <span id="total-responses" class="font-semibold text-blue-600">0</span></p>
                     <button onclick="exportToExcel()" class="bg-green-600 text-white font-medium py-2 px-4 rounded-xl text-sm hover:bg-green-700 transition duration-150 transition-smooth transition-transform-hover">
                         <i class="fas fa-file-excel mr-1"></i> Export Excel
                     </button>
                 </div>
                 
-                <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 mt-6 card-shadow-hover">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Daftar Feedback Responden</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 centered-table">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-no">No</th>
-                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-waktu">Waktu Submit</th>
-                                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-col-aksi">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="response-list" class="bg-white divide-y divide-gray-200">
-                                <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Pilih formulir untuk melihat respon.</td></tr>
-                            </tbody>
-                        </table>
+                <div id="field-analysis-results" class="space-y-8 mt-6">
                     </div>
-                    <div id="pagination-controls" class="mt-4 flex justify-between items-center"></div>
-                </div>
+
             </div>
         </main>
     </div>
 
-    <div id="responseDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeResponseDetail()"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full card-shadow-hover">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="flex justify-between items-start border-b pb-3 mb-4">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
-                            Detail Respon
-                        </h3>
-                        
-                        <button type="button" 
-                                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center transition-smooth transition-transform-hover"
-                                onclick="closeResponseDetail()">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                        </button>
-                    </div>
-
-                    <div id="response-detail-content" class="space-y-4 max-h-96 overflow-y-auto">
-                        <p>Memuat detail...</p>
-                    </div>
-
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" 
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-smooth transition-transform-hover"
-                            onclick="closeResponseDetail()">
-                        Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
     <script>
         const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
         let formId = null;
         let allResponses = [];
         let formFields = [];
-        let currentPage = 1;
-        const itemsPerPage = 5;
+        let globalFormFieldsDefinition = []; // Menyimpan struktur field lengkap dari API
+
+        // Warna untuk Chart.js
+        const CHART_COLORS = [
+            '#3b82f6', // blue-500
+            '#ef4444', // red-500
+            '#10b981', // emerald-500
+            '#f59e0b', // amber-500
+            '#a855f7', // purple-500
+            '#ec4899', // pink-500
+            '#06b6d4', // cyan-500
+            '#f97316', // orange-500
+        ];
         
+        // Simpan referensi chart untuk penghancuran (destroy) saat mengganti form
+        let activeCharts = [];
+
+
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
             fetchFormListForDropdown();
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const initialFormId = urlParams.get('id');
+            // Logika pre-select formId dari URL
+            const initialFormId = getQueryParam('id');
             if (initialFormId) {
-                setTimeout(() => {
-                    // Cek elemen dropdown options
-                    const dropdownElement = document.getElementById('dropdown-options');
-                    if (dropdownElement && dropdownElement.children.length > 0) {
-                        const formLink = dropdownElement.querySelector(`[data-form-id="${initialFormId}"]`);
-                        if (formLink) {
-                            document.getElementById('selected-form-title').textContent = formLink.textContent;
-                            loadFormData(initialFormId);
-                        }
-                    }
-                }, 500);
+                // Biarkan fetchFormListForDropdown memanggil selectFormFromDropdown
             }
         });
         
@@ -486,13 +441,13 @@
                 }
                 
                 // Cek URL untuk pre-select
-                 const initialFormId = getQueryParam('id');
-                 if (initialFormId && forms.length > 0) {
+                const initialFormId = getQueryParam('id');
+                if (initialFormId && forms.length > 0) {
                     const initialForm = forms.find(f => f.form_id == initialFormId);
                     if (initialForm) {
                         selectFormFromDropdown(initialForm.form_id, initialForm.form_title);
                     }
-                 }
+                }
 
             } catch (error) {
                 console.error('Gagal mengambil daftar formulir:', error);
@@ -515,7 +470,11 @@
             
             document.getElementById('initial-instruction').classList.add('hidden');
             document.getElementById('report-content').classList.add('hidden');
-            document.getElementById('response-list').innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data respon...</td></tr>`;
+            document.getElementById('field-analysis-results').innerHTML = `<p class="text-center text-gray-500 p-8"><i class="fas fa-spinner fa-spin mr-2"></i> Memproses analisis data...</p>`;
+            
+            // Hapus semua chart lama
+            activeCharts.forEach(chart => chart.destroy());
+            activeCharts = [];
 
             formId = selectedFormId;
 
@@ -528,15 +487,14 @@
                     document.getElementById('total-responses').textContent = result.total_responses;
                     
                     allResponses = result.responses;
-
-                    formFields = result.form_fields.map(field => ({
-                        id: field.id,
-                        label: field.label,
-                        type: field.type
-                    }));
+                    globalFormFieldsDefinition = result.form_fields;
                     
                     document.getElementById('report-content').classList.remove('hidden');
-                    renderResponseList(1);
+                    
+                    // --- FUNGSI ANALISIS BARU ---
+                    const aggregatedData = aggregateResponses(allResponses, globalFormFieldsDefinition);
+                    renderAnalysisSections(aggregatedData, result.total_responses);
+                    // ----------------------------
 
                 } else {
                     alert('Gagal memuat laporan: ' + (result.message || 'Error tidak diketahui.'));
@@ -549,143 +507,249 @@
                 document.getElementById('initial-instruction').classList.remove('hidden');
             }
         }
+        
+        // =========================================================================
+        // FUNGSI AGREGASI & RENDERING ANALISIS
+        // =========================================================================
 
-        function renderResponseList(page) {
-            currentPage = page;
-            const tableBody = document.getElementById('response-list');
-            const totalResponses = allResponses.length;
-            const totalPages = Math.ceil(totalResponses / itemsPerPage);
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedItems = allResponses.slice(startIndex, endIndex);
-
-            tableBody.innerHTML = '';
-            
-            if (totalResponses === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Belum ada respon untuk formulir ini.</td></tr>`;
-            } else {
-                paginatedItems.forEach((response, index) => {
-                    const row = document.createElement('tr');
-                    const responseNumber = startIndex + index + 1;
-                    
-                    const submittedAt = new Date(response.submitted_at);
-                    const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-                    const responseIndexInAll = startIndex + index;
-                    
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-col-no">${responseNumber}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-col-waktu">${formattedTime}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium w-col-aksi">
-                            <button onclick='showResponseDetail(allResponses[${responseIndexInAll}])' class="text-blue-600 hover:text-blue-900 transition-smooth transition-transform-hover">Lihat Detail</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-            renderPaginationButtons(totalPages);
-        }
-
-        function renderPaginationButtons(totalPages) {
-            const container = document.getElementById('pagination-controls');
-            container.innerHTML = '';
-            
-            if (totalPages <= 1) return;
-
-            const buttonsDiv = document.createElement('div');
-            buttonsDiv.classList.add('flex', 'space-x-2');
-
-            const showPrev = currentPage > 1;
-            const showNext = currentPage < totalPages;
-            
-            if (showPrev) {
-                const prevBtn = createPaginationButton('Sebelumnya', currentPage - 1, false);
-                buttonsDiv.appendChild(prevBtn);
-            }
-
-            const maxVisiblePages = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-            
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = createPaginationButton(i, i, i === currentPage);
-                buttonsDiv.appendChild(pageBtn);
-            }
-
-            if (showNext) {
-                const nextBtn = createPaginationButton('Selanjutnya', currentPage + 1, false);
-                buttonsDiv.appendChild(nextBtn);
-            }
-
-            container.appendChild(buttonsDiv);
-        }
-
-        function createPaginationButton(text, page, isCurrent) {
-            const button = document.createElement('button');
-            button.textContent = text;
-            button.disabled = isCurrent;
-            button.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm');
-            
-            if (isCurrent) {
-                button.classList.add('bg-blue-500', 'text-white');
-            } else {
-                button.classList.add('text-gray-700', 'hover:bg-gray-100', 'transition-smooth', 'transition-transform-hover');
-                button.onclick = () => renderResponseList(page);
-            }
-            return button;
-        }
-
-
-        function showResponseDetail(response) {
-            const modal = document.getElementById('responseDetailModal');
-            const contentDiv = document.getElementById('response-detail-content');
-            
-            let htmlContent = '';
-
-            const submittedAt = new Date(response.submitted_at);
-            const formattedTime = submittedAt.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            
-            htmlContent += `
-                <div class="border-b pb-2 mb-4 bg-blue-50 p-3 rounded-lg card-shadow-hover">
-                    <p class="text-sm font-semibold text-gray-600">Waktu Submit:</p>
-                    <p class="text-base font-bold text-blue-600">${formattedTime}</p>
-                </div>
-            `;
-            
-            formFields.forEach(field => {
-                const value = response[field.id]; 
-                let displayValue;
-
-                if (Array.isArray(value)) {
-                    displayValue = value.join(', ');
-                } else if (value !== null && value !== undefined && value !== '') {
-                    displayValue = String(value);
-                } else {
-                    displayValue = '(Kosong)';
-                }
-                
-                htmlContent += `
-                    <div class="bg-gray-50 p-3 rounded-lg border card-shadow-hover">
-                        <p class="text-sm font-medium text-gray-700">${field.label}:</p>
-                        <p class="text-gray-900 font-semibold mt-1 whitespace-pre-wrap">${displayValue}</p>
-                    </div>
-                `;
+        function aggregateResponses(responses, fieldsDefinition) {
+            // Konversi Field Definition menjadi Map Label -> Tipe
+            const fieldMap = {};
+            fieldsDefinition.forEach(field => {
+                const cleanLabel = (field.label || field.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                fieldMap[cleanLabel] = {
+                    label: field.label,
+                    type: field.type,
+                    options: field.options || []
+                };
             });
 
-            contentDiv.innerHTML = htmlContent;
-            modal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden'); 
+            const aggregatedData = {};
+            const totalResponses = responses.length;
+
+            responses.forEach(response => {
+                // Iterasi melalui setiap jawaban dalam satu respon
+                for (const key in response) {
+                    if (key === 'submitted_at') continue; 
+                    
+                    const fieldDef = fieldMap[key];
+                    if (!fieldDef) continue; // Lewati field yang tidak terdefinisi (seperti field_ID mentah yang tidak di-map)
+                    
+                    const fieldType = fieldDef.type;
+                    const answer = response[key];
+                    
+                    if (!aggregatedData[key]) {
+                        aggregatedData[key] = {
+                            label: fieldDef.label,
+                            type: fieldType,
+                            totalCount: 0,
+                            data: (fieldType === 'radio' || fieldType === 'select' || fieldType === 'checkbox') ? {} : []
+                        };
+                    }
+                    
+                    aggregatedData[key].totalCount++;
+
+                    if (['text', 'number', 'textarea'].includes(fieldType)) {
+                        if (answer !== null && answer !== undefined && answer !== '') {
+                            aggregatedData[key].data.push(answer);
+                        }
+                    } else if (fieldType === 'radio' || fieldType === 'select') {
+                        // Pilihan Tunggal: Hitung Frekuensi Opsi
+                        const option = String(answer).trim();
+                        if (option !== '' && option !== 'undefined' && option !== 'null') {
+                             aggregatedData[key].data[option] = (aggregatedData[key].data[option] || 0) + 1;
+                        }
+                    } else if (fieldType === 'checkbox' && Array.isArray(answer)) {
+                        // Pilihan Ganda: Hitung Frekuensi Setiap Opsi yang Dipilih
+                        answer.forEach(option => {
+                            const optKey = String(option).trim();
+                            if (optKey !== '') {
+                                aggregatedData[key].data[optKey] = (aggregatedData[key].data[optKey] || 0) + 1;
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Konversi objek agregat menjadi array yang mudah di-render
+            return Object.values(aggregatedData);
         }
 
-        function closeResponseDetail() {
-            const modal = document.getElementById('responseDetailModal');
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden'); 
+        function renderAnalysisSections(aggregatedData, totalResponses) {
+            const container = document.getElementById('field-analysis-results');
+            container.innerHTML = ''; 
+
+            if (totalResponses === 0) {
+                 container.innerHTML = `<p class="text-center text-gray-500 p-8">Belum ada respon yang masuk untuk form ini.</p>`;
+                 return;
+            }
+
+            aggregatedData.forEach((fieldData, index) => {
+                const section = document.createElement('div');
+                section.classList.add('bg-white', 'p-6', 'rounded-2xl', 'shadow-xl', 'border', 'border-gray-100', 'card-shadow-hover', 'transition-smooth', 'transition-transform-hover');
+                
+                let htmlContent = `<h3 class="text-xl font-bold mb-4 text-gray-800">${fieldData.label}</h3>`;
+                
+                // === Textual Input (Nama, Email, Angka, Textarea) ===
+                if (['text', 'number', 'textarea'].includes(fieldData.type)) {
+                    htmlContent += renderTextualData(fieldData, totalResponses);
+                
+                // === Radio & Dropdown (Pie Chart) ===
+                } else if (['radio', 'select'].includes(fieldData.type)) {
+                    htmlContent += renderPieChartData(fieldData, totalResponses, index);
+
+                // === Checkbox (Tabel Frekuensi) ===
+                } else if (fieldData.type === 'checkbox') {
+                    htmlContent += renderCheckboxData(fieldData, index);
+                }
+
+                section.innerHTML = htmlContent;
+                container.appendChild(section);
+            });
+            
+            // Render chart harus dilakukan setelah semua canvas di-inject ke DOM
+            aggregatedData.forEach((fieldData, index) => {
+                if (['radio', 'select'].includes(fieldData.type)) {
+                    drawPieChart(`chart-canvas-${index}`, fieldData, totalResponses);
+                }
+            });
         }
+        
+        // --- RENDERING FUNGSI INDIVIDUAL ---
+
+        // 1. TEXTUAL DATA (text, number, textarea)
+        function renderTextualData(fieldData, totalResponses) {
+            let html = `<p class="text-sm text-gray-600 mb-4">Total Jawaban Terisi: <span class="font-semibold text-blue-600">${fieldData.data.length}</span> / ${totalResponses}</p>`;
+            
+            if (fieldData.data.length === 0) {
+                html += `<p class="text-gray-500 italic mt-2">Belum ada jawaban terisi untuk field ini.</p>`;
+                return html;
+            }
+
+            // Batasi tampilan ke 10 jawaban teratas, sisanya dapat dilihat di Excel
+            const displayData = fieldData.data.slice(0, 10);
+            
+            html += `<ul class="space-y-2 max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">`;
+            displayData.forEach(answer => {
+                html += `<li class="p-2 border-b border-gray-100 last:border-b-0 text-gray-700 text-sm">${answer}</li>`;
+            });
+            html += `</ul>`;
+            
+            if (fieldData.data.length > 10) {
+                 html += `<p class="text-xs text-gray-500 mt-2 italic">Menampilkan 10 jawaban teratas. Download Excel untuk melihat semua ${fieldData.data.length} jawaban.</p>`;
+            }
+            
+            return html;
+        }
+        
+        // 2. PIE CHART DATA (radio, select)
+        function renderPieChartData(fieldData, totalResponses, index) {
+            const canvasId = `chart-canvas-${index}`;
+            
+            let html = `<div class="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">`;
+            
+            // Canvas untuk Chart.js
+            html += `<div class="chart-container flex-shrink-0"><canvas id="${canvasId}"></canvas></div>`;
+
+            // Legenda dan Persentase
+            html += `<div class="flex-grow w-full lg:w-auto p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-semibold text-gray-800 mb-3">Rincian Pilihan:</h4>
+                        <ul id="legend-${canvasId}" class="space-y-2">`;
+            
+            const sortedOptions = Object.entries(fieldData.data).sort((a, b) => b[1] - a[1]);
+            
+            sortedOptions.forEach((entry, colorIndex) => {
+                const option = entry[0];
+                const count = entry[1];
+                const percentage = ((count / totalResponses) * 100).toFixed(1);
+                const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
+                
+                html += `<li class="flex justify-between items-center text-sm">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color};"></span>
+                                <span class="text-gray-700">${option}</span>
+                            </div>
+                            <span class="font-bold text-gray-900">${percentage}% <span class="text-gray-500 font-normal">(${count})</span></span>
+                        </li>`;
+            });
+
+            html += `</ul></div></div>`;
+            return html;
+        }
+
+        function drawPieChart(canvasId, fieldData, totalResponses) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            const labels = Object.keys(fieldData.data);
+            const dataCounts = Object.values(fieldData.data);
+            
+            const dataColors = dataCounts.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
+
+            const newChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataCounts,
+                        backgroundColor: dataColors,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // Legenda ditampilkan secara kustom di HTML
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribusi Jawaban (${totalResponses} Responden)`,
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            });
+            activeCharts.push(newChart);
+        }
+        
+        // 3. CHECKBOX DATA (Tabel Frekuensi)
+        function renderCheckboxData(fieldData, index) {
+            let html = `<p class="text-sm text-gray-600 mb-4">Total Pilihan Terisi: <span class="font-semibold text-blue-600">${fieldData.totalCount}</span></p>`;
+            
+            if (Object.keys(fieldData.data).length === 0) {
+                html += `<p class="text-gray-500 italic mt-2">Belum ada pilihan yang dipilih.</p>`;
+                return html;
+            }
+
+            html += `<div class="overflow-x-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/4">Pilihan</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Jumlah Responden</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">`;
+
+            const sortedOptions = Object.entries(fieldData.data).sort((a, b) => b[1] - a[1]);
+
+            sortedOptions.forEach(entry => {
+                const option = entry[0];
+                const count = entry[1];
+                html += `<tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 w-3/4">${option}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-right w-1/4">${count}</td>
+                        </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        // =========================================================================
+        // EKSPOR EXCEL
+        // =========================================================================
         
         function exportToExcel() {
             if (!formId || allResponses.length === 0) {
