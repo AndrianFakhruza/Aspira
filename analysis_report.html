@@ -232,8 +232,8 @@
         }
         @media (min-width: 1024px) {
             .chart-container {
-                max-width: 300px; /* Diubah dari 400px */
-                height: 300px; /* Diubah dari 400px */
+                max-width: 300px; 
+                height: 300px; 
             }
         }
     </style>
@@ -342,7 +342,6 @@
         const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
         let formId = null;
         let allResponses = [];
-        let formFields = [];
         let globalFormFieldsDefinition = []; // Menyimpan struktur field lengkap dari API
 
         // Warna untuk Chart.js
@@ -365,7 +364,6 @@
             checkSession();
             fetchFormListForDropdown();
             
-            // Logika pre-select formId dari URL
             const initialFormId = getQueryParam('id');
             if (initialFormId) {
                 // Biarkan fetchFormListForDropdown memanggil selectFormFromDropdown
@@ -440,7 +438,6 @@
                     dropdownOptions.appendChild(info);
                 }
                 
-                // Cek URL untuk pre-select
                 const initialFormId = getQueryParam('id');
                 if (initialFormId && forms.length > 0) {
                     const initialForm = forms.find(f => f.form_id == initialFormId);
@@ -472,7 +469,6 @@
             document.getElementById('report-content').classList.add('hidden');
             document.getElementById('field-analysis-results').innerHTML = `<p class="text-center text-gray-500 p-8"><i class="fas fa-spinner fa-spin mr-2"></i> Memproses analisis data...</p>`;
             
-            // Hapus semua chart lama
             activeCharts.forEach(chart => chart.destroy());
             activeCharts = [];
 
@@ -492,8 +488,8 @@
                     document.getElementById('report-content').classList.remove('hidden');
                     
                     // --- FUNGSI ANALISIS BARU ---
-                    const aggregatedData = aggregateResponses(allResponses, globalFormFieldsDefinition);
-                    renderAnalysisSections(aggregatedData, result.total_responses);
+                    const aggregatedDataMap = aggregateResponses(allResponses, globalFormFieldsDefinition);
+                    renderAnalysisSections(aggregatedDataMap, result.total_responses, globalFormFieldsDefinition);
                     // ----------------------------
 
                 } else {
@@ -511,9 +507,12 @@
         // =========================================================================
         // FUNGSI AGREGASI & RENDERING ANALISIS
         // =========================================================================
-
+        
+        // Fungsi aggregateResponses kini mengembalikan Map (Objek) agar mudah diakses
         function aggregateResponses(responses, fieldsDefinition) {
-            // Konversi Field Definition menjadi Map Label -> Tipe
+            const aggregatedDataMap = {};
+            
+            // 1. Buat Map Label Bersih -> Field Definition
             const fieldMap = {};
             fieldsDefinition.forEach(field => {
                 const cleanLabel = (field.label || field.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
@@ -524,22 +523,18 @@
                 };
             });
 
-            const aggregatedData = {};
-            const totalResponses = responses.length;
-
             responses.forEach(response => {
-                // Iterasi melalui setiap jawaban dalam satu respon
                 for (const key in response) {
                     if (key === 'submitted_at') continue; 
                     
                     const fieldDef = fieldMap[key];
-                    if (!fieldDef) continue; // Lewati field yang tidak terdefinisi (seperti field_ID mentah yang tidak di-map)
+                    if (!fieldDef) continue;
                     
                     const fieldType = fieldDef.type;
                     const answer = response[key];
                     
-                    if (!aggregatedData[key]) {
-                        aggregatedData[key] = {
+                    if (!aggregatedDataMap[key]) {
+                        aggregatedDataMap[key] = {
                             label: fieldDef.label,
                             type: fieldType,
                             totalCount: 0,
@@ -547,35 +542,42 @@
                         };
                     }
                     
-                    aggregatedData[key].totalCount++;
-
+                    // Hanya menghitung baris yang ada jawabannya, BUKAN total responden
+                    // Jumlah responden total diambil dari responses.length
+                    
                     if (['text', 'number', 'textarea'].includes(fieldType)) {
                         if (answer !== null && answer !== undefined && answer !== '') {
-                            aggregatedData[key].data.push(answer);
+                            aggregatedDataMap[key].data.push(answer);
+                            aggregatedDataMap[key].totalCount++;
                         }
                     } else if (fieldType === 'radio' || fieldType === 'select') {
-                        // Pilihan Tunggal: Hitung Frekuensi Opsi
                         const option = String(answer).trim();
                         if (option !== '' && option !== 'undefined' && option !== 'null') {
-                             aggregatedData[key].data[option] = (aggregatedData[key].data[option] || 0) + 1;
+                            aggregatedDataMap[key].data[option] = (aggregatedDataMap[key].data[option] || 0) + 1;
+                            aggregatedDataMap[key].totalCount++;
                         }
                     } else if (fieldType === 'checkbox' && Array.isArray(answer)) {
-                        // Pilihan Ganda: Hitung Frekuensi Setiap Opsi yang Dipilih
+                        let isAnswered = false;
                         answer.forEach(option => {
                             const optKey = String(option).trim();
                             if (optKey !== '') {
-                                aggregatedData[key].data[optKey] = (aggregatedData[key].data[optKey] || 0) + 1;
+                                aggregatedDataMap[key].data[optKey] = (aggregatedDataMap[key].data[optKey] || 0) + 1;
+                                isAnswered = true;
                             }
                         });
+                        // Hanya tambahkan 1 ke totalCount jika responden memilih minimal satu opsi
+                        if(isAnswered) {
+                            aggregatedDataMap[key].totalCount++;
+                        }
                     }
                 }
             });
 
-            // Konversi objek agregat menjadi array yang mudah di-render
-            return Object.values(aggregatedData);
+            return aggregatedDataMap;
         }
 
-        function renderAnalysisSections(aggregatedData, totalResponses) {
+        // FUNGSI YANG DIKOREKSI: Memastikan iterasi dilakukan berdasarkan urutan field asli (globalFormFieldsDefinition)
+        function renderAnalysisSections(aggregatedDataMap, totalResponses, fieldsDefinition) {
             const container = document.getElementById('field-analysis-results');
             container.innerHTML = ''; 
 
@@ -584,21 +586,26 @@
                  return;
             }
 
-            aggregatedData.forEach((fieldData, index) => {
+            // ITERASI BERDASARKAN URUTAN FIELDS DEFINITION DARI DATABASE
+            fieldsDefinition.forEach((fieldDefinition, index) => {
+                const cleanLabel = (fieldDefinition.label || fieldDefinition.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const fieldData = aggregatedDataMap[cleanLabel];
+                
+                // Jika field tidak memiliki data (belum diisi oleh responden), lewati saja atau berikan placeholder. 
+                // Kita akan menggunakan data aggregation yang sudah ada (meskipun totalCount mungkin 0)
+                if (!fieldData) return; 
+
                 const section = document.createElement('div');
                 section.classList.add('bg-white', 'p-6', 'rounded-2xl', 'shadow-xl', 'border', 'border-gray-100', 'card-shadow-hover', 'transition-smooth', 'transition-transform-hover');
                 
                 let htmlContent = `<h3 class="text-xl font-bold mb-4 text-gray-800">${fieldData.label}</h3>`;
                 
-                // === Textual Input (Nama, Email, Angka, Textarea) ===
                 if (['text', 'number', 'textarea'].includes(fieldData.type)) {
                     htmlContent += renderTextualData(fieldData, totalResponses);
                 
-                // === Radio & Dropdown (Pie Chart) ===
                 } else if (['radio', 'select'].includes(fieldData.type)) {
                     htmlContent += renderPieChartData(fieldData, totalResponses, index);
 
-                // === Checkbox (Tabel Frekuensi) ===
                 } else if (fieldData.type === 'checkbox') {
                     htmlContent += renderCheckboxData(fieldData, index);
                 }
@@ -608,8 +615,11 @@
             });
             
             // Render chart harus dilakukan setelah semua canvas di-inject ke DOM
-            aggregatedData.forEach((fieldData, index) => {
-                if (['radio', 'select'].includes(fieldData.type)) {
+            fieldsDefinition.forEach((fieldDefinition, index) => {
+                const cleanLabel = (fieldDefinition.label || fieldDefinition.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                const fieldData = aggregatedDataMap[cleanLabel];
+
+                if (fieldData && ['radio', 'select'].includes(fieldData.type)) {
                     drawPieChart(`chart-canvas-${index}`, fieldData, totalResponses);
                 }
             });
@@ -626,7 +636,6 @@
                 return html;
             }
 
-            // Batasi tampilan ke 10 jawaban teratas, sisanya dapat dilihat di Excel
             const displayData = fieldData.data.slice(0, 10);
             
             html += `<ul class="space-y-2 max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">`;
@@ -658,20 +667,28 @@
             
             const sortedOptions = Object.entries(fieldData.data).sort((a, b) => b[1] - a[1]);
             
-            sortedOptions.forEach((entry, colorIndex) => {
-                const option = entry[0];
-                const count = entry[1];
-                const percentage = ((count / totalResponses) * 100).toFixed(1);
-                const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
-                
-                html += `<li class="flex justify-between items-center text-sm">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color};"></span>
-                                <span class="text-gray-700">${option}</span>
-                            </div>
-                            <span class="font-bold text-gray-900">${percentage}% <span class="text-gray-500 font-normal">(${count})</span></span>
-                        </li>`;
-            });
+            // Total jawaban yang masuk (bukan total responden)
+            const totalAnsweredCount = Object.values(fieldData.data).reduce((sum, count) => sum + count, 0);
+
+            if (totalAnsweredCount === 0) {
+                html += `<p class="text-gray-500 italic mt-2">Belum ada jawaban terisi untuk pilihan ini.</p>`;
+            } else {
+                sortedOptions.forEach((entry, colorIndex) => {
+                    const option = entry[0];
+                    const count = entry[1];
+                    // Persentase dihitung dari total pilihan yang masuk (totalAnsweredCount), bukan totalResponses
+                    const percentage = ((count / totalAnsweredCount) * 100).toFixed(1); 
+                    const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
+                    
+                    html += `<li class="flex justify-between items-center text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${color};"></span>
+                                    <span class="text-gray-700">${option}</span>
+                                </div>
+                                <span class="font-bold text-gray-900">${percentage}% <span class="text-gray-500 font-normal">(${count})</span></span>
+                            </li>`;
+                });
+            }
 
             html += `</ul></div></div>`;
             return html;
@@ -700,11 +717,11 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false // Legenda ditampilkan secara kustom di HTML
+                            display: false 
                         },
                         title: {
                             display: true,
-                            text: `Distribusi Jawaban (${totalResponses} Responden)`,
+                            text: `Distribusi Jawaban (${fieldData.totalCount} Responden mengisi)`,
                             font: { size: 14 }
                         }
                     }
@@ -715,7 +732,8 @@
         
         // 3. CHECKBOX DATA (Tabel Frekuensi)
         function renderCheckboxData(fieldData, index) {
-            let html = `<p class="text-sm text-gray-600 mb-4">Total Pilihan Terisi: <span class="font-semibold text-blue-600">${fieldData.totalCount}</span></p>`;
+            // TotalCount di sini adalah jumlah responden yang mengisi (memilih minimal 1 opsi)
+            let html = `<p class="text-sm text-gray-600 mb-4">Total Responden Mengisi: <span class="font-semibold text-blue-600">${fieldData.totalCount}</span></p>`;
             
             if (Object.keys(fieldData.data).length === 0) {
                 html += `<p class="text-gray-500 italic mt-2">Belum ada pilihan yang dipilih.</p>`;
@@ -727,7 +745,7 @@
                             <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/4">Pilihan</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Jumlah Responden</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Jumlah Pemilih</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">`;
