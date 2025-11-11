@@ -3,186 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin - Form CSR</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Login Admin - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        /* 1. SOFT GRADIENT BACKGROUND MIRIP REFERENSI (CYAN/BIRU MUDA) */
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f3f4f6; /* Warna latar belakang abu-abu muda */
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e5f3ff; /* Fallback */
+            background-image: linear-gradient(135deg, #e0f2fe 0%, #ffffff 80%); /* Light blue to white */
+            overflow: hidden;
         }
 
-        /* Gradasi tombol sesuai tema navbar */
-        .btn-gradient {
-            background-image: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
-        }
-        .btn-gradient:hover {
-            background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(30, 64, 175, 0.4);
-        }
-        
-        /* Gaya input form */
-        .form-input {
-            transition: all 0.2s;
-            border-color: #d1d5db;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Ring fokus biru */
+        /* 2. CARD UTAMA (MAIN CONTAINER) */
+        .main-card {
+            background-color: #fff;
+            border-radius: 2rem; /* Sudut lebih membulat */
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.2); /* Shadow yang lebih kuat */
+            width: 90%;
+            max-width: 1100px; /* Ukuran maksimal lebar */
+            height: 70vh; 
+            min-height: 550px;
+            display: flex;
+            flex-direction: column; 
+            overflow: hidden; 
         }
         
-        /* Background Top Bar yang menarik */
-        .top-bar-gradient {
-            background: linear-gradient(90deg, #1e40af, #3b82f6, #dc2626); /* Biru ke Merah */
-            height: 8px; /* Tinggi bar */
+        .btn-primary {
+            background-color: #1e40af; /* Biru gelap tema ASPIRA */
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #3b82f6; /* Biru terang tema ASPIRA */
+        }
+        
+        /* 3. SPLIT LAYOUT UNTUK KOLOM DI DALAM CARD */
+        @media (min-width: 1024px) {
+            .main-card {
+                flex-direction: row; /* Split screen di desktop */
+            }
+
+            /* Kolom Kiri (Branding/Informasi) - DIUBAH RASIO KE 45% */
+            .branding-section {
+                width: 45%; 
+                background: linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%); /* Light Blue Gradient */
+                padding: 4rem 2.5rem 4rem 4rem; /* Menyesuaikan padding kanan */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+                position: relative;
+            }
+            
+            /* Kolom Kanan (Form Login) - DIUBAH RASIO KE 55% */
+            .login-section {
+                width: 55%;
+                background-color: white; 
+                padding: 3rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Dekorasi sudut kolom branding agar terlihat melengkung seperti referensi */
+            .branding-section::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -35px; /* Sedikit digeser keluar untuk transisi mulus */
+                width: 70px; /* Diperlebar sedikit dari sebelumnya */
+                height: 100%;
+                background-color: white;
+                transform: skewX(-5deg);
+                z-index: 1;
+            }
+        }
+
+        /* Mobile Adjustments (Default stack) */
+        .branding-section {
+            padding: 2rem;
+            text-align: center;
+        }
+        .login-section {
+            padding: 2rem;
         }
     </style>
 </head>
 <body>
     
-    <!-- Top Bar (Gaya Navbar Atas) -->
-    <div class="top-bar-gradient fixed top-0 left-0 w-full z-10"></div>
-
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8 mt-4">
-            <!-- Container Utama Form Login -->
-            <div class="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-gray-100 transform transition-all duration-300 hover:shadow-2xl">
-                
-                <!-- Header Branding -->
-                <div class="flex flex-col items-center justify-center mb-8">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-md">
-                            <!-- Placeholder Logo -->
-                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-extrabold text-lg tracking-wider leading-tight text-gray-800">ASPIRA</span>
-                            <span class="font-bold text-sm text-white leading-tight">PERTA ARUN GAS</span>
-                        </div>
+    <div class="main-card">
+        
+        <div class="branding-section text-gray-800">
+            <div class="lg:mb-10 mb-4 w-full">
+                <div class="hidden lg:flex items-center space-x-4 mb-8">
+                    <div class="bg-white p-3 rounded-xl shadow-md">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
                     </div>
-                    <h2 class="mt-4 text-2xl font-extrabold text-gray-900">
-                        Masuk ke Dashboard Admin
-                    </h2>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Masukkan kredensial yang terdaftar di database.
-                    </p>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-blue-800">ASPIRA</h1>
                 </div>
-                
-                <!-- Form Login -->
-                <form id="loginForm" class="mt-8 space-y-6" onsubmit="handleLogin(event)">
-                    <input type="hidden" name="remember" value="true">
-                    
-                    <!-- Input Username/Email -->
-                    <div>
-                        <label for="username" class="sr-only">Username atau Email</label>
-                        <input id="username" name="username" type="text" autocomplete="username" required 
-                               class="form-input appearance-none rounded-xl relative block w-full px-4 py-3 border placeholder-gray-500 text-gray-900 focus:z-10 text-sm" 
-                               placeholder="Username">
+                <div class="flex lg:hidden items-center justify-center space-x-2">
+                    <div class="bg-white p-2 rounded-lg shadow-sm">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
                     </div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-blue-800">ASPIRA</h1>
+                </div>
+            </div>
+
+            <h2 class="text-4xl font-extrabold mb-4 lg:text-left text-center">
+                Cepat, Efisien dan Produktif
+            </h2>
+            <p class="text-lg mb-8 lg:text-left text-center text-gray-600">
+                ASPIRA adalah sistem yang dirancang untuk mengumpulkan, mengelola, dan menganalisis feedback karyawan dan pelanggan PT. PERTA ARUN GAS secara waktu-nyata (real-time).
+            </p>
+            
+            <div class="text-sm mt-auto text-gray-500 w-full lg:text-left text-center">
+                <span>Hak Cipta &copy; 2025 PT. PERTA ARUN GAS.</span>
+            </div>
+        </div>
+        
+        <div class="login-section">
+            <div class="w-full max-w-sm lg:max-w-md">
+                
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Login Admin</h2>
+                <p class="text-sm text-gray-500 mb-6">Akses ke Dashboard Analisis Anda.</p>
+                
+                <div id="alert-message" class="hidden p-3 mb-4 rounded-lg text-sm" role="alert"></div>
+
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
                     
-                    <!-- Input Password -->
                     <div>
-                        <label for="password" class="sr-only">Password</label>
-                        <input id="password" name="password" type="password" autocomplete="current-password" required 
-                               class="form-input appearance-none rounded-xl relative block w-full px-4 py-3 border placeholder-gray-500 text-gray-900 focus:z-10 text-sm" 
-                               placeholder="Password">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nama Pengguna</label>
+                        <div class="relative">
+                            <input type="text" id="username" name="username" required autocomplete="username"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                   placeholder="Masukkan nama pengguna Anda">
+                        </div>
                     </div>
 
-                    <!-- Tombol Login -->
                     <div>
-                        <button type="submit" id="loginBtn"
-                                class="btn-gradient group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                                <svg class="h-5 w-5 text-blue-300 group-hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                            Masuk
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi</label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required autocomplete="current-password"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                   placeholder="Masukkan kata sandi">
+                            <button type="button" id="toggle-password" class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility()">
+                                <i class="fas fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" 
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-sign-in-alt mr-2 mt-1"></i> Masuk
                         </button>
                     </div>
-                    
-                    <!-- Pesan Status -->
-                    <div id="statusMessage" class="text-center text-sm font-medium text-red-600 hidden"></div>
                 </form>
             </div>
-            
-            <p class="text-center text-xs text-gray-500">
-                &copy; <span id="currentYear"></span> PT Perta Arun Gas. All rights reserved.
-            </p>
         </div>
+        
     </div>
 
     <script>
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
 
-        // --- KONFIGURASI API LOGIN ---
-        // INI SUDAH DIBERIKAN PORT 8080 KHUSUS UNTUK LARAGON
-        const LOGIN_API_URL = 'http://localhost:8080/aspira/api.php?action=login'; 
-
-        function showMessage(message, isError = true) {
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.classList.remove('hidden');
-            statusMessage.classList.toggle('text-red-600', isError);
-            statusMessage.classList.toggle('text-green-600', !isError);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('adminRole')) {
+                window.location.href = 'index.html';
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert-message');
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            
+            if (type === 'error') {
+                alertDiv.classList.add('bg-red-100', 'text-red-700');
+            } else if (type === 'success') {
+                alertDiv.classList.add('bg-green-100', 'text-green-700');
+            }
+        }
+        
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('#toggle-password i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
         }
 
         async function handleLogin(event) {
             event.preventDefault();
+
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
             
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner inline-block w-4 h-4 border-2 border-white border-t-blue-500 rounded-full animate-spin mr-2"></span>Memeriksa...';
-            showMessage("Memverifikasi data...", false);
-
+            document.getElementById('alert-message').classList.add('hidden');
+            
             try {
-                // Kirim data login ke endpoint api.php?action=login
-                const response = await fetch(LOGIN_API_URL, {
+                const response = await fetch(`${API_BASE_URL}?action=login`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username, password: password })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
-
-                // Cek status HTTP. Jika 404, error-nya akan ditangkap di blok catch.
-                if (!response.ok) {
-                    throw new Error(`Koneksi Gagal. Status: ${response.status}`);
-                }
 
                 const result = await response.json();
 
-                if (result.success) {
-                    // Login Sukses! Simpan role dan username ke sessionStorage
+                if (response.ok && result.success) {
                     sessionStorage.setItem('adminRole', result.role);
                     sessionStorage.setItem('adminUsername', result.username);
 
-                    showMessage(`Login Berhasil! Role: ${result.role}. Mengarahkan...`, false);
-                    
-                    // Pengalihan ke Halaman Dashboard Admin
+                    showAlert('Login berhasil! Mengalihkan...', 'success');
                     setTimeout(() => {
                         window.location.href = 'index.html';
-                    }, 500); 
-                    
+                    }, 1000); 
+
                 } else {
-                    // Jika Gagal Login (dibalas oleh api.php dengan success: false)
-                    showMessage(result.message || "Gagal Masuk: Username atau Password salah.", true);
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = 'Masuk';
+                    showAlert(result.message || 'Login gagal. Periksa koneksi dan kredensial Anda.', 'error');
                 }
+
             } catch (error) {
-                // Jika Gagal Koneksi (misalnya api.php belum berjalan atau URL salah)
-                console.error('Error koneksi:', error);
-                showMessage(`Terjadi kesalahan koneksi server. Pastikan Laragon/API PHP berjalan di ${LOGIN_API_URL}.`, true);
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = 'Masuk';
+                console.error('Error saat login:', error);
+                showAlert('Terjadi kesalahan koneksi server. Pastikan API berjalan.', 'error');
             }
         }
     </script>
