@@ -657,10 +657,10 @@
 
             // --- 3. FINALISASI UI ---
             if (dbSuccess) {
-                let successMessage = `Terima kasih! Feedback Anda berhasil dikirim.`;
-                if (!n8nSuccess) {
-                    successMessage += ` (Catatan: Notifikasi Webhook n8n gagal terkirim, tetapi data sudah tersimpan di database.)`;
-                }
+                let successMessage = `Terima kasih! Feedback Anda berhasil dikirim, dan data anda sudah tersimpan di database.`;
+                // if (!n8nSuccess) {
+                //     successMessage += ` (Catatan: Notifikasi Webhook n8n gagal terkirim, tetapi data sudah tersimpan di database.)`;
+                // }
                 
                 displayStatus(successMessage, false);
                 form.reset(); 

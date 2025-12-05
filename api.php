@@ -44,12 +44,12 @@ if ($conn->connect_error) {
 // --- KONFIGURASI SMTP GMAIL ---
 $smtp_config = [
     'host'     => 'smtp.gmail.com',
-    'username' => 'fakhruzaandrian561@gmail.com', // EMAIL ADMIN
-    'password' => 'yvxjjyekxlykduwq',            // SANDI APLIKASI 16 KARAKTER
+    'username' => 'admcsr561@gmail.com', // EMAIL ADMIN
+    'password' => 'gnipfxmcpllngeic',            // SANDI APLIKASI 16 KARAKTER
     'port'     => 587,
     'secure'   => PHPMailer::ENCRYPTION_STARTTLS,
-    'admin_email' => 'fakhruzaandrian561@gmail.com', // PENERIMA NOTIFIKASI
-    'admin_name' => 'Admin System Aspira' 
+    'admin_email' => 'admcsr561@gmail.com', // PENERIMA NOTIFIKASI
+    'admin_name' => 'Admin Aspira' 
 ];
 
 // --- KONFIGURASI DAN SETUP BANNER ---
