@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Admin - ASPIRA</title>
+    <title>Dashboard Admin - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* PENTING: Memastikan HTML dan BODY menggunakan tinggi penuh untuk centering vertikal */
         html, body {
             height: 100%;
         }
@@ -29,21 +30,38 @@
         }
         .btn-gradient:hover {
             background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.6);
+            transform: translateY(-3px); /* Bergerak ke atas */
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.6); /* Shadow membesar */
         }
+        /* --- AKHIR ANIMASI TOMBOL UTAMA --- */
         
-        /* --- ANIMASI TOMBOL AKSI & PAGINASI --- */
-        .action-btn {
+        /* --- ANIMASI CARD KPI (.kpi-card) --- */
+        .kpi-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: default;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px); /* Card bergerak ke atas */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Shadow lebih menonjol */
+        }
+        /* --- AKHIR ANIMASI CARD KPI --- */
+        
+        /* --- ANIMASI TOMBOL AKSI & PAGINASI (New) --- */
+        .action-btn, .pagination-btn {
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            display: inline-flex;
+            display: inline-flex; /* Penting untuk centering ikon */
             align-items: center;
             justify-content: center;
         }
-        .action-btn:hover {
-            transform: translateY(-2px) scale(1.05);
+        .action-btn:hover, .pagination-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05); /* Sedikit naik dan membesar */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+        .action-btn:active, .pagination-btn:active:not(:disabled) {
+            transform: translateY(0px) scale(1);
+        }
+        /* --- AKHIR ANIMASI TOMBOL AKSI & PAGINASI --- */
+
 
         .sidebar-link.active {
             background-color: #1e40af;
@@ -51,7 +69,15 @@
             box-shadow: 0 4px 6px rgba(30, 64, 175, 0.4);
         }
 
-        /* Sidebar Toggle */
+        /* Centering for all custom modals */
+        #customDeleteModal, #customAlertModal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        #customDeleteModal .flex, #customAlertModal .flex {
+            align-items: center;
+            justify-content: center;
+        }
+
         .sidebar-container {
             width: 256px;
             transition: width 0.3s ease;
@@ -65,19 +91,17 @@
         .sidebar-container.collapsed .toggle-button-wrapper .fa-arrow-left {
             transform: rotate(180deg);
         }
+
         .toggle-button-wrapper {
             position: absolute;
             right: 0;
             top: 50%;
             transform: translateY(-50%) translateX(50%);
+            transition: transform 0.3s ease;
             z-index: 10;
         }
-
-        /* Modal styling */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 50;
+        .sidebar-container.collapsed .toggle-button-wrapper {
+            transform: translateY(-50%) translateX(50%);
         }
     </style>
 </head>
@@ -106,7 +130,7 @@
             </div>
 
             <nav class="flex-grow p-4 space-y-2">
-                <a href="dashboard.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                <a href="#" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
                     <i class="fas fa-home w-5 h-5 mr-3"></i>
                     <span class="sidebar-text">Dashboard</span>
                 </a>
@@ -118,7 +142,7 @@
                     <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
                     <span class="sidebar-text">Analisis & Laporan</span>
                 </a>
-                <a href="admin_management.html" id="admin-management-link" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
+                <a href="admin_management.html" id="admin-management-link" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
                     <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
                     <span class="sidebar-text">Manajemen Admin</span>
                 </a>
@@ -134,16 +158,29 @@
 
         <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                Manajemen Admin
+                Selamat Datang, <span id="admin-name" class="text-blue-600">Admin</span>!
             </h1>
-            <p class="text-gray-500 mb-8">Kelola akun administrator sistem. Hanya Super Admin yang dapat mengakses dan mengubah data ini.</p>
+            <p class="text-gray-500 mb-8">Ringkasan cepat dan daftar formulir yang perlu Anda kelola.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 flex flex-col kpi-card">
+                    <p class="text-sm text-gray-500 font-medium">Total Formulir Aktif</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-forms">...</p>
+                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 flex flex-col kpi-card">
+                    <p class="text-sm text-gray-500 font-medium">Total Respon Diterima</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-responses">...</p>
+                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
+                </div>
+            </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Daftar Akun Admin</h2>
-                    <button id="add-admin-btn" onclick="openAddModal()" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
-                        <i class="fas fa-user-plus mr-1"></i> Tambah Admin Baru
-                    </button>
+                    <h2 class="text-xl font-bold text-gray-800">Daftar Formulir CSR</h2>
+                    <a href="form_builder.html" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
+                        <i class="fas fa-plus mr-1"></i> Buat Form Baru
+                    </a>
                 </div>
                 <div class="h-1 w-16 bg-gradient-to-r from-blue-600 to-blue-500 mb-6 rounded-full"></div>
 
@@ -151,57 +188,26 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Aksi</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Judul Form</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Respon</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Tgl Dibuat</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-list" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data admin...</td></tr>
-                        </tbody>
+                        <tbody id="form-list" class="bg-white divide-y divide-gray-200">
+                            </tbody>
                     </table>
+                </div>
+                
+                <div class="mt-4 flex flex-col sm:flex-row justify-between items-center" id="pagination-controls">
+                    <span class="text-sm text-gray-500 mb-2 sm:mb-0" id="pagination-info"></span>
+                    <div class="flex space-x-2" id="pagination-buttons">
+                        </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="addAdminModal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold text-blue-600 mb-4" id="modal-title">Tambah Akun Admin</h3>
-            <form id="adminForm" onsubmit="handleAdminSubmit(event)">
-                <div class="space-y-4">
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                        <input type="text" id="username" name="username" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
-                        <select id="role" name="role" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                            <option value="Admin">Admin</option>
-                            <option value="Super Admin">Super Admin</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
-                    <button type="submit" id="submitAdminBtn" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
-                        Simpan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
     <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
@@ -214,12 +220,12 @@
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                             <h3 class="text-lg leading-6 font-bold text-gray-900" id="delete-modal-title">
-                                Konfirmasi Penghapusan Akun
+                                Konfirmasi Penghapusan
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500">
-                                    Anda yakin ingin menghapus akun admin: <strong id="admin-name-to-delete"></strong>?
-                                    Tindakan ini tidak dapat dibatalkan.
+                                    Anda yakin ingin menghapus formulir: <strong id="form-title-to-delete"></strong>?
+                                    Semua data respon akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
                                 </p>
                             </div>
                         </div>
@@ -240,7 +246,6 @@
             </div>
         </div>
     </div>
-
     <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
         <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAlertModal()"></div>
@@ -273,55 +278,41 @@
             </div>
         </div>
     </div>
-    
     <script>
         const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
-        let adminIdToDelete = null; 
-        let alertCallback = null;
-        let currentAdmin = null;
+        let allForms = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let formIdToDelete = null; 
+        let alertCallback = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
+            fetchFormList();
         });
-        
-        // =========================================================================
-        // SESSION AND UTILITY FUNCTIONS
-        // =========================================================================
 
         function checkSession() {
             const adminRole = sessionStorage.getItem('adminRole');
             const adminUsername = sessionStorage.getItem('adminUsername');
             
-            // 1. Pengecekan sesi dasar
             if (!adminRole) {
-                window.location.href = 'index.html'; 
-                return;
-            }
-
-            // 2. Pengecekan Super Admin
-            if (adminRole !== 'Super Admin') {
-                customAlert('Akses Ditolak. Halaman ini hanya untuk Super Admin.', 'error', () => {
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 500);
+                customAlert('Sesi berakhir, silakan login kembali.', 'error', () => {
+                    window.location.href = 'index.html';
                 });
                 return;
             }
-            
-            // 3. Jika Lolos, set user dan panggil fetch data
-            currentAdmin = { username: adminUsername, role: adminRole };
-            
-            // Catatan: Jika Anda ingin menampilkan nama admin di halaman ini, 
-            // pastikan Anda memiliki elemen dengan ID 'admin-name' di main content.
-            // const adminNameEl = document.getElementById('admin-name');
-            // if (adminNameEl) {
-            //      adminNameEl.textContent = adminUsername;
-            // }
 
-            // PENTING: Panggil fungsi fetch list HANYA setelah yakin user adalah Super Admin
-            fetchAdminList(); 
+            document.getElementById('admin-name').textContent = adminUsername;
+            
+            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
+            if (adminRole !== 'Super Admin') {
+                const adminLink = document.getElementById('admin-management-link');
+                if (adminLink) {
+                    adminLink.classList.add('hidden');
+                }
+            }
         }
-
+        
         function toggleSidebar(event) {
             if (event) event.stopPropagation();
             const sidebar = document.getElementById('sidebar');
@@ -331,13 +322,6 @@
             icon.classList.toggle('fa-arrow-right');
         }
 
-        function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'index.html';
-        }
-
-        // Custom Alert Modal Functions
         function customAlert(message, type = 'info', callback = null) {
             const modal = document.getElementById('customAlertModal');
             const iconContainer = document.getElementById('alert-icon-container');
@@ -384,10 +368,9 @@
             }, 300);
         }
 
-        // Delete Modal Functions
-        function openDeleteModal(adminId, adminUsername) {
-            adminIdToDelete = adminId;
-            document.getElementById('admin-name-to-delete').textContent = adminUsername;
+        function openDeleteModal(formId, formTitle) {
+            formIdToDelete = formId;
+            document.getElementById('form-title-to-delete').textContent = formTitle;
             const modal = document.getElementById('customDeleteModal');
             modal.classList.remove('hidden');
             setTimeout(() => modal.style.opacity = '1', 10);
@@ -399,152 +382,193 @@
             modal.style.opacity = '0';
             setTimeout(() => modal.classList.add('hidden'), 300);
             document.body.classList.remove('overflow-hidden');
-            adminIdToDelete = null;
+            formIdToDelete = null;
         }
 
-        // Add Admin Modal Functions
-        function openAddModal() {
-            document.getElementById('adminForm').reset();
-            document.getElementById('addAdminModal').classList.remove('hidden');
-            document.getElementById('addAdminModal').classList.add('flex');
-            document.getElementById('username').focus();
-        }
-
-        function closeAddModal() {
-            document.getElementById('addAdminModal').classList.add('hidden');
-            document.getElementById('addAdminModal').classList.remove('flex');
-        }
-
-
-        // =========================================================================
-        // CORE INTEGRATION LOGIC
-        // =========================================================================
-
-        async function fetchAdminList() {
-            const tableBody = document.getElementById('admin-list');
-            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data admin...</td></tr>`;
-
-            try {
-                const response = await fetch(`${API_BASE_URL}?action=get_admin_users`);
-                const result = await response.json();
-
-                if (response.ok && result.success && Array.isArray(result.users)) {
-                    renderAdminList(result.users);
-                } else {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">${result.message || 'Gagal memuat data pengguna admin. Periksa API.'}</td></tr>`;
-                }
-            } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error koneksi server saat mengambil data.</td></tr>`;
-                console.error('Fetch Admin List Error:', error);
-            }
-        }
-
-        function renderAdminList(users) {
-            const tableBody = document.getElementById('admin-list');
-            tableBody.innerHTML = '';
-
-            if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada akun admin terdaftar.</td></tr>`;
+        function copyToClipboard(button, textToCopy) {
+            if (!navigator.clipboard) {
+                customAlert('Browser Anda tidak mendukung fitur salin.', 'error');
                 return;
             }
 
-            users.forEach(user => {
-                const isCurrentUser = user.username === currentAdmin.username;
-                // Mengasumsikan is_active TRUE karena tidak ada kolom status di DB
-                const isActive = user.is_active !== false; 
-                
-                const statusClass = isActive ? 'text-green-600' : 'text-red-500';
-                const statusText = isActive ? 'Aktif' : 'Nonaktif';
-                
-                // Gunakan user_id sebagai identifier
-                const adminId = user.user_id; 
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalIcon = button.innerHTML;
+                const originalClasses = button.className;
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${isCurrentUser ? 'text-blue-600 font-bold' : 'text-gray-900'}">${user.username} ${isCurrentUser ? '(Anda)' : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${user.email || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-gray-800">${user.role}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${statusClass}">${statusText}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-center space-x-2">
-                        ${isCurrentUser ?
-                            `<span class="text-gray-400 italic">Tidak ada aksi</span>`
-                            :
-                            `<button onclick="deleteAdminConfirmation(${adminId}, '${user.username}')" class="text-red-600 hover:text-red-900 action-btn w-7 h-7 rounded-full" title="Hapus Admin">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>`
-                        }
-                    </td>
-                `;
-                tableBody.appendChild(row);
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.classList.remove('text-blue-500', 'hover:text-blue-700');
+                button.classList.add('text-green-500', 'hover:text-green-700');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.classList.remove('text-green-500', 'hover:text-green-700');
+                    button.classList.add('text-blue-500', 'hover:text-blue-700');
+                }, 2000);
+                
+            }).catch(err => {
+                console.error('Gagal menyalin link: ', err);
+                customAlert('Gagal menyalin link ke clipboard.', 'error');
             });
         }
-        
-        async function handleAdminSubmit(event) {
-            event.preventDefault();
-            const form = event.target;
-            const submitBtn = document.getElementById('submitAdminBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
-            
-            const formData = {
-                username: form.username.value,
-                email: form.email.value, 
-                password: form.password.value,
-                role: form.role.value
-            };
 
-            closeAddModal();
-
+        async function fetchFormList() {
             try {
-                const response = await fetch(`${API_BASE_URL}?action=add_admin_user`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
+                const response = await fetch(`${API_BASE_URL}?action=get_forms`);
                 const result = await response.json();
-                
+
                 if (response.ok && result.success) {
-                    customAlert(`Akun admin '${formData.username}' berhasil ditambahkan.`, 'success', fetchAdminList);
+                    allForms = result.forms.map(form => ({
+                        ...form,
+                        form_id: form.form_id, 
+                        responses: form.responses_count || 0, 
+                        // Pastikan ini sesuai dengan domain/struktur folder Anda
+                        link: `form_public.html?id=${form.form_id}`, 
+                        created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+                    }));
+                    
+                    document.getElementById('total-forms').textContent = allForms.length;
+                    const totalResponses = allForms.reduce((sum, form) => sum + (parseInt(form.responses) || 0), 0);
+                    document.getElementById('total-responses').textContent = totalResponses;
+                    
+                    renderFormList(currentPage);
                 } else {
-                    customAlert(`Gagal menambah admin: ${result.message || 'Error tidak diketahui.'}`, 'error', fetchAdminList);
+                    console.error('Gagal mengambil data formulir:', result.message);
+                    document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Gagal memuat data formulir.</td></tr>`;
                 }
             } catch (error) {
-                console.error('Add Admin Error:', error);
-                customAlert('Terjadi kesalahan koneksi saat menambah admin.', 'error', fetchAdminList);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Simpan';
+                console.error('Terjadi kesalahan koneksi:', error);
+                document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error koneksi server.</td></tr>`;
             }
         }
 
+        function renderFormList(page) {
+            const tableBody = document.getElementById('form-list');
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedItems = allForms.slice(startIndex, endIndex);
 
-        function deleteAdminConfirmation(adminId, adminUsername) {
-            openDeleteModal(adminId, adminUsername);
+            tableBody.innerHTML = '';
+            if (allForms.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Belum ada formulir yang dibuat.</td></tr>`;
+            } else {
+                paginatedItems.forEach(form => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${form.form_title}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold text-center">${form.responses}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${form.created_at}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2 flex justify-center">
+                            
+                            <button onclick="copyToClipboard(this, '${window.location.origin}/aspira/${form.link}')" class="text-blue-500 hover:text-blue-700 action-btn w-7 h-7 rounded-full" title="Salin Link Publik">
+                                <i class="fas fa-copy"></i>
+                            </button>
+
+                            <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900 action-btn w-7 h-7 rounded-full" title="Analisis Respon">
+                                <i class="fas fa-chart-bar"></i>
+                            </a>
+
+                            <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900 action-btn w-7 h-7 rounded-full" title="Edit Formulir">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 action-btn w-7 h-7 rounded-full" title="Hapus Formulir">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            renderPaginationButtons();
+        }
+
+        function renderPaginationButtons() {
+            const totalPages = Math.ceil(allForms.length / itemsPerPage);
+            const paginationButtonsContainer = document.getElementById('pagination-buttons');
+            const paginationInfo = document.getElementById('pagination-info');
+            paginationButtonsContainer.innerHTML = '';
+
+            if (allForms.length === 0) {
+                paginationInfo.textContent = `Menampilkan 0 dari 0 Formulir`;
+                return;
+            }
+            paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, allForms.length)} hingga ${Math.min(currentPage * itemsPerPage, allForms.length)} dari ${allForms.length} Formulir`;
+
+            // --- Logika Tombol 'Sebelumnya' ---
+            if (currentPage > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Sebelumnya';
+                prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
+                prevButton.onclick = () => {
+                    currentPage--;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(prevButton);
+            }
+            // --- Akhir Logika 'Sebelumnya' ---
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100', 'pagination-btn');
+                if (i === currentPage) {
+                    pageButton.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'hover:shadow-none'); 
+                } else {
+                    pageButton.classList.add('text-gray-700');
+                }
+                pageButton.onclick = () => {
+                    currentPage = i;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(pageButton);
+            }
+
+            // --- Logika Tombol 'Selanjutnya' ---
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Selanjutnya';
+                nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
+                nextButton.onclick = () => {
+                    currentPage++;
+                    renderFormList(currentPage);
+                };
+                paginationButtonsContainer.appendChild(nextButton);
+            }
+            // --- Akhir Logika 'Selanjutnya' ---
+        }
+
+        function deleteFormConfirmation(formId, formTitle) {
+            openDeleteModal(formId, formTitle);
         }
 
         async function confirmDelete() {
-            const id = adminIdToDelete;
+            const id = formIdToDelete;
             if (!id) return;
             
             closeDeleteModal(); 
 
             try {
-                const response = await fetch(`${API_BASE_URL}?action=delete_admin_user&id=${id}`, {
+                const response = await fetch(`${API_BASE_URL}?action=delete_form&id=${id}`, {
                     method: 'DELETE'
                 });
 
                 const result = await response.json();
                 
                 if (response.ok && result.success) {
-                    customAlert(`Akun admin berhasil dihapus.`, 'success', fetchAdminList); 
+                    customAlert(`Formulir #${id} berhasil dihapus.`, 'success', fetchFormList); 
                 } else {
-                    customAlert(`Gagal menghapus akun: ${result.message || 'Error tidak diketahui.'}`, 'error', fetchAdminList);
+                    customAlert(`Gagal menghapus formulir: ${result.message || 'Error tidak diketahui.'}`, 'error');
                 }
             } catch (error) {
                 console.error('Delete error:', error);
-                customAlert('Terjadi kesalahan koneksi saat menghapus akun admin.', 'error', fetchAdminList);
+                customAlert('Terjadi kesalahan koneksi saat menghapus formulir.', 'error');
             }
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('adminRole');
+            sessionStorage.removeItem('adminUsername');
+            window.location.href = 'index.html';
         }
     </script>
 </body>

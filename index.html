@@ -3,572 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - ASPIRA</title>
+    <title>Login Admin - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        /* PENTING: Memastikan HTML dan BODY menggunakan tinggi penuh untuk centering vertikal */
-        html, body {
-            height: 100%;
-        }
-        
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        /* 1. SOFT GRADIENT BACKGROUND MIRIP REFERENSI (CYAN/BIRU MUDA) */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-
-        .navbar-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        }
-
-        /* --- ANIMASI TOMBOL UTAMA (.btn-gradient) --- */
-        .btn-gradient {
-            background-image: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
-        }
-        .btn-gradient:hover {
-            background-image: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            transform: translateY(-3px); /* Bergerak ke atas */
-            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.6); /* Shadow membesar */
-        }
-        /* --- AKHIR ANIMASI TOMBOL UTAMA --- */
-        
-        /* --- ANIMASI CARD KPI (.kpi-card) --- */
-        .kpi-card {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            cursor: default;
-        }
-        .kpi-card:hover {
-            transform: translateY(-5px); /* Card bergerak ke atas */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Shadow lebih menonjol */
-        }
-        /* --- AKHIR ANIMASI CARD KPI --- */
-        
-        /* --- ANIMASI TOMBOL AKSI & PAGINASI (New) --- */
-        .action-btn, .pagination-btn {
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            display: inline-flex; /* Penting untuk centering ikon */
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
             align-items: center;
             justify-content: center;
-        }
-        .action-btn:hover, .pagination-btn:hover:not(:disabled) {
-            transform: translateY(-2px) scale(1.05); /* Sedikit naik dan membesar */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .action-btn:active, .pagination-btn:active:not(:disabled) {
-            transform: translateY(0px) scale(1);
-        }
-        /* --- AKHIR ANIMASI TOMBOL AKSI & PAGINASI --- */
-
-
-        .sidebar-link.active {
-            background-color: #1e40af;
-            color: #fff;
-            box-shadow: 0 4px 6px rgba(30, 64, 175, 0.4);
+            background-color: #e5f3ff; /* Fallback */
+            background-image: linear-gradient(135deg, #e0f2fe 0%, #ffffff 80%); /* Light blue to white */
+            overflow: hidden;
         }
 
-        /* Centering for all custom modals */
-        #customDeleteModal, #customAlertModal {
-            transition: opacity 0.3s ease-in-out;
+        /* 2. CARD UTAMA (MAIN CONTAINER) */
+        .main-card {
+            background-color: #fff;
+            border-radius: 2rem; /* Sudut lebih membulat */
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.2); /* Shadow yang lebih kuat */
+            width: 90%;
+            max-width: 1100px; /* Ukuran maksimal lebar */
+            height: 70vh; 
+            min-height: 550px;
+            display: flex;
+            flex-direction: column; 
+            overflow: hidden; 
         }
-        #customDeleteModal .flex, #customAlertModal .flex {
-            align-items: center;
-            justify-content: center;
+        
+        .btn-primary {
+            background-color: #1e40af; /* Biru gelap tema ASPIRA */
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #3b82f6; /* Biru terang tema ASPIRA */
+        }
+        
+        /* 3. SPLIT LAYOUT UNTUK KOLOM DI DALAM CARD */
+        @media (min-width: 1024px) {
+            .main-card {
+                flex-direction: row; /* Split screen di desktop */
+            }
+
+            /* Kolom Kiri (Branding/Informasi) - DIUBAH RASIO KE 45% */
+            .branding-section {
+                width: 45%; 
+                background: linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%); /* Light Blue Gradient */
+                padding: 4rem 2.5rem 4rem 4rem; /* Menyesuaikan padding kanan */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+                position: relative;
+            }
+            
+            /* Kolom Kanan (Form Login) - DIUBAH RASIO KE 55% */
+            .login-section {
+                width: 55%;
+                background-color: white; 
+                padding: 3rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Dekorasi sudut kolom branding agar terlihat melengkung seperti referensi */
+            .branding-section::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -35px; /* Sedikit digeser keluar untuk transisi mulus */
+                width: 70px; /* Diperlebar sedikit dari sebelumnya */
+                height: 100%;
+                background-color: white;
+                transform: skewX(-5deg);
+                z-index: 1;
+            }
         }
 
-        .sidebar-container {
-            width: 256px;
-            transition: width 0.3s ease;
+        /* Mobile Adjustments (Default stack) */
+        .branding-section {
+            padding: 2rem;
+            text-align: center;
         }
-        .sidebar-container.collapsed {
-            width: 80px;
-        }
-        .sidebar-container.collapsed .sidebar-text {
-            display: none;
-        }
-        .sidebar-container.collapsed .toggle-button-wrapper .fa-arrow-left {
-            transform: rotate(180deg);
-        }
-
-        .toggle-button-wrapper {
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%) translateX(50%);
-            transition: transform 0.3s ease;
-            z-index: 10;
-        }
-        .sidebar-container.collapsed .toggle-button-wrapper {
-            transform: translateY(-50%) translateX(50%);
+        .login-section {
+            padding: 2rem;
         }
     </style>
 </head>
 <body>
     
-    <div class="flex h-screen bg-gray-50">
+    <div class="main-card">
         
-        <aside id="sidebar" class="sidebar-container navbar-gradient text-white flex flex-col relative h-full">
-            
-            <div class="toggle-button-wrapper">
-                <button onclick="toggleSidebar(event)" class="w-8 h-8 flex items-center justify-center p-2 rounded-full navbar-gradient text-white shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <i id="toggle-icon" class="fas fa-arrow-left text-sm transition-transform duration-300"></i>
-                </button>
-            </div>
-
-            <div class="flex items-center space-x-3 p-4 border-b border-blue-700/50">
-                <div class="flex-shrink-0">
-                    <div class="bg-white p-2 rounded-lg border border-gray-200">
+        <div class="branding-section text-gray-800">
+            <div class="lg:mb-10 mb-4 w-full">
+                <div class="hidden lg:flex items-center space-x-4 mb-8">
+                    <div class="bg-white p-3 rounded-xl shadow-md">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
+                    </div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-blue-800">ASPIRA</h1>
+                </div>
+                <div class="flex lg:hidden items-center justify-center space-x-2">
+                    <div class="bg-white p-2 rounded-lg shadow-sm">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1M9 11h1M9 15h1m10-14v2m0 2v2m0 2v2m0 2v2m0 2v2m0 2v2m0-20H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V3a2 2 0 00-2-2z"></path></svg>
                     </div>
-                </div>
-                <div class="flex flex-col sidebar-text flex-grow">
-                    <span class="font-extrabold text-sm tracking-wider leading-tight text-white">ASPIRA</span>
-                    <span class="font-bold text-xs text-white leading-tight">PERTA ARUN GAS</span>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-blue-800">ASPIRA</h1>
                 </div>
             </div>
 
-            <nav class="flex-grow p-4 space-y-2">
-                <a href="#" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
-                    <i class="fas fa-home w-5 h-5 mr-3"></i>
-                    <span class="sidebar-text">Dashboard</span>
-                </a>
-                <a href="form_builder.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
-                    <i class="fas fa-magic w-5 h-5 mr-3"></i>
-                    <span class="sidebar-text">Form Builder</span>
-                </a>
-                <a href="analysis_report.html" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
-                    <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
-                    <span class="sidebar-text">Analisis & Laporan</span>
-                </a>
-                <a href="admin_management.html" id="admin-management-link" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
-                    <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
-                    <span class="sidebar-text">Manajemen Admin</span>
-                </a>
-            </nav>
-
-            <div class="p-4 border-t border-blue-700/50">
-                <button class="w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl text-white hover:bg-red-500 hover:text-white transition-colors duration-200" onclick="logout()">
-                    <i class="fas fa-sign-out-alt w-5 h-5 mr-2"></i>
-                    <span class="sidebar-text">Logout</span>
-                </button>
+            <h2 class="text-4xl font-extrabold mb-4 lg:text-left text-center">
+                Cepat, Efisien dan Produktif
+            </h2>
+            <p class="text-lg mb-8 lg:text-left text-center text-gray-600">
+                ASPIRA adalah sistem yang dirancang untuk mengumpulkan, mengelola, dan menganalisis feedback karyawan dan pelanggan PT. PERTA ARUN GAS secara waktu-nyata (real-time).
+            </p>
+            
+            <div class="text-sm mt-auto text-gray-500 w-full lg:text-left text-center">
+                <span>Hak Cipta &copy; 2025 PT. PERTA ARUN GAS.</span>
             </div>
-        </aside>
-
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                Selamat Datang, <span id="admin-name" class="text-blue-600">Admin</span>!
-            </h1>
-            <p class="text-gray-500 mb-8">Ringkasan cepat dan daftar formulir yang perlu Anda kelola.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 flex flex-col kpi-card">
-                    <p class="text-sm text-gray-500 font-medium">Total Formulir Aktif</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-forms">...</p>
-                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500 flex flex-col kpi-card">
-                    <p class="text-sm text-gray-500 font-medium">Total Respon Diterima</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1" id="total-responses">...</p>
-                    <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up"></i> Tampilan data sementara</p>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Daftar Formulir CSR</h2>
-                    <a href="form_builder.html" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
-                        <i class="fas fa-plus mr-1"></i> Buat Form Baru
-                    </a>
-                </div>
-                <div class="h-1 w-16 bg-gradient-to-r from-blue-600 to-blue-500 mb-6 rounded-full"></div>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Judul Form</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Respon</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Tgl Dibuat</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="form-list" class="bg-white divide-y divide-gray-200">
-                            </tbody>
-                    </table>
-                </div>
+        </div>
+        
+        <div class="login-section">
+            <div class="w-full max-w-sm lg:max-w-md">
                 
-                <div class="mt-4 flex flex-col sm:flex-row justify-between items-center" id="pagination-controls">
-                    <span class="text-sm text-gray-500 mb-2 sm:mb-0" id="pagination-info"></span>
-                    <div class="flex space-x-2" id="pagination-buttons">
-                        </div>
-                </div>
-            </div>
-        </main>
-    </div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Login Admin</h2>
+                <p class="text-sm text-gray-500 mb-6">Akses ke Dashboard Analisis Anda.</p>
+                
+                <div id="alert-message" class="hidden p-3 mb-4 rounded-lg text-sm" role="alert"></div>
 
-    <div id="customDeleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="opacity: 0;">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDeleteModal()"></div>
-
-            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <i class="fas fa-trash-alt text-red-600"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="delete-modal-title">
-                                Konfirmasi Penghapusan
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500">
-                                    Anda yakin ingin menghapus formulir: <strong id="form-title-to-delete"></strong>?
-                                    Semua data respon akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
-                                </p>
-                            </div>
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+                    
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nama Pengguna</label>
+                        <div class="relative">
+                            <input type="text" id="username" name="username" required autocomplete="username"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                   placeholder="Masukkan nama pengguna Anda">
                         </div>
                     </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                            onclick="confirmDelete()">
-                        Hapus Permanen
-                    </button>
-                    <button type="button" 
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
-                            onclick="closeDeleteModal()">
-                        Batal
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="customAlertModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title-alert" role="dialog" aria-modal="true" style="opacity: 0;">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAlertModal()"></div>
 
-            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10" id="alert-icon-container">
-                            <i class="fas fa-info-circle text-yellow-600" id="alert-icon"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="alert-title">
-                                Informasi
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500" id="alert-message">
-                                    Pesan default.
-                                </p>
-                            </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi</label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required autocomplete="current-password"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                   placeholder="Masukkan kata sandi">
+                            <button type="button" id="toggle-password" class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility()">
+                                <i class="fas fa-eye text-sm"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                            onclick="closeAlertModal()">
-                        OK
-                    </button>
-                </div>
+
+                    <div class="pt-4">
+                        <button type="submit" 
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-sign-in-alt mr-2 mt-1"></i> Masuk
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+        
     </div>
+
     <script>
         const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
-        let allForms = [];
-        let currentPage = 1;
-        const itemsPerPage = 5;
-        let formIdToDelete = null; 
-        let alertCallback = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
-            fetchFormList();
+            if (sessionStorage.getItem('adminRole')) {
+                window.location.href = 'dashboard.html';
+            }
         });
-
-        function checkSession() {
-            const adminRole = sessionStorage.getItem('adminRole');
-            const adminUsername = sessionStorage.getItem('adminUsername');
-            
-            if (!adminRole) {
-                customAlert('Sesi berakhir, silakan login kembali.', 'error', () => {
-                    window.location.href = 'admin_login.html';
-                });
-                return;
-            }
-
-            document.getElementById('admin-name').textContent = adminUsername;
-            
-            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
-            if (adminRole !== 'Super Admin') {
-                const adminLink = document.getElementById('admin-management-link');
-                if (adminLink) {
-                    adminLink.classList.add('hidden');
-                }
-            }
-        }
         
-        function toggleSidebar(event) {
-            if (event) event.stopPropagation();
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-            const icon = document.getElementById('toggle-icon');
-            icon.classList.toggle('fa-arrow-left');
-            icon.classList.toggle('fa-arrow-right');
-        }
-
-        function customAlert(message, type = 'info', callback = null) {
-            const modal = document.getElementById('customAlertModal');
-            const iconContainer = document.getElementById('alert-icon-container');
-            const icon = document.getElementById('alert-icon');
-            const title = document.getElementById('alert-title');
-            const msg = document.getElementById('alert-message');
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert-message');
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
             
-            alertCallback = callback;
-
-            msg.textContent = message;
-            
-            iconContainer.className = 'mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10';
-            icon.className = 'fas';
-
             if (type === 'error') {
-                iconContainer.classList.add('bg-red-100');
-                icon.classList.add('fa-exclamation-triangle', 'text-red-600');
-                title.textContent = 'Terjadi Kesalahan';
+                alertDiv.classList.add('bg-red-100', 'text-red-700');
             } else if (type === 'success') {
-                iconContainer.classList.add('bg-green-100');
-                icon.classList.add('fa-check-circle', 'text-green-600');
-                title.textContent = 'Berhasil';
-            } else { 
-                iconContainer.classList.add('bg-yellow-100');
-                icon.classList.add('fa-info-circle', 'text-yellow-600');
-                title.textContent = 'Informasi';
-            }
-
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.style.opacity = '1', 10);
-            document.body.classList.add('overflow-hidden');
-        }
-
-        function closeAlertModal() {
-            const modal = document.getElementById('customAlertModal');
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-                if (alertCallback) {
-                    alertCallback();
-                    alertCallback = null;
-                }
-            }, 300);
-        }
-
-        function openDeleteModal(formId, formTitle) {
-            formIdToDelete = formId;
-            document.getElementById('form-title-to-delete').textContent = formTitle;
-            const modal = document.getElementById('customDeleteModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.style.opacity = '1', 10);
-            document.body.classList.add('overflow-hidden');
-        }
-
-        function closeDeleteModal() {
-            const modal = document.getElementById('customDeleteModal');
-            modal.style.opacity = '0';
-            setTimeout(() => modal.classList.add('hidden'), 300);
-            document.body.classList.remove('overflow-hidden');
-            formIdToDelete = null;
-        }
-
-        function copyToClipboard(button, textToCopy) {
-            if (!navigator.clipboard) {
-                customAlert('Browser Anda tidak mendukung fitur salin.', 'error');
-                return;
-            }
-
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                const originalIcon = button.innerHTML;
-                const originalClasses = button.className;
-
-                button.innerHTML = '<i class="fas fa-check"></i>';
-                button.classList.remove('text-blue-500', 'hover:text-blue-700');
-                button.classList.add('text-green-500', 'hover:text-green-700');
-                
-                setTimeout(() => {
-                    button.innerHTML = originalIcon;
-                    button.classList.remove('text-green-500', 'hover:text-green-700');
-                    button.classList.add('text-blue-500', 'hover:text-blue-700');
-                }, 2000);
-                
-            }).catch(err => {
-                console.error('Gagal menyalin link: ', err);
-                customAlert('Gagal menyalin link ke clipboard.', 'error');
-            });
-        }
-
-        async function fetchFormList() {
-            try {
-                const response = await fetch(`${API_BASE_URL}?action=get_forms`);
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    allForms = result.forms.map(form => ({
-                        ...form,
-                        form_id: form.form_id, 
-                        responses: form.responses_count || 0, 
-                        // Pastikan ini sesuai dengan domain/struktur folder Anda
-                        link: `form_public.html?id=${form.form_id}`, 
-                        created_at: new Date(form.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
-                    }));
-                    
-                    document.getElementById('total-forms').textContent = allForms.length;
-                    const totalResponses = allForms.reduce((sum, form) => sum + (parseInt(form.responses) || 0), 0);
-                    document.getElementById('total-responses').textContent = totalResponses;
-                    
-                    renderFormList(currentPage);
-                } else {
-                    console.error('Gagal mengambil data formulir:', result.message);
-                    document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Gagal memuat data formulir.</td></tr>`;
-                }
-            } catch (error) {
-                console.error('Terjadi kesalahan koneksi:', error);
-                document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error koneksi server.</td></tr>`;
-            }
-        }
-
-        function renderFormList(page) {
-            const tableBody = document.getElementById('form-list');
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedItems = allForms.slice(startIndex, endIndex);
-
-            tableBody.innerHTML = '';
-            if (allForms.length === 0) {
-                 tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Belum ada formulir yang dibuat.</td></tr>`;
-            } else {
-                paginatedItems.forEach(form => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${form.form_title}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold text-center">${form.responses}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${form.created_at}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2 flex justify-center">
-                            
-                            <button onclick="copyToClipboard(this, '${window.location.origin}/aspira/${form.link}')" class="text-blue-500 hover:text-blue-700 action-btn w-7 h-7 rounded-full" title="Salin Link Publik">
-                                <i class="fas fa-copy"></i>
-                            </button>
-
-                            <a href="analysis_report.html?id=${form.form_id}" class="text-green-600 hover:text-green-900 action-btn w-7 h-7 rounded-full" title="Analisis Respon">
-                                <i class="fas fa-chart-bar"></i>
-                            </a>
-
-                            <a href="form_builder.html?id=${form.form_id}" class="text-blue-600 hover:text-blue-900 action-btn w-7 h-7 rounded-full" title="Edit Formulir">
-                                <i class="fas fa-edit"></i>
-                            </a>
-
-                            <button onclick="deleteFormConfirmation(${form.form_id}, '${form.form_title.replace(/'/g, "\\'")}')" class="text-red-600 hover:text-red-900 action-btn w-7 h-7 rounded-full" title="Hapus Formulir">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-            renderPaginationButtons();
-        }
-
-        function renderPaginationButtons() {
-            const totalPages = Math.ceil(allForms.length / itemsPerPage);
-            const paginationButtonsContainer = document.getElementById('pagination-buttons');
-            const paginationInfo = document.getElementById('pagination-info');
-            paginationButtonsContainer.innerHTML = '';
-
-            if (allForms.length === 0) {
-                paginationInfo.textContent = `Menampilkan 0 dari 0 Formulir`;
-                return;
-            }
-            paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, allForms.length)} hingga ${Math.min(currentPage * itemsPerPage, allForms.length)} dari ${allForms.length} Formulir`;
-
-            // --- Logika Tombol 'Sebelumnya' ---
-            if (currentPage > 1) {
-                const prevButton = document.createElement('button');
-                prevButton.textContent = 'Sebelumnya';
-                prevButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
-                prevButton.onclick = () => {
-                    currentPage--;
-                    renderFormList(currentPage);
-                };
-                paginationButtonsContainer.appendChild(prevButton);
-            }
-            // --- Akhir Logika 'Sebelumnya' ---
-
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'hover:bg-gray-100', 'pagination-btn');
-                if (i === currentPage) {
-                    pageButton.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'hover:shadow-none'); 
-                } else {
-                    pageButton.classList.add('text-gray-700');
-                }
-                pageButton.onclick = () => {
-                    currentPage = i;
-                    renderFormList(currentPage);
-                };
-                paginationButtonsContainer.appendChild(pageButton);
-            }
-
-            // --- Logika Tombol 'Selanjutnya' ---
-            if (currentPage < totalPages) {
-                const nextButton = document.createElement('button');
-                nextButton.textContent = 'Selanjutnya';
-                nextButton.classList.add('px-3', 'py-1', 'border', 'border-gray-300', 'rounded-lg', 'text-sm', 'text-gray-700', 'hover:bg-gray-100', 'pagination-btn');
-                nextButton.onclick = () => {
-                    currentPage++;
-                    renderFormList(currentPage);
-                };
-                paginationButtonsContainer.appendChild(nextButton);
-            }
-            // --- Akhir Logika 'Selanjutnya' ---
-        }
-
-        function deleteFormConfirmation(formId, formTitle) {
-            openDeleteModal(formId, formTitle);
-        }
-
-        async function confirmDelete() {
-            const id = formIdToDelete;
-            if (!id) return;
-            
-            closeDeleteModal(); 
-
-            try {
-                const response = await fetch(`${API_BASE_URL}?action=delete_form&id=${id}`, {
-                    method: 'DELETE'
-                });
-
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    customAlert(`Formulir #${id} berhasil dihapus.`, 'success', fetchFormList); 
-                } else {
-                    customAlert(`Gagal menghapus formulir: ${result.message || 'Error tidak diketahui.'}`, 'error');
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                customAlert('Terjadi kesalahan koneksi saat menghapus formulir.', 'error');
+                alertDiv.classList.add('bg-green-100', 'text-green-700');
             }
         }
         
-        function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'admin_login.html';
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('#toggle-password i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            document.getElementById('alert-message').classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    sessionStorage.setItem('adminRole', result.role);
+                    sessionStorage.setItem('adminUsername', result.username);
+
+                    showAlert('Login berhasil! Mengalihkan...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000); 
+
+                } else {
+                    showAlert(result.message || 'Login gagal. Periksa koneksi dan kredensial Anda.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error saat login:', error);
+                showAlert('Terjadi kesalahan koneksi server. Pastikan API berjalan.', 'error');
+            }
         }
     </script>
 </body>
