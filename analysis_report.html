@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisis & Laporan - ASPIRA</title>
+    <title>Analisis Formulir - ASPIRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css"> 
@@ -301,7 +301,7 @@
                 </a>
                 <a href="analysis_report.html" class="sidebar-link active flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
                     <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
-                    <span class="sidebar-text">Analisis & Laporan</span>
+                    <span class="sidebar-text">Analisis Formulir</span>
                 </a>
                 <a href="admin_management.html" id="admin-management-link" class="sidebar-link flex items-center p-3 rounded-xl transition-colors duration-200 hover:bg-blue-700">
                     <i class="fas fa-users-cog w-5 h-5 mr-3"></i>
@@ -321,7 +321,7 @@
             
             <div class="flex justify-between items-start mb-6">
                 <h1 class="text-3xl font-bold text-gray-800">
-                    Analisis Feedback
+                    Analisis Formulir
                 </h1>
                 
                 <div id="form-selection" class="bg-white p-4 rounded-xl shadow-md border border-gray-100 flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 card-shadow-hover">
@@ -359,9 +359,6 @@
                     </div>
 
                     <div class="flex space-x-3">
-                         <button onclick="exportToExcel()" class="bg-green-600 text-white font-medium py-2 px-4 rounded-xl text-sm hover:bg-green-700 transition duration-150 transition-smooth transition-transform-hover">
-                            <i class="fas fa-file-excel mr-1"></i> Export Excel
-                        </button>
                         <button onclick="scrollToGlobalAnalysis()" class="bg-blue-600 text-white font-medium py-2 px-4 rounded-xl text-sm hover:bg-blue-700 transition duration-150 transition-smooth transition-transform-hover">
                             <i class="fas fa-chart-line mr-1"></i> Lihat Analisis Global
                         </button>
@@ -537,7 +534,8 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    document.getElementById('report-title').textContent = `Laporan Analisis: ${result.form_title}`;
+                    // JUDUL DIUBAH: Analisis <nama formulir>
+                    document.getElementById('report-title').textContent = `Analisis ${result.form_title}`;
                     document.getElementById('total-responses').textContent = result.total_responses;
                     
                     allResponses = result.responses;
@@ -565,7 +563,7 @@
         }
         
         // =========================================================================
-        // FUNGSI UTAMA ANALISIS GLOBAL (FINAL)
+        // FUNGSI UTAMA ANALISIS GLOBAL (FINAL DENGAN LOGIKA TIE-BREAKER)
         // =========================================================================
 
         function generateGlobalAnalysis(aggregatedDataMap, totalResponses, formTitle, fieldsDefinition) {
@@ -604,9 +602,14 @@
                     const totalAnswered = fieldData.totalCount;
 
                     if (totalAnswered > 0) {
-                        const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
-                        const mayoritas = sorted[0];
-                        const persentaseMayoritas = ((mayoritas[1] / totalAnswered) * 100).toFixed(1);
+                        const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+                        const maxFreq = entries[0][1];
+                        
+                        // Menangani data seri (Tie-breaker)
+                        const winners = entries.filter(e => e[1] === maxFreq);
+                        const names = winners.map(e => `'${e[0]}'`).join(' dan ');
+                        const percentage = ((maxFreq / totalAnswered) * 100).toFixed(1);
+                        const suffix = winners.length > 1 ? `masing-masing ${maxFreq}` : `${maxFreq}`;
                         
                         analysisBody += `
                             <div class="analysis-point">
@@ -615,24 +618,47 @@
                                     <span class="text-sm font-normal text-gray-600">(${totalAnswered} Responden Mengisi)</span>
                                 </p>
                                 <p class="ml-4 text-sm text-gray-700">
-                                    Frekuensi tertinggi terletak pada opsi '${mayoritas[0]}' dengan persentase ${persentaseMayoritas}% (yaitu ${mayoritas[1]} responden).
+                                    Frekuensi tertinggi terletak pada opsi ${names} dengan persentase ${percentage}% (yaitu ${suffix} responden).
                                 </p>
                             </div>`; 
                     }
                 } 
-                // Analisis untuk Teks Bebas (Kualitatif) - TIDAK ADA OUTPUT DI SINI
-                else if (['textarea'].includes(fieldType) && fieldData.data.length > 0) {
-                    // Output kualitatif dihilangkan
+                // Analisis untuk Rating (UPDATE: Tanpa 'kepuasan' dan Tren)
+                else if (fieldType === 'rating') {
+                    const data = fieldData.data;
+                    let sum = 0;
+                    let count = 0;
+                    for(let i=1; i<=5; i++) {
+                        if(data[i]) {
+                            sum += (i * data[i]);
+                            count += data[i];
+                        }
+                    }
+                    const avg = count > 0 ? (sum / count).toFixed(1) : 0;
+                    analysisBody += `
+                        <div class="analysis-point">
+                            <p class="font-bold text-base text-blue-800 mb-1">
+                                ${fieldData.label}
+                                <span class="text-sm font-normal text-gray-600">(${count} Penilaian)</span>
+                            </p>
+                            <p class="ml-4 text-sm text-gray-700">
+                                Skor rata-rata adalah <strong>${avg} / 5.0</strong>.
+                            </p>
+                        </div>`;
                 }
                 
-                // Analisis untuk Checkbox
+                // Analisis untuk Checkbox (Pilihan Ganda)
                 else if (fieldType === 'checkbox') {
                      const data = fieldData.data;
                      const totalAnswered = fieldData.totalCount;
 
                      if (totalAnswered > 0) {
-                        const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
-                        const opsiTerpopuler = sorted[0];
+                        const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+                        const maxFreq = entries[0][1];
+                        
+                        const winners = entries.filter(e => e[1] === maxFreq);
+                        const names = winners.map(e => `'${e[0]}'`).join(' dan ');
+                        const suffix = winners.length > 1 ? `masing-masing ${maxFreq}` : `${maxFreq}`;
 
                         analysisBody += `
                             <div class="analysis-point">
@@ -641,14 +667,14 @@
                                     <span class="text-sm font-normal text-gray-600">(${totalAnswered} Responden Mengisi)</span>
                                 </p>
                                 <p class="ml-4 text-sm text-gray-700">
-                                    Ini adalah Pertanyaan Pilihan Ganda. Opsi yang paling sering dipilih adalah '${opsiTerpopuler[0]}', dipilih oleh ${opsiTerpopuler[1]} responden.
+                                    Ini adalah Pertanyaan Pilihan Ganda. Opsi yang paling sering dipilih adalah ${names}, dipilih oleh ${suffix} responden.
                                 </p>
                             </div>`;
                      }
                 }
             });
 
-            // 3. PENUTUP - DIHAPUS TOTAL
+            // 3. PENUTUP
             analysisHtml += analysisBody;
             analysisHtml += `</div>`;
             
@@ -656,7 +682,7 @@
         }
 
         // =========================================================================
-        // FUNGSI AGREGASI & RENDERING VISUAL (TIDAK BERUBAH)
+        // FUNGSI AGREGASI & RENDERING VISUAL
         // =========================================================================
 
         function aggregateResponses(responses, fieldsDefinition) {
@@ -668,37 +694,39 @@
                 fieldMap[cleanLabel] = {
                     label: field.label,
                     type: field.type,
-                    options: field.options || []
+                    options: field.options || [],
+                    id: field.id
                 };
             });
 
             responses.forEach(response => {
-                for (const key in response) {
-                    if (key === 'submitted_at') continue; 
-                    
+                const rData = response.response_data || response;
+
+                for (const key in fieldMap) {
                     const fieldDef = fieldMap[key];
-                    if (!fieldDef) continue;
-                    
+                    const fieldId = fieldDef.id;
                     const fieldType = fieldDef.type;
-                    const answer = response[key];
+                    const answer = rData[fieldId] || rData[key];
                     
+                    if (answer === undefined || answer === null) continue;
+
                     if (!aggregatedDataMap[key]) {
                         aggregatedDataMap[key] = {
                             label: fieldDef.label,
                             type: fieldType,
                             totalCount: 0,
-                            data: (fieldType === 'radio' || fieldType === 'select' || fieldType === 'checkbox') ? {} : []
+                            data: (['radio', 'select', 'checkbox', 'rating'].includes(fieldType)) ? {} : []
                         };
                     }
                     
                     if (['text', 'number', 'textarea'].includes(fieldType)) {
-                        if (answer !== null && answer !== undefined && answer !== '') {
+                        if (answer !== '') {
                             aggregatedDataMap[key].data.push(answer);
                             aggregatedDataMap[key].totalCount++;
                         }
-                    } else if (fieldType === 'radio' || fieldType === 'select') {
+                    } else if (fieldType === 'radio' || fieldType === 'select' || fieldType === 'rating') {
                         const option = String(answer).trim();
-                        if (option !== '' && option !== 'undefined' && option !== 'null') {
+                        if (option !== '') {
                             aggregatedDataMap[key].data[option] = (aggregatedDataMap[key].data[option] || 0) + 1;
                             aggregatedDataMap[key].totalCount++;
                         }
@@ -721,7 +749,6 @@
             return aggregatedDataMap;
         }
 
-        // --- MENGIMPLEMENTASIKAN LAYOUT 2-KOLOM DINAMIS DI FUNGSI INI ---
         function renderAnalysisSections(aggregatedDataMap, totalResponses, fieldsDefinition) {
             const container = document.getElementById('field-analysis-results');
             container.innerHTML = ''; 
@@ -731,8 +758,7 @@
                  return;
             }
 
-            // Memisahkan field berdasarkan tipe, tetapi **MEMPERTAHANKAN URUTAN ASLI**
-            let chartFieldIndex = 0; // Index khusus untuk chart fields yang akan digambar
+            let chartFieldIndex = 0;
             
             fieldsDefinition.forEach((fieldDefinition, originalIndex) => {
                 const cleanLabel = (fieldDefinition.label || fieldDefinition.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
@@ -741,65 +767,95 @@
                 if (!fieldData) return;
 
                 const fieldType = fieldData.type;
-                const isChartOrChoice = ['radio', 'select', 'checkbox'].includes(fieldType);
+                const isChartOrChoice = ['radio', 'select'].includes(fieldType);
+                const isTableBased = ['checkbox', 'rating'].includes(fieldType);
                 const isTextual = ['text', 'number', 'textarea'].includes(fieldType);
 
                 let sectionWrapper = document.createElement('div');
                 let section = document.createElement('div');
-                section.classList.add('bg-white', 'p-6', 'rounded-2xl', 'shadow-xl', 'border', 'border-gray-100', 'card-shadow-hover', 'transition-smooth', 'transition-transform-hover', 'h-full');
+                section.className = 'bg-white p-6 rounded-2xl shadow-xl border border-gray-100 card-shadow-hover transition-smooth transition-transform-hover h-full';
                 
                 let htmlContent = `<h3 class="text-xl font-bold mb-4 text-gray-800">${fieldData.label}</h3>`;
                 
-                // --- Logika Penempatan 2 Kolom (Hanya untuk Chart/Choice) ---
                 if (isChartOrChoice) {
-                    sectionWrapper.classList.add('chart-card-col');
-
-                    // Cek jumlah total chart fields yang sebenarnya (hitung secara manual dari fieldsDefinition)
-                    const totalChartFields = fieldsDefinition.filter(f => ['radio', 'select', 'checkbox'].includes(f.type)).length;
-                    
-                    // Jika total chart fields ganjil dan ini adalah field chart terakhir (berdasarkan chartFieldIndex)
-                    if (totalChartFields % 2 !== 0 && chartFieldIndex === totalChartFields - 1) {
-                         sectionWrapper.classList.add('full-width-lg');
-                    }
-                    
-                    // Render konten chart/choice
-                    if (['radio', 'select'].includes(fieldType)) {
-                        htmlContent += renderPieChartData(fieldData, totalResponses, chartFieldIndex);
-                    } else if (fieldType === 'checkbox') {
-                        htmlContent += renderCheckboxData(fieldData, chartFieldIndex);
-                    }
-                    
-                    // Index untuk chart visualisasi (canvas ID)
+                    sectionWrapper.className = 'chart-card-col';
+                    htmlContent += renderPieChartData(fieldData, totalResponses, chartFieldIndex);
                     fieldData.chartRenderIndex = chartFieldIndex;
                     chartFieldIndex++; 
                 } 
-                
-                // --- Logika Penempatan 1 Kolom (Teks) ---
+                else if (isTableBased) {
+                    sectionWrapper.className = 'chart-card-col';
+                    if (fieldType === 'checkbox') {
+                        htmlContent += renderCheckboxData(fieldData);
+                    } else {
+                        htmlContent += renderRatingData(fieldData);
+                    }
+                }
                 else if (isTextual) {
-                    sectionWrapper.classList.add('chart-card-col', 'full-width-lg');
+                    sectionWrapper.className = 'chart-card-col full-width-lg';
                     htmlContent += renderTextualData(fieldData, totalResponses);
                 }
 
-                // Append dan Render Chart
                 section.innerHTML = htmlContent;
                 sectionWrapper.appendChild(section);
                 container.appendChild(sectionWrapper);
             });
 
-            // 3. Render chart harus dilakukan setelah semua canvas di-inject ke DOM
-            // Gunakan index yang disimpan di fieldData.chartRenderIndex
             fieldsDefinition.forEach(fieldDefinition => {
-                const fieldType = fieldDefinition.type;
                 const cleanLabel = (fieldDefinition.label || fieldDefinition.id).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                 const fieldData = aggregatedDataMap[cleanLabel];
-
-                if (fieldData && ['radio', 'select'].includes(fieldType) && typeof fieldData.chartRenderIndex === 'number') {
+                if (fieldData && ['radio', 'select'].includes(fieldData.type) && typeof fieldData.chartRenderIndex === 'number') {
                     drawPieChart(`chart-canvas-${fieldData.chartRenderIndex}`, fieldData, totalResponses);
                 }
             });
         }
         
-        // --- RENDERING FUNGSI INDIVIDUAL (TIDAK BERUBAH) ---
+        // --- RENDERING FUNGSI INDIVIDUAL ---
+
+        function renderRatingData(fieldData) {
+            const data = fieldData.data;
+            let sum = 0;
+            let count = 0;
+            for(let i=1; i<=5; i++) {
+                if(data[i]) {
+                    sum += (i * data[i]);
+                    count += data[i];
+                }
+            }
+            const avg = count > 0 ? (sum / count).toFixed(1) : 0;
+
+            let html = `
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="bg-blue-600 text-white p-3 rounded-xl text-center min-w-[80px]">
+                        <p class="text-2xl font-extrabold">${avg}</p>
+                        <p class="text-[10px] uppercase font-bold">Rata-rata</p>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex text-yellow-400 text-lg mb-1">
+                            ${[1,2,3,4,5].map(i => `<i class="${i <= Math.round(avg) ? 'fas' : 'far'} fa-star"></i>`).join('')}
+                        </div>
+                        <p class="text-xs text-gray-500">Berdasarkan ${count} penilaian responden.</p>
+                    </div>
+                </div>
+                <div class="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            `;
+
+            for (let i = 5; i >= 1; i--) {
+                const freq = data[i] || 0;
+                const perc = count > 0 ? (freq / count * 100).toFixed(0) : 0;
+                html += `
+                    <div class="flex items-center text-xs">
+                        <span class="w-12 font-medium">${i} Bintang</span>
+                        <div class="flex-grow h-2 bg-gray-200 rounded-full mx-3 overflow-hidden">
+                            <div class="h-full bg-blue-500" style="width: ${perc}%"></div>
+                        </div>
+                        <span class="w-8 text-right font-bold">${freq}</span>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            return html;
+        }
 
         function renderTextualData(fieldData, totalResponses) {
             let html = `<p class="text-sm text-gray-600 mb-4">Total Jawaban Terisi: <span class="font-semibold text-blue-600">${fieldData.data.length}</span> / ${totalResponses}</p>`;
@@ -818,46 +874,35 @@
             html += `</ul>`;
             
             if (fieldData.data.length > 10) {
-                 html += `<p class="text-xs text-gray-500 mt-2 italic">Menampilkan 10 jawaban teratas. Download Excel untuk melihat semua ${fieldData.data.length} jawaban.</p>`;
+                 html += `<p class="text-xs text-gray-500 mt-2 italic">Menampilkan 10 jawaban teratas.</p>`;
             }
             
             return html;
         }
         
-        // Menjaga agar legenda dan chart berdampingan di dalam card
         function renderPieChartData(fieldData, totalResponses, index) {
             const canvasId = `chart-canvas-${index}`;
             
-            // Menggunakan flex-row agar chart dan legend berdampingan
             let html = `<div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-4">`;
-            
-            // Canvas untuk Chart.js
             html += `<div class="chart-container flex-shrink-0"><canvas id="${canvasId}"></canvas></div>`;
 
-            // Legenda dan Persentase (HANYA MENAMPILKAN PILIHAN DAN JUMLAH)
             html += `<div class="flex-grow w-full md:w-auto p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h4 class="font-semibold text-gray-800 mb-3 text-sm">Pilihan:</h4>
                         <ul id="legend-${canvasId}" class="space-y-2">`;
             
             const sortedOptions = Object.entries(fieldData.data).sort((a, b) => b[1] - a[1]);
             
-            const totalAnsweredCount = Object.values(fieldData.data).reduce((sum, count) => sum + count, 0);
-
-            if (totalAnsweredCount === 0) {
-                html += `<p class="text-gray-500 italic mt-2 text-sm">Belum ada jawaban terisi untuk pilihan ini.</p>`;
+            if (Object.keys(fieldData.data).length === 0) {
+                html += `<p class="text-gray-500 italic mt-2 text-sm">Belum ada jawaban.</p>`;
             } else {
                 sortedOptions.forEach((entry, colorIndex) => {
-                    const option = entry[0];
-                    const count = entry[1];
-                    // TIDAK MENAMPILKAN PERSENTASE DI SINI
                     const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
-                    
                     html += `<li class="flex justify-between items-center text-xs">
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color};"></span>
-                                    <span class="text-gray-700">${option}</span>
+                                    <span class="text-gray-700">${entry[0]}</span>
                                 </div>
-                                <span class="font-bold text-gray-900">(${count})</span>
+                                <span class="font-bold text-gray-900">(${entry[1]})</span>
                             </li>`;
                 });
             }
@@ -868,10 +913,8 @@
 
         function drawPieChart(canvasId, fieldData, totalResponses) {
             const ctx = document.getElementById(canvasId).getContext('2d');
-            
             const labels = Object.keys(fieldData.data);
             const dataCounts = Object.values(fieldData.data);
-            
             const dataColors = dataCounts.map((_, index) => CHART_COLORS[index % CHART_COLORS.length]);
 
             const newChart = new Chart(ctx, {
@@ -888,39 +931,28 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false 
-                        },
+                        legend: { display: false },
                         title: {
                             display: true,
-                            text: `Distribusi Jawaban (${fieldData.totalCount} Responden mengisi)`,
+                            text: `Distribusi Jawaban (${fieldData.totalCount})`,
                             font: { size: 14 }
                         },
-                        // Konfigurasi Data Labels untuk menampilkan persentase di grafik
                         datalabels: {
                             formatter: (value, context) => {
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 if (total === 0) return '';
-                                const percentage = (value / total * 100).toFixed(1) + '%';
-                                return percentage;
+                                return (value / total * 100).toFixed(1) + '%';
                             },
                             color: '#fff',
-                            textShadowBlur: 4,
-                            textShadowColor: 'rgba(0, 0, 0, 0.6)',
-                            font: {
-                                weight: 'bold',
-                                size: 14,
-                            }
+                            font: { weight: 'bold', size: 11 }
                         }
                     }
-                },
-                // Mendaftarkan plugin di instance chart agar dapat menggunakan datalabels
-                plugins: [ChartDataLabels]
+                }
             });
             activeCharts.push(newChart);
         }
         
-        function renderCheckboxData(fieldData, index) {
+        function renderCheckboxData(fieldData) {
             let html = `<p class="text-sm text-gray-600 mb-4">Total Responden Mengisi: <span class="font-semibold text-blue-600">${fieldData.totalCount}</span></p>`;
             
             if (Object.keys(fieldData.data).length === 0) {
@@ -941,11 +973,9 @@
             const sortedOptions = Object.entries(fieldData.data).sort((a, b) => b[1] - a[1]);
 
             sortedOptions.forEach(entry => {
-                const option = entry[0];
-                const count = entry[1];
                 html += `<tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 w-3/4">${option}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-right w-1/4">${count}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 w-3/4">${entry[0]}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-right w-1/4">${entry[1]}</td>
                         </tr>`;
             });
 
@@ -953,10 +983,7 @@
             return html;
         }
 
-        // =========================================================================
-        // EKSPOR EXCEL
-        // =========================================================================
-        
+        // FUNGSI exportToExcel TETAP ADA DI JS UNTUK KOMPATIBILITAS (Meskipun tombol dihapus)
         function exportToExcel() {
             if (!formId || allResponses.length === 0) {
                 alert('Tidak ada data respon untuk diekspor. Pilih formulir terlebih dahulu.');
