@@ -1,7 +1,24 @@
 <?php
-// TAMPILKAN SEMUA ERROR (Hanya untuk debugging)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Load .env if present and configure debug/other envs
+if (file_exists(__DIR__ . '/.env')) {
+    $env = parse_ini_file(__DIR__ . '/.env', false, INI_SCANNER_RAW);
+    foreach ($env as $k => $v) {
+        putenv(trim($k) . '=' . trim($v));
+    }
+}
+$APP_DEBUG = getenv('APP_DEBUG') ?: '0';
+if ($APP_DEBUG === '1') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+}
+// Start server-side session (use cookie-based PHP sessions)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // --- MEMUAT PHPMailer ---
 use PHPMailer\PHPMailer\PHPMailer;
@@ -13,8 +30,21 @@ require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require 'vendor/phpmailer/phpmailer/src/SMTP.php';
 // -------------------------
 
+// CORS handling: allow wildcard only in debug; in production use ALLOWED_ORIGINS env
+if ($APP_DEBUG === '1') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Credentials: true');
+} else {
+    $allowed = getenv('ALLOWED_ORIGINS') ?: '';
+    if (!empty($allowed) && isset($_SERVER['HTTP_ORIGIN'])) {
+        $origins = array_map('trim', explode(',', $allowed));
+        if (in_array($_SERVER['HTTP_ORIGIN'], $origins)) {
+            header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+            header('Access-Control-Allow-Credentials: true');
+        }
+    }
+}
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
@@ -28,28 +58,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // =========================================================================
 
 // --- KONFIGURASI DATABASE ---
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "aspira";
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_user = getenv('DB_USER') ?: 'root';
+$db_pass = getenv('DB_PASS') ?: '';
+$db_name = getenv('DB_NAME') ?: 'aspira';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
 if ($conn->connect_error) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Koneksi database gagal: ' . $conn->connect_error]);
+    error_log('DB CONNECT ERROR: ' . $conn->connect_error);
+    echo json_encode(['success' => false, 'message' => 'Koneksi database gagal.']);
     exit();
 }
 
-// --- KONFIGURASI SMTP GMAIL ---
+// --- KONFIGURASI SMTP ---
 $smtp_config = [
-    'host'     => 'smtp.gmail.com',
-    'username' => 'admcsr561@gmail.com', // EMAIL ADMIN
-    'password' => 'gnipfxmcpllngeic',            // SANDI APLIKASI 16 KARAKTER
-    'port'     => 587,
+    'host'     => getenv('SMTP_HOST') ?: 'smtp.gmail.com',
+    'username' => getenv('SMTP_USER') ?: '',
+    'password' => getenv('SMTP_PASS') ?: '',
+    'port'     => intval(getenv('SMTP_PORT') ?: 587),
     'secure'   => PHPMailer::ENCRYPTION_STARTTLS,
-    'admin_email' => 'admcsr561@gmail.com', // PENERIMA NOTIFIKASI
-    'admin_name' => 'Admin Aspira' 
+    'admin_email' => getenv('ADMIN_EMAIL') ?: '',
+    'admin_name' => getenv('ADMIN_NAME') ?: 'Admin Aspira'
 ];
 
 // --- KONFIGURASI DAN SETUP BANNER ---
@@ -63,6 +94,23 @@ if (!is_dir($upload_dir)) {
 
 $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Quick endpoints: GET action=get_profile -> return session info; GET action=logout -> destroy session
+if ($method === 'GET' && ($action === 'get_profile' || $action === 'logout')) {
+    if ($action === 'logout') {
+        session_unset();
+        session_destroy();
+        echo json_encode(['success' => true, 'message' => 'Logged out']);
+        exit();
+    }
+
+    if (isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => true, 'user' => ['user_id' => $_SESSION['user_id'], 'username' => $_SESSION['username'] ?? null, 'role' => $_SESSION['role'] ?? null]]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+    }
+    exit();
+}
 
 // =========================================================================
 //                       FUNGSI BANTU UNTUK MENGIRIM EMAIL (DENGAN DEBUGGING)
@@ -133,7 +181,29 @@ if ($method === 'POST' || $method === 'PUT') {
                 $user = $result->fetch_assoc();
                 $stmt->close();
 
-                if ($user && $user['password'] === $password) {
+                if ($user) {
+                    // Support legacy plain-text passwords: if stored password is plain and matches, rehash it
+                    if (password_verify($password, $user['password'])) {
+                        // hashed password matched
+                    } elseif ($user['password'] === $password) {
+                        // legacy plaintext match: rehash and update stored password
+                        $newHash = password_hash($password, PASSWORD_DEFAULT);
+                        $upd = $conn->prepare('UPDATE users SET password = ? WHERE user_id = ?');
+                        $upd->bind_param('si', $newHash, $user['user_id']);
+                        $upd->execute();
+                        $upd->close();
+                        $user['password'] = $newHash;
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'Username atau password salah.']);
+                        break;
+                    }
+
+                    // Authentication succeeded — set server-side session
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = $user['user_id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['role'] = $user['role'];
+
                     echo json_encode(['success' => true, 'message' => 'Login berhasil!', 'role' => $user['role'], 'username' => $user['username']]);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Username atau password salah.']);
@@ -164,7 +234,7 @@ if ($method === 'POST' || $method === 'PUT') {
                     exit;
                 }
                 
-                $password_to_save = $password_raw; 
+                $password_to_save = password_hash($password_raw, PASSWORD_DEFAULT); 
 
                 $sql = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
@@ -692,6 +762,12 @@ if ($method === 'DELETE') {
                 echo json_encode(['success' => false, 'message' => 'ID user tidak ditemukan.']);
                 exit;
             }
+            // authorization: only Super Admin allowed
+            if (!isset($_SESSION['role']) || (strtolower($_SESSION['role']) !== 'super admin' && strtolower($_SESSION['role']) !== 'superadmin')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Akses ditolak.']);
+                exit;
+            }
 
             try {
                 $sql = "DELETE FROM users WHERE user_id = ?";
@@ -714,6 +790,13 @@ if ($method === 'DELETE') {
         case 'delete_form':
             $form_id = $_GET['id'] ?? null;
             if ($form_id) {
+                // authorization: only Admin or Super Admin allowed
+                if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['admin','super admin','superadmin'])) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'message' => 'Akses ditolak.']);
+                    exit;
+                }
+
                 // 1. Dapatkan path banner dan hapus file
                 $sql_get_path = "SELECT banner_path FROM forms WHERE form_id = ?";
                 $stmt_get_path = $conn->prepare($sql_get_path);

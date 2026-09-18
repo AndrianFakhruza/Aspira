@@ -1,2 +1,5 @@
 # Abaikan semua file di folder uploads
 uploads/
+
+# Environment file (contains secrets)
+.env

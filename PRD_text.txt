@@ -1,0 +1,372 @@
+﻿PRODUCT REQUIREMENTS DOCUMENT
+ASPIRA
+Platform Form Builder, Survei & Analisis Respons
+Versi 2.0 — Rencana Perombakan (Revamp)
+September 2026
+Disusun berdasarkan audit terhadap kode sumber aplikasi Aspira saat ini
+1. Ringkasan Eksekutif
+Aspira adalah aplikasi internal berbasis web untuk membuat formulir/survei (form builder), mengumpulkan respons publik, dan menganalisis hasilnya secara visual (chart) melalui panel admin. Aplikasi saat ini dibangun dengan PHP native (tanpa framework) di sisi backend, MySQL (mysqli) sebagai database, serta HTML/JavaScript murni dengan Tailwind CSS (via CDN) di sisi frontend. Fitur inti yang sudah berjalan meliputi: login admin, form builder drag-and-drop sederhana, halaman publik pengisian formulir, dashboard rekap, laporan analisis berbasis chart, manajemen multi-admin, ekspor data ke Excel, serta notifikasi email otomatis (ke responden dan admin) menggunakan PHPMailer.
+Dokumen ini merangkum kondisi aplikasi saat ini (as-is), temuan dari audit kode (arsitektur, keamanan, dan pengalaman pengguna), serta rencana perombakan (to-be) yang mencakup fitur baru, perbaikan, dan optimasi — sebagai acuan pengembangan Aspira versi berikutnya.
+1.1 Tujuan Dokumen
+Mendokumentasikan fungsionalitas Aspira versi saat ini sebagai baseline.
+Mengidentifikasi kelemahan teknis, keamanan, dan UX yang perlu diperbaiki.
+Mendefinisikan kebutuhan fitur baru untuk perombakan (revamp) yang lebih baik, aman, dan skalabel.
+Menjadi acuan bersama antara product owner, developer, dan stakeholder lain dalam pengembangan berikutnya.
+2. Latar Belakang & Masalah
+Berdasarkan penelusuran source code, Aspira dikembangkan secara bertahap (terlihat dari riwayat commit) mulai dari fitur dasar login dan form builder, hingga penambahan fitur analisis global otomatis dan redesain halaman login. Namun karena dibangun tanpa framework dan tanpa proses keamanan standar, terdapat sejumlah masalah mendasar yang berisiko besar apabila aplikasi ini digunakan secara produksi atau diakses dari luar jaringan lokal.
+Masalah Utama yang Ditemukan
+Keamanan kredensial: 
+password admin disimpan dalam bentuk plain text di database dan dibandingkan langsung tanpa hashing (bcrypt/argon2).
+Kredensial rahasia ter-hardcode: 
+kredensial database dan App Password Gmail SMTP tertulis langsung di dalam kode api.php, bukan di file environment/konfigurasi terpisah.
+Manajemen sesi lemah: 
+status login hanya disimpan di sessionStorage browser (client-side), tanpa token/session terenkripsi di server, sehingga rentan dimanipulasi.
+Tidak ada proteksi API: 
+endpoint api.php membuka header 'Access-Control-Allow-Origin: *' dan tidak memvalidasi peran/izin pengguna di sisi server untuk aksi sensitif (mis. hapus form, hapus admin).
+Rentan XSS: 
+beberapa data ditampilkan ke email/HTML tanpa sanitasi penuh, serta tidak ada validasi input terhadap konten yang diunggah pengguna publik.
+Tidak ada rate limiting/CAPTCHA: 
+form publik dapat disubmit berulang kali tanpa batas, membuka peluang spam dan penyalahgunaan.
+Error reporting aktif di production: 
+display_errors diaktifkan secara permanen, berpotensi membocorkan detail struktur server ke pengguna.
+Keterbatasan fungsional: 
+tipe pertanyaan terbatas (teks, angka, textarea, radio, select, checkbox, rating), belum ada logika bercabang (conditional logic), validasi field custom, batas jumlah respons, atau jadwal buka/tutup form.
+UX admin manual: 
+tidak ada pagination pada daftar respons/formulir dalam jumlah besar, tidak ada pencarian/filter respons, dan ekspor hanya format .xls sederhana (HTML table).
+Tidak ada draft/versioning: 
+form yang sedang dibuat langsung tersimpan sebagai entitas final; tidak ada status draft/publish maupun riwayat perubahan.
+3. Gambaran Produk Saat Ini (As-Is)
+3.1 Modul / Halaman Eksisting
+Halaman
+Fungsi Utama
+index.html
+Halaman login admin
+dashboard.html
+Ringkasan daftar formulir & jumlah respons
+form_builder.html
+Membuat/mengedit formulir (drag & drop sederhana), upload banner
+form_public.html
+Halaman publik untuk mengisi formulir (responden)
+analysis_report.html
+Visualisasi hasil respons per pertanyaan (pie chart, daftar jawaban) & ringkasan naratif otomatis
+admin_management.html
+Manajemen akun admin (tambah/hapus, role)
+api.php
+Satu file backend REST-like untuk seluruh operasi CRUD, auth, email, dan ekspor
+3.2 Tipe Field Formulir yang Tersedia
+Text (isian singkat)
+Number (angka)
+Textarea (isian panjang)
+Radio button (pilihan tunggal)
+Select/dropdown (pilihan tunggal)
+Checkbox (pilihan ganda)
+Rating (skala penilaian)
+Setiap form baru otomatis memiliki dua field permanen (Email dan Nama Lengkap) yang tidak bisa dihapus admin, digunakan sebagai identitas responden untuk pengiriman email konfirmasi.
+3.3 Alur Utama Pengguna
+Admin login → dashboard menampilkan daftar formulir & jumlah respons.
+Admin membuat formulir baru via form builder, menambahkan field, opsional banner gambar, lalu menyimpan → sistem menghasilkan tautan publik unik.
+Tautan dibagikan ke responden publik → responden mengisi form_public.html → data tersimpan ke tabel responses (JSON) → email konfirmasi ke responden & notifikasi ke admin dikirim via SMTP Gmail.
+Admin melihat rekap di dashboard, analisis visual di analysis_report.html, atau mengekspor data ke Excel.
+Admin (role tertentu) dapat menambah/menghapus akun admin lain di admin_management.html.
+4. Target Pengguna
+Peran
+Kebutuhan Utama
+Super Admin
+Kontrol penuh: kelola akun admin, kelola semua formulir, lihat seluruh data & pengaturan sistem
+Admin/Editor
+Membuat & mengelola formulir miliknya, melihat & menganalisis respons
+Viewer (baru)
+Hanya bisa melihat laporan/analisis, tanpa hak edit — cocok untuk manajemen/stakeholder
+Responden Publik
+Mengisi formulir dengan cepat, jelas, dan mendapat konfirmasi bahwa data tersimpan
+5. Visi & Tujuan Perombakan (Revamp)
+Perombakan Aspira ditujukan untuk mengubahnya dari aplikasi form sederhana berbasis file PHP tunggal menjadi platform survei/feedback yang aman, terstruktur, dan siap digunakan secara lebih luas (multi-tim/multi-departemen), tanpa kehilangan kesederhanaan penggunaan yang sudah menjadi kekuatan Aspira saat ini.
+Tujuan Utama
+Menjadikan aplikasi aman untuk dipakai secara publik/production (keamanan data & kredensial).
+Meningkatkan fleksibilitas form builder (tipe field lebih kaya, logika bercabang, validasi).
+Memperkuat analisis data (insight otomatis, filter, perbandingan, export lebih lengkap).
+Memperbaiki skalabilitas arsitektur (kode terstruktur, siap dikembangkan tim lebih besar).
+Meningkatkan pengalaman pengguna admin maupun responden publik.
+6. Rekomendasi Perombakan per Kategori
+6.1 Keamanan & Infrastruktur (Prioritas Tertinggi)
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Hashing Password
+Ganti penyimpanan & verifikasi password dari plain text menjadi hashing (password_hash/password_verify, bcrypt/argon2).
+Must Have
+Mencegah kebocoran kredensial jika database diretas/bocor.
+Environment Config (.env)
+Pindahkan kredensial DB, SMTP, dan secret lain ke file .env yang tidak ikut ter-commit ke repository.
+Must Have
+Mencegah kredensial sensitif terekspos di source code/Git.
+Session & Token berbasis Server
+Ganti sessionStorage client-side dengan session PHP/JWT yang divalidasi di server pada setiap request API sensitif.
+Must Have
+Mencegah manipulasi status login dari sisi klien.
+Otorisasi per-Role di Backend
+Validasi role (super admin/admin/viewer) di setiap endpoint API, bukan hanya di tampilan frontend.
+Must Have
+Mencegah akses tidak sah ke aksi sensitif via panggilan API langsung.
+Rate Limiting & CAPTCHA pada Form Publik
+Tambahkan reCAPTCHA/hCaptcha dan pembatasan submit per-IP untuk endpoint submit_feedback.
+Should Have
+Mencegah spam bot dan penyalahgunaan formulir publik.
+Sanitasi & Validasi Input Konsisten
+Validasi tipe, panjang, dan format data di server untuk semua field (termasuk unggahan gambar) sebelum disimpan.
+Must Have
+Mengurangi risiko XSS, SQL injection lanjutan, dan data korup.
+Matikan Debug Mode di Production
+Nonaktifkan display_errors dan gunakan logging terpusat (mis. Monolog) alih-alih menampilkan error mentah ke klien.
+Must Have
+Mencegah kebocoran informasi struktur server ke pihak luar.
+CORS Terbatas
+Ganti Access-Control-Allow-Origin: * dengan whitelist domain resmi aplikasi.
+Should Have
+Mengurangi risiko pemanggilan API dari domain tidak dikenal.
+HTTPS & Header Keamanan
+Wajibkan HTTPS, tambahkan header keamanan (CSP, X-Frame-Options, HSTS).
+Should Have
+Melindungi data saat transit dan dari serangan clickjacking.
+6.2 Form Builder — Fitur Baru
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Tipe Field Tambahan
+Tambahkan: tanggal/waktu, upload file/dokumen, skala linear (NPS/Likert), matriks pertanyaan, email/nomor telepon dengan validasi format bawaan.
+Should Have
+Mendukung survei yang lebih kompleks dan spesifik kebutuhan bisnis.
+Logika Bercabang (Conditional Logic)
+Field/halaman tertentu muncul berdasarkan jawaban sebelumnya (skip logic).
+Should Have
+Formulir lebih relevan dan personal, mengurangi kelelahan pengisi.
+Multi-halaman / Progress Bar
+Form panjang dapat dipecah jadi beberapa halaman dengan indikator progres.
+Could Have
+Meningkatkan completion rate formulir yang panjang.
+Validasi Field Kustom
+Wajib diisi, panjang minimum/maksimum, format regex, rentang angka, dsb — dapat diatur per field oleh admin.
+Must Have
+Meningkatkan kualitas data yang masuk.
+Template Formulir
+Sediakan template siap pakai (survei kepuasan, feedback event, form pendaftaran) yang bisa diduplikasi.
+Could Have
+Mempercepat pembuatan form baru.
+Status Draft / Publish / Tutup
+Form memiliki status: draft (belum aktif), published (aktif), closed (ditutup manual/otomatis by jadwal atau kuota respons).
+Must Have
+Kontrol siklus hidup form lebih jelas; mencegah publikasi tidak sengaja.
+Duplikasi & Versi Formulir
+Admin dapat menduplikasi form yang sudah ada dan menyimpan riwayat perubahan struktur.
+Should Have
+Mempercepat pembuatan form serupa & audit perubahan.
+Auto-save saat Membangun Form
+Simpan draft otomatis secara berkala saat admin membangun form.
+Could Have
+Mencegah kehilangan pekerjaan saat sesi terputus.
+6.3 Pengalaman Responden Publik
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Desain Form Publik Lebih Modern & Responsif
+Perbaiki tampilan mobile-first, animasi transisi antar pertanyaan (mirip Typeform/Google Forms).
+Should Have
+Meningkatkan kenyamanan dan completion rate pengisian.
+Simpan Progres Sementara
+Jika form panjang, simpan progres di browser agar responden bisa lanjut jika tab tertutup tidak sengaja.
+Could Have
+Mengurangi form abandonment.
+Konfirmasi & Halaman Terima Kasih Kustom
+Admin dapat mengatur pesan/redirect setelah submit, bukan hanya notifikasi default.
+Should Have
+Pengalaman closing yang lebih personal sesuai kebutuhan campaign.
+Dukungan Multi-bahasa Form
+Form dapat disajikan dalam lebih dari satu bahasa sesuai preferensi audiens.
+Could Have
+Menjangkau audiens yang lebih luas.
+Aksesibilitas (a11y)
+Label ARIA, kontras warna sesuai standar, navigasi keyboard penuh.
+Should Have
+Formulir dapat diakses pengguna dengan keterbatasan (disabilitas).
+6.4 Dashboard & Analisis Data
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Pencarian & Filter Respons
+Filter respons berdasarkan tanggal, kata kunci, atau nilai field tertentu; pagination untuk data besar.
+Must Have
+Memudahkan admin menelusuri data dalam jumlah besar.
+Insight Otomatis Berbasis AI
+Ringkasan naratif otomatis (sudah ada versi dasar) ditingkatkan dengan analisis sentimen jawaban teks bebas dan deteksi tren/anomali antar periode.
+Should Have
+Admin mendapat insight lebih cepat tanpa membaca semua respons satu per satu.
+Perbandingan Antar Periode/Segmen
+Bandingkan hasil survei bulan ini vs bulan lalu, atau antar-segmen responden.
+Could Have
+Mendukung pengambilan keputusan berbasis tren.
+Ekspor Data Lebih Lengkap
+Ekspor ke .xlsx asli (bukan HTML table berformat .xls), CSV, dan PDF laporan analisis siap presentasi.
+Should Have
+Kompatibilitas lebih baik dan laporan siap dibagikan ke pihak lain.
+Dashboard Ringkasan Multi-form
+Statistik gabungan lintas formulir (total respons, tren pengisian per waktu, form paling aktif).
+Could Have
+Gambaran menyeluruh performa seluruh formulir dalam satu tampilan.
+Notifikasi Real-time / In-app
+Notifikasi in-app (selain email) saat respons baru masuk, dengan opsi push/Webhook ke Slack atau lainnya.
+Could Have
+Admin tim dapat merespons feedback lebih cepat.
+6.5 Manajemen Pengguna & Kolaborasi
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Role & Permission Lebih Granular
+Tambah role Viewer (read-only) dan kepemilikan form per admin/tim, bukan hanya Admin vs Super Admin.
+Should Have
+Kontrol akses lebih sesuai struktur organisasi.
+Reset Password Mandiri & Verifikasi Email
+Admin dapat reset password sendiri via email, dengan verifikasi akun saat pendaftaran.
+Must Have
+Mengurangi ketergantungan pada super admin dan meningkatkan keamanan akun.
+Log Aktivitas (Audit Trail)
+Catat siapa membuat/mengubah/menghapus form atau akun, dan kapan.
+Should Have
+Akuntabilitas dan kemudahan investigasi jika terjadi masalah.
+Kolaborasi Multi-admin per Form
+Beberapa admin dapat mengelola form yang sama (co-editing) dengan hak akses berbeda.
+Could Have
+Mendukung kerja tim pada formulir yang kompleks.
+6.6 Arsitektur & Kualitas Teknis
+Fitur
+Deskripsi
+Prioritas
+Alasan / Manfaat
+Migrasi ke Framework Backend
+Migrasi dari file api.php tunggal (>700 baris, semua logika tercampur) ke framework terstruktur (mis. Laravel/Slim) dengan pola MVC dan routing jelas.
+Must Have
+Kode lebih mudah dipelihara, diuji, dan dikembangkan oleh tim.
+REST API Terdokumentasi
+Standarisasi endpoint REST dengan dokumentasi (OpenAPI/Swagger) dan penanganan error yang konsisten.
+Should Have
+Memudahkan integrasi dan pengembangan lanjutan/tim baru.
+Automated Testing
+Tambahkan unit test dan integration test untuk logika inti (submit form, autentikasi, ekspor data).
+Should Have
+Mengurangi risiko bug saat pengembangan fitur baru.
+Penyimpanan File di Cloud Storage
+Pindahkan upload banner/lampiran dari folder lokal (uploads/) ke layanan object storage (S3-compatible).
+Could Have
+Lebih skalabel dan aman dibanding penyimpanan file lokal pada server web.
+CI/CD & Staging Environment
+Siapkan pipeline deployment otomatis dan environment staging terpisah dari produksi.
+Could Have
+Perubahan dapat diuji sebelum tayang ke pengguna nyata.
+7. Kebutuhan Non-Fungsional
+Aspek
+Target
+Keamanan
+Password ter-hash, koneksi HTTPS wajib, validasi input di server, tidak ada kredensial hardcoded
+Performa
+Waktu muat halaman dashboard/analisis < 2 detik untuk hingga 10.000 respons per form (dengan pagination/indexing)
+Skalabilitas
+Arsitektur mendukung penambahan jumlah form & responden tanpa perubahan besar pada kode
+Ketersediaan
+Target uptime 99.5% jika di-deploy sebagai layanan produksi
+Kompatibilitas
+Berfungsi baik di browser modern (Chrome, Safari, Edge, Firefox) dan perangkat mobile
+Aksesibilitas
+Mengikuti panduan dasar WCAG 2.1 level AA pada form publik
+Auditabilitas
+Seluruh aksi admin penting tercatat pada log aktivitas
+8. Rekomendasi Tumpukan Teknologi (Opsional)
+Apabila perombakan dilakukan dari nol atau bertahap, berikut opsi arah teknis yang bisa dipertimbangkan — tetap dapat disesuaikan dengan kapasitas tim dan infrastruktur yang tersedia:
+Backend: 
+PHP dengan framework (Laravel) untuk mempertahankan familiaritas tim, atau Node.js (Express/NestJS) bila ingin satu bahasa dengan frontend.
+Database: 
+Tetap MySQL/MariaDB dengan penambahan indexing dan migrasi skema terstruktur (mis. menggunakan tool migration bawaan framework).
+Frontend: 
+Framework komponen modern (React/Vue) menggantikan HTML+JS manual per halaman, agar form builder lebih mudah dikembangkan (drag-and-drop yang lebih baik).
+Autentikasi: 
+Session berbasis server atau JWT dengan refresh token, ditambah opsi 2FA untuk admin.
+Penyimpanan File: 
+Object storage (S3-compatible) untuk banner/lampiran.
+Email: 
+Tetap gunakan PHPMailer atau migrasi ke layanan transaksional (mis. SendGrid/Mailgun) agar deliverability lebih terjamin dan tidak bergantung pada App Password Gmail pribadi.
+9. Roadmap Perombakan (Usulan Fase)
+Fase
+Fokus
+Contoh Item
+Fase 1 — Fondasi Keamanan
+Menutup celah keamanan kritis sebelum menambah fitur baru
+Hashing password, .env config, session server-side, otorisasi API, matikan debug mode
+Fase 2 — Penguatan Core
+Memperkuat fitur inti yang sudah ada
+Validasi field, status draft/publish, pagination & filter respons, reset password mandiri
+Fase 3 — Fitur Baru
+Menambah kapabilitas form builder & analisis
+Tipe field baru, logika bercabang, insight otomatis, ekspor .xlsx/PDF
+Fase 4 — Skalabilitas & Kolaborasi
+Menyiapkan aplikasi untuk penggunaan lebih luas
+Role granular, audit log, cloud storage, dashboard multi-form, CI/CD
+10. Metrik Keberhasilan (Success Metrics)
+Tidak ada insiden kebocoran kredensial/data pasca perombakan Fase 1.
+Completion rate pengisian formulir publik meningkat (baseline diukur sebelum & sesudah redesain form publik).
+Waktu admin membuat form baru berkurang berkat template & validasi field siap pakai.
+Waktu yang dibutuhkan admin untuk mendapatkan insight dari data respons berkurang berkat fitur analisis otomatis.
+Tidak ada keluhan performa saat jumlah respons per form mencapai skala ribuan.
+11. Risiko & Mitigasi
+Risiko
+Mitigasi
+Migrasi arsitektur besar berisiko molor/menghambat operasional harian
+Lakukan perombakan bertahap (fase keamanan dulu) tanpa mengganggu sistem yang berjalan; jalankan paralel dengan feature-flag bila perlu
+Migrasi password lama (plain text) ke hashing memutus akses admin existing
+Terapkan strategi migrasi bertahap: hash otomatis saat login pertama pasca-update, atau reset paksa dengan notifikasi ke seluruh admin
+Perubahan struktur data form memutus kompatibilitas data lama
+Sediakan skrip migrasi data & jalankan proses testing menyeluruh sebelum go-live
+Ketergantungan pada akun Gmail pribadi untuk SMTP
+Pindah ke layanan email transaksional khusus dengan domain resmi organisasi
+12. Lampiran: Ringkasan Endpoint API Saat Ini
+Untuk referensi teknis, berikut daftar aksi (action) yang tersedia pada api.php versi saat ini:
+Method
+Action
+Fungsi
+POST
+login
+Autentikasi admin
+POST
+add_admin_user
+Menambah akun admin baru
+POST/PUT
+save_form / update_form
+Membuat / memperbarui formulir beserta banner
+POST
+submit_feedback
+Menyimpan respons publik + kirim email konfirmasi & notifikasi
+GET
+get_admin_users
+Daftar akun admin
+GET
+get_forms
+Daftar formulir & jumlah respons
+GET
+get_form_structure
+Struktur field satu formulir (untuk builder/isi publik)
+GET
+get_form_and_responses
+Struktur + seluruh data respons satu formulir (untuk analisis)
+GET
+export_excel
+Unduh data respons sebagai file .xls
+DELETE
+delete_admin_user
+Menghapus akun admin
+DELETE
+delete_form
+Menghapus formulir beserta respons & banner terkait
+— Akhir Dokumen —
+

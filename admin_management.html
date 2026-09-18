@@ -428,24 +428,29 @@
         // =========================================================================
         // SESSION AND UTILITY FUNCTIONS
         // =========================================================================
-        function checkSession() {
-            const adminRole = sessionStorage.getItem('adminRole');
-            const adminUsername = sessionStorage.getItem('adminUsername');
-            
-            if (!adminRole) {
-                window.location.href = 'index.html'; 
-                return;
+        async function checkSession() {
+            try {
+                const resp = await fetch(`${API_BASE_URL}?action=get_profile`, { credentials: 'include' });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                const user = data.user || {};
+                if (!user.role || user.role !== 'Super Admin') {
+                    customAlert('Akses Terbatas. Halaman ini khusus Super Admin.', 'error', () => {
+                        window.location.href = 'dashboard.html';
+                    });
+                    return;
+                }
+                currentAdmin = { username: user.username, role: user.role };
+                // Keep client-side storage for UX fallback (but backend enforces auth)
+                sessionStorage.setItem('adminRole', user.role);
+                sessionStorage.setItem('adminUsername', user.username);
+                fetchAdminList();
+            } catch (e) {
+                window.location.href = 'index.html';
             }
-
-            if (adminRole !== 'Super Admin') {
-                customAlert('Akses Terbatas. Halaman ini khusus Super Admin.', 'error', () => {
-                    window.location.href = 'dashboard.html';
-                });
-                return;
-            }
-            
-            currentAdmin = { username: adminUsername, role: adminRole };
-            fetchAdminList(); 
         }
 
         function toggleSidebar(event) {
@@ -457,7 +462,12 @@
             icon.classList.toggle('fa-arrow-right');
         }
 
-        function logout() {
+        async function logout() {
+            try {
+                await fetch(`${API_BASE_URL}?action=logout`, { credentials: 'include' });
+            } catch (e) {
+                // ignore errors while logging out
+            }
             sessionStorage.removeItem('adminRole');
             sessionStorage.removeItem('adminUsername');
             window.location.href = 'index.html';
@@ -579,7 +589,7 @@
             tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data admin...</td></tr>`;
 
             try {
-                const response = await fetch(`${API_BASE_URL}?action=get_admin_users`);
+                const response = await fetch(`${API_BASE_URL}?action=get_admin_users`, { credentials: 'include' });
                 const result = await response.json();
 
                 if (response.ok && result.success && Array.isArray(result.users)) {
@@ -660,6 +670,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}?action=${action}`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
@@ -687,7 +698,8 @@
 
             try {
                 const response = await fetch(`${API_BASE_URL}?action=delete_admin_user&id=${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
                 const result = await response.json();
                 
