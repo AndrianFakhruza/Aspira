@@ -80,10 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // =========================================================================
 
 // --- KONFIGURASI DATABASE ---
+<<<<<<< HEAD
 $db_host = getenv('DB_HOST') ?: 'localhost';
 $db_user = getenv('DB_USER') ?: 'root';
 $db_pass = getenv('DB_PASS') ?: '';
 $db_name = getenv('DB_NAME') ?: 'aspira';
+=======
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "aspira_db";
+>>>>>>> 195fbe6b4d4da25eedfa3b58c18c0a19ec047965
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
