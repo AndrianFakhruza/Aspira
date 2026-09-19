@@ -96,8 +96,10 @@
             padding: 2rem;
         }
     </style>
+    <link rel="stylesheet" href="assets/ui.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
-<body>
+<body class="login-shell">
     
     <div class="main-card">
         
@@ -173,11 +175,24 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        // Keep API requests on the same host and port as this page.
+        const API_BASE_URL = 'api.php';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (sessionStorage.getItem('adminRole')) {
-                window.location.href = 'dashboard.html';
+        document.addEventListener('DOMContentLoaded', async () => {
+            // sessionStorage is only used for display; server session remains the authority.
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=get_profile`, { credentials: 'include' });
+                const result = await response.json();
+                if (response.ok && result.success && result.user) {
+                    sessionStorage.setItem('adminRole', result.user.role);
+                    sessionStorage.setItem('adminUsername', result.user.username);
+                    window.AspiraUI ? window.AspiraUI.navigate('dashboard.html') : window.location.href = 'dashboard.html';
+                } else {
+                    sessionStorage.removeItem('adminRole');
+                    sessionStorage.removeItem('adminUsername');
+                }
+            } catch (_) {
+                // Keep the login form usable if the server is temporarily unavailable.
             }
         });
         
@@ -234,8 +249,8 @@
 
                     showAlert('Login berhasil! Mengalihkan...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000); 
+                        window.AspiraUI ? window.AspiraUI.navigate('dashboard.html') : window.location.href = 'dashboard.html';
+                    }, 550);
 
                 } else {
                     showAlert(result.message || 'Login gagal. Periksa koneksi dan kredensial Anda.', 'error');

@@ -97,8 +97,10 @@
             background-color: #f3f4f6;
         }
     </style>
+    <link rel="stylesheet" href="assets/ui.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
-<body>
+<body class="app-shell">
     
     <div class="flex h-screen bg-gray-50">
         
@@ -323,7 +325,7 @@
     </div>
     
     <script>
-        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        const API_BASE_URL = 'api.php';
         let adminIdToDelete = null; 
         let alertCallback = null;
         let currentAdmin = null;
@@ -463,13 +465,7 @@
         }
 
         async function logout() {
-            try {
-                await fetch(`${API_BASE_URL}?action=logout`, { credentials: 'include' });
-            } catch (e) {
-                // ignore errors while logging out
-            }
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
+            if (window.AspiraUI) return window.AspiraUI.logout();
             window.location.href = 'index.html';
         }
 

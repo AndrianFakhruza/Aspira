@@ -183,10 +183,14 @@
         }
         .rating-star:hover { transform: scale(1.1); color: #f59e0b; }
         .rating-star.active { color: #fbbf24; }
+
+        .progress-fill { transition: width .25s ease; }
     </style>
+    <link rel="stylesheet" href="assets/ui.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
 
-<body>
+<body class="public-shell">
     
         <div class="floating-icons">
                 <div class="icon-float">
@@ -254,6 +258,11 @@
                                         <p id="form-description" class="text-gray-600 mt-1"></p>
                                     </div>
 
+                                    <div class="mb-6" aria-live="polite">
+                                        <div class="flex justify-between text-xs font-medium text-slate-500 mb-2"><span>Progres pengisian</span><span id="progress-label">0%</span></div>
+                                        <div class="h-2 overflow-hidden rounded-full bg-slate-100"><div id="progress-fill" class="progress-fill h-full rounded-full bg-blue-600" style="width:0%"></div></div>
+                                    </div>
+
                                     <div id="form-fields" class="space-y-6"></div>
 
                                     <div class="pt-6">
@@ -277,7 +286,7 @@
         
     <script>
         // --- KONSTANTA & VARIABEL ---
-        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        const API_BASE_URL = 'api.php';
         const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/csr-notifier'; 
 
         let formStructure = null; // Menyimpan struktur form yang dimuat
@@ -361,9 +370,12 @@
                 switch (fieldType) {
                     case 'text':
                     case 'number':
+                    case 'email':
+                    case 'date':
                         fieldHtml = `${labelHtml}
                     <input type="${fieldType}" id="${field.id}" name="${field.id}" 
                     placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''} 
+                    ${field.min_length ? `minlength="${field.min_length}"` : ''} ${field.max_length ? `maxlength="${field.max_length}"` : ''}
                     class="form-input w-full px-4 py-2 border border-gray-300 rounded-xl text-sm">`;
                         break;
 
@@ -371,6 +383,7 @@
                         fieldHtml = `${labelHtml}
                     <textarea id="${field.id}" name="${field.id}" rows="4" 
                     placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''} 
+                    ${field.min_length ? `minlength="${field.min_length}"` : ''} ${field.max_length ? `maxlength="${field.max_length}"` : ''}
                     class="form-input w-full px-4 py-2 border border-gray-300 rounded-xl resize-none text-sm"></textarea>`;
                         break;
 
@@ -444,6 +457,53 @@
             });
 
             publicForm.classList.remove('hidden');
+            restoreDraft(formId);
+            publicForm.addEventListener('input', () => {
+                saveDraft(formId);
+                updateProgress();
+            });
+            publicForm.addEventListener('change', () => {
+                saveDraft(formId);
+                updateProgress();
+            });
+            updateProgress();
+        }
+
+        function draftKey(formId) { return `aspira-form-draft-${formId}`; }
+
+        function saveDraft(formId) {
+            const form = document.getElementById('publicForm');
+            const draft = {};
+            new FormData(form).forEach((value, key) => {
+                const cleanKey = key.endsWith('[]') ? key.slice(0, -2) : key;
+                if (key.endsWith('[]')) (draft[cleanKey] ||= []).push(value); else draft[cleanKey] = value;
+            });
+            localStorage.setItem(draftKey(formId), JSON.stringify(draft));
+        }
+
+        function restoreDraft(formId) {
+            try {
+                const draft = JSON.parse(localStorage.getItem(draftKey(formId)) || '{}');
+                Object.entries(draft).forEach(([key, value]) => {
+                    const values = Array.isArray(value) ? value : [value];
+                    document.querySelectorAll(`[name="${CSS.escape(key)}"], [name="${CSS.escape(key)}[]"]`).forEach(input => {
+                        if (input.type === 'checkbox' || input.type === 'radio') input.checked = values.includes(input.value);
+                        else if (input.type !== 'hidden') input.value = values[0];
+                    });
+                });
+            } catch (_) { localStorage.removeItem(draftKey(formId)); }
+        }
+
+        function updateProgress() {
+            if (!formStructure?.fields?.length) return;
+            const form = document.getElementById('publicForm');
+            const complete = formStructure.fields.filter(field => {
+                const inputs = form.querySelectorAll(`[name="${CSS.escape(field.id)}"], [name="${CSS.escape(field.id)}[]"]`);
+                return [...inputs].some(input => (input.type === 'checkbox' || input.type === 'radio') ? input.checked : input.value.trim());
+            }).length;
+            const percent = Math.round((complete / formStructure.fields.length) * 100);
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+            document.getElementById('progress-label').textContent = `${percent}%`;
         }
 
         // --- FUNGSI BARU UNTUK RATING ---
@@ -575,6 +635,7 @@
 
             // --- 3. FINALISASI UI ---
             if (dbSuccess) {
+                localStorage.removeItem(draftKey(formId));
                 displayStatus(`Terima kasih! Feedback Anda berhasil dikirim, dan data anda sudah tersimpan di database.`, false);
                 form.reset(); 
             } else {

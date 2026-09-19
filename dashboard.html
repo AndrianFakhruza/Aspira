@@ -104,8 +104,10 @@
             transform: translateY(-50%) translateX(50%);
         }
     </style>
+    <link rel="stylesheet" href="assets/ui.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
-<body>
+<body class="app-shell dashboard-shell">
     
     <div class="flex h-screen bg-gray-50">
         
@@ -175,7 +177,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+            <div id="forms-panel" class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-gray-800">Daftar Formulir CSR</h2>
                     <a href="form_builder.html" class="btn-gradient text-white font-medium py-2 px-4 rounded-xl text-sm">
@@ -183,6 +185,11 @@
                     </a>
                 </div>
                 <div class="h-1 w-16 bg-gradient-to-r from-blue-600 to-blue-500 mb-6 rounded-full"></div>
+                <label class="relative block mb-5" for="form-search">
+                    <span class="sr-only">Cari formulir</span>
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input id="form-search" type="search" oninput="filterForms(this.value)" placeholder="Cari judul formulir..." class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100">
+                </label>
 
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -279,37 +286,43 @@
         </div>
     </div>
     <script>
-        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        const API_BASE_URL = 'api.php';
         let allForms = [];
+        let formSearch = '';
         let currentPage = 1;
         const itemsPerPage = 5;
         let formIdToDelete = null; 
         let alertCallback = null; 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
-            fetchFormList();
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (await checkSession()) {
+                fetchFormList();
+            }
         });
 
-        function checkSession() {
-            const adminRole = sessionStorage.getItem('adminRole');
-            const adminUsername = sessionStorage.getItem('adminUsername');
-            
-            if (!adminRole) {
+        async function checkSession() {
+            try {
+                const response = await fetch(`${API_BASE_URL}?action=get_profile`, { credentials: 'include' });
+                const result = await response.json();
+                if (!response.ok || !result.success || !result.user) {
+                    throw new Error('Sesi tidak valid');
+                }
+
+                const { role: adminRole, username: adminUsername } = result.user;
+                sessionStorage.setItem('adminRole', adminRole);
+                sessionStorage.setItem('adminUsername', adminUsername);
+                document.getElementById('admin-name').textContent = adminUsername;
+                if (adminRole !== 'Super Admin') {
+                    document.getElementById('admin-management-link')?.classList.add('hidden');
+                }
+                return true;
+            } catch (_) {
+                sessionStorage.removeItem('adminRole');
+                sessionStorage.removeItem('adminUsername');
                 customAlert('Sesi berakhir, silakan login kembali.', 'error', () => {
                     window.location.href = 'index.html';
                 });
-                return;
-            }
-
-            document.getElementById('admin-name').textContent = adminUsername;
-            
-            // LOGIKA PENTING: Menyembunyikan link Manajemen Admin
-            if (adminRole !== 'Super Admin') {
-                const adminLink = document.getElementById('admin-management-link');
-                if (adminLink) {
-                    adminLink.classList.add('hidden');
-                }
+                return false;
             }
         }
         
@@ -412,6 +425,7 @@
         }
 
         async function fetchFormList() {
+            renderDataSkeleton();
             try {
                 const response = await fetch(`${API_BASE_URL}?action=get_forms`);
                 const result = await response.json();
@@ -432,6 +446,12 @@
                     
                     renderFormList(currentPage);
                 } else {
+                    if (response.status === 401) {
+                        sessionStorage.removeItem('adminRole');
+                        sessionStorage.removeItem('adminUsername');
+                        customAlert('Sesi berakhir, silakan login kembali.', 'error', () => window.location.href = 'index.html');
+                        return;
+                    }
                     console.error('Gagal mengambil data formulir:', result.message);
                     document.getElementById('form-list').innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Gagal memuat data formulir.</td></tr>`;
                 }
@@ -443,13 +463,14 @@
 
         function renderFormList(page) {
             const tableBody = document.getElementById('form-list');
+            const currentForms = allForms.filter(form => form.form_title.toLowerCase().includes(formSearch));
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const paginatedItems = allForms.slice(startIndex, endIndex);
+            const paginatedItems = currentForms.slice(startIndex, endIndex);
 
             tableBody.innerHTML = '';
-            if (allForms.length === 0) {
-                 tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Belum ada formulir yang dibuat.</td></tr>`;
+            if (currentForms.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">${formSearch ? 'Formulir tidak ditemukan.' : 'Belum ada formulir yang dibuat.'}</td></tr>`;
             } else {
                 paginatedItems.forEach(form => {
                     const row = document.createElement('tr');
@@ -483,16 +504,17 @@
         }
 
         function renderPaginationButtons() {
-            const totalPages = Math.ceil(allForms.length / itemsPerPage);
+            const currentForms = allForms.filter(form => form.form_title.toLowerCase().includes(formSearch));
+            const totalPages = Math.ceil(currentForms.length / itemsPerPage);
             const paginationButtonsContainer = document.getElementById('pagination-buttons');
             const paginationInfo = document.getElementById('pagination-info');
             paginationButtonsContainer.innerHTML = '';
 
-            if (allForms.length === 0) {
+            if (currentForms.length === 0) {
                 paginationInfo.textContent = `Menampilkan 0 dari 0 Formulir`;
                 return;
             }
-            paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, allForms.length)} hingga ${Math.min(currentPage * itemsPerPage, allForms.length)} dari ${allForms.length} Formulir`;
+            paginationInfo.textContent = `Menampilkan ${Math.min((currentPage - 1) * itemsPerPage + 1, currentForms.length)} hingga ${Math.min(currentPage * itemsPerPage, currentForms.length)} dari ${currentForms.length} Formulir`;
 
             // --- Logika Tombol 'Sebelumnya' ---
             if (currentPage > 1) {
@@ -537,6 +559,20 @@
             // --- Akhir Logika 'Selanjutnya' ---
         }
 
+        function renderDataSkeleton() {
+            document.getElementById('total-forms').innerHTML = '<span class="data-skeleton data-skeleton-number"></span>';
+            document.getElementById('total-responses').innerHTML = '<span class="data-skeleton data-skeleton-number"></span>';
+            document.getElementById('form-list').innerHTML = Array.from({ length: 5 }, () => `
+                <tr class="data-skeleton-row"><td colspan="4" class="px-6 py-3"><span class="data-skeleton data-skeleton-line"></span></td></tr>`
+            ).join('');
+        }
+
+        function filterForms(query) {
+            formSearch = query.trim().toLowerCase();
+            currentPage = 1;
+            renderFormList(currentPage);
+        }
+
         function deleteFormConfirmation(formId, formTitle) {
             openDeleteModal(formId, formTitle);
         }
@@ -566,9 +602,7 @@
         }
         
         function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'index.html';
+            window.AspiraUI ? window.AspiraUI.logout() : window.location.href = 'index.html';
         }
     </script>
 </body>

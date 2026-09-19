@@ -266,8 +266,10 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="assets/ui.css">
+    <script src="assets/app-ui.js" defer></script>
 </head>
-<body>
+<body class="app-shell">
     
     <div class="flex h-screen bg-gray-50">
         
@@ -381,7 +383,7 @@
         // Mendaftarkan plugin datalabels secara global
         Chart.register(ChartDataLabels);
 
-        const API_BASE_URL = 'http://localhost:8080/aspira/api.php';
+        const API_BASE_URL = 'api.php';
         let formId = null;
         let allResponses = [];
         let globalFormFieldsDefinition = []; 
@@ -434,9 +436,7 @@
         }
         
         function logout() {
-            sessionStorage.removeItem('adminRole');
-            sessionStorage.removeItem('adminUsername');
-            window.location.href = 'index.html';
+            window.AspiraUI ? window.AspiraUI.logout() : window.location.href = 'index.html';
         }
         
         // NEW FUNCTION: Scroll ke Analisis Global
