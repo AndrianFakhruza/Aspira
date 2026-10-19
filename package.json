@@ -4,6 +4,7 @@
   "private": true,
   "description": "Platform Form Builder, Survei & Analisis Respons",
   "scripts": {
+    "predev": "node -e \"try { fs.rmSync('.next', { recursive: true, force: true }); } catch (e) {}\"",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
