@@ -52,9 +52,9 @@ export function FieldCard({
   const getFieldBadge = () => {
     switch (field.type) {
       case "text":
-        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-indigo-50 text-indigo-600 border-indigo-200" };
+        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-blue-50 text-blue-600 border-blue-200" };
       case "textarea":
-        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-indigo-50 text-indigo-600 border-indigo-200" };
+        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-blue-50 text-blue-600 border-blue-200" };
       case "number":
         return { icon: <Hash className="w-3.5 h-3.5" />, color: "bg-cyan-50 text-cyan-600 border-cyan-200" };
       case "email":
@@ -72,7 +72,7 @@ export function FieldCard({
       case "rating":
         return { icon: <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />, color: "bg-amber-50 text-amber-600 border-amber-200" };
       case "linear_scale":
-        return { icon: <ListFilter className="w-3.5 h-3.5" />, color: "bg-violet-50 text-violet-600 border-violet-200" };
+        return { icon: <ListFilter className="w-3.5 h-3.5" />, color: "bg-sky-50 text-sky-600 border-sky-200" };
       case "file_upload":
         return { icon: <Upload className="w-3.5 h-3.5" />, color: "bg-rose-50 text-rose-600 border-rose-200" };
       default:
@@ -90,8 +90,8 @@ export function FieldCard({
       className={cn(
         "p-4 bg-surface border rounded-[10px] transition-all duration-200 cursor-pointer relative group",
         isSelected
-          ? "border-indigo-500 ring-2 ring-indigo-500/20 shadow-md bg-indigo-50/10"
-          : "border-border hover:border-indigo-300/80 hover:shadow-xs",
+          ? "border-blue-500 ring-2 ring-blue-500/20 shadow-md bg-blue-50/10"
+          : "border-border hover:border-blue-300/80 hover:shadow-xs",
         isDragging && "opacity-40"
       )}
     >
@@ -100,7 +100,7 @@ export function FieldCard({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 text-text-secondary/50 hover:text-indigo-600 rounded mt-0.5 hover:bg-indigo-50/50 transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1 text-text-secondary/50 hover:text-blue-600 rounded mt-0.5 hover:bg-blue-50/50 transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-4 h-4 stroke-[1.5]" />
@@ -125,7 +125,7 @@ export function FieldCard({
                   e.stopPropagation();
                   onDuplicate();
                 }}
-                className="p-1.5 text-text-secondary hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all hover:scale-110"
+                className="p-1.5 text-text-secondary hover:text-blue-600 rounded-md hover:bg-blue-50 transition-all hover:scale-110"
                 title="Duplikasi Pertanyaan"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -149,7 +149,7 @@ export function FieldCard({
             type="text"
             value={field.label}
             onChange={(e) => onUpdate({ label: e.target.value })}
-            className="w-full font-semibold text-sm bg-transparent border-b border-transparent hover:border-border focus:border-indigo-500 focus:outline-none py-1 text-text-primary placeholder:text-text-secondary/40 transition-colors"
+            className="w-full font-semibold text-sm bg-transparent border-b border-transparent hover:border-border focus:border-blue-500 focus:outline-none py-1 text-text-primary placeholder:text-text-secondary/40 transition-colors"
             placeholder="Ketik pertanyaan di sini..."
           />
 
@@ -158,7 +158,7 @@ export function FieldCard({
             type="text"
             value={field.help_text || ""}
             onChange={(e) => onUpdate({ help_text: e.target.value })}
-            className="w-full text-xs text-text-secondary bg-transparent border-b border-transparent hover:border-border focus:border-indigo-500 focus:outline-none py-0.5 placeholder:text-text-secondary/30 transition-colors"
+            className="w-full text-xs text-text-secondary bg-transparent border-b border-transparent hover:border-border focus:border-blue-500 focus:outline-none py-0.5 placeholder:text-text-secondary/30 transition-colors"
             placeholder="Petunjuk pengisian atau deskripsi tambahan (opsional)..."
           />
 
@@ -169,7 +169,7 @@ export function FieldCard({
                 <div key={i} className="flex items-center gap-2 text-xs text-text-secondary">
                   <div
                     className={cn(
-                      "w-3.5 h-3.5 border border-indigo-300 shrink-0 bg-indigo-50/50",
+                      "w-3.5 h-3.5 border border-blue-300 shrink-0 bg-blue-50/50",
                       field.type === "radio" ? "rounded-full" : "rounded-[3px]"
                     )}
                   />
@@ -193,14 +193,14 @@ export function FieldCard({
           )}
 
           {field.type === "linear_scale" && (
-            <div className="pt-2 flex items-center gap-1.5 overflow-x-auto text-violet-600">
+            <div className="pt-2 flex items-center gap-1.5 overflow-x-auto text-sky-600">
               {Array.from(
                 { length: (field.linear_scale_max ?? 10) - (field.linear_scale_min ?? 0) + 1 },
                 (_, i) => (field.linear_scale_min ?? 0) + i
               ).map((val) => (
                 <div
                   key={val}
-                  className="w-6 h-6 border border-violet-200 bg-violet-50/50 rounded flex items-center justify-center text-[10px] font-mono font-bold shrink-0 hover:scale-110 transition-transform"
+                  className="w-6 h-6 border border-sky-200 bg-sky-50/50 rounded flex items-center justify-center text-[10px] font-mono font-bold shrink-0 hover:scale-110 transition-transform"
                 >
                   {val}
                 </div>

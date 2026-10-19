@@ -294,7 +294,7 @@ export default function PublicFormPage() {
             <div className="pt-6 border-t border-border">
               <p className="text-[11px] text-text-secondary flex items-center justify-center gap-1">
                 <span>Dibuat dengan</span>
-                <span className="font-semibold text-indigo-600">Tanggap</span>
+                <span className="font-semibold text-blue-600">Tanggap</span>
               </p>
             </div>
           )}
@@ -326,11 +326,11 @@ export default function PublicFormPage() {
                 <span>
                   Bagian {currentSection} dari {maxSection}
                 </span>
-                <span className="text-indigo-600 font-bold">{Math.round((currentSection / maxSection) * 100)}%</span>
+                <span className="text-blue-600 font-bold">{Math.round((currentSection / maxSection) * 100)}%</span>
               </div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 rounded-full"
                   initial={false}
                   animate={{ width: `${(currentSection / maxSection) * 100}%` }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
@@ -480,8 +480,8 @@ export default function PublicFormPage() {
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-[8px] border cursor-pointer transition-all",
                             isSelected
-                              ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 text-indigo-950 dark:text-indigo-200 font-semibold"
-                              : "border-border hover:border-indigo-300 hover:bg-indigo-50/20"
+                              ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 text-blue-950 dark:text-blue-200 font-semibold"
+                              : "border-border hover:border-blue-300 hover:bg-blue-50/20"
                           )}
                         >
                           <input
@@ -489,7 +489,7 @@ export default function PublicFormPage() {
                             name={field.id}
                             checked={isSelected}
                             onChange={() => setAnswers({ ...answers, [field.id]: opt })}
-                            className="w-4 h-4 text-indigo-600 accent-indigo-600"
+                            className="w-4 h-4 text-blue-600 accent-blue-600"
                           />
                           <span className="text-xs">{opt}</span>
                         </motion.label>
@@ -517,8 +517,8 @@ export default function PublicFormPage() {
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-[8px] border cursor-pointer transition-all",
                             isChecked
-                              ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 text-indigo-950 dark:text-indigo-200 font-semibold"
-                              : "border-border hover:border-indigo-300 hover:bg-indigo-50/20"
+                              ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 text-blue-950 dark:text-blue-200 font-semibold"
+                              : "border-border hover:border-blue-300 hover:bg-blue-50/20"
                           )}
                         >
                           <input
@@ -537,7 +537,7 @@ export default function PublicFormPage() {
                                 });
                               }
                             }}
-                            className="w-4 h-4 rounded border-border text-indigo-600 accent-indigo-600"
+                            className="w-4 h-4 rounded border-border text-blue-600 accent-blue-600"
                           />
                           <span className="text-xs">{opt}</span>
                         </motion.label>
@@ -603,8 +603,8 @@ export default function PublicFormPage() {
                             className={cn(
                               "w-9 h-9 rounded-[6px] border text-xs font-bold flex items-center justify-center shrink-0 transition-all cursor-pointer font-mono",
                               isValSelected
-                                ? "bg-gradient-to-tr from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30"
-                                : "border-border hover:border-indigo-300 hover:bg-indigo-50/50 text-text-primary"
+                                ? "bg-gradient-to-tr from-blue-600 to-sky-500 text-white border-blue-600 shadow-sm shadow-blue-500/30"
+                                : "border-border hover:border-blue-300 hover:bg-blue-50/50 text-text-primary"
                             )}
                           >
                             {val}
@@ -627,10 +627,10 @@ export default function PublicFormPage() {
 
                 {field.type === "file_upload" && (
                   <motion.div
-                    whileHover={{ scale: 1.01, borderColor: "#6366F1" }}
-                    className="p-8 border border-dashed border-border rounded-[8px] text-center space-y-2 hover:bg-indigo-50/20 cursor-pointer transition-colors group"
+                    whileHover={{ scale: 1.01, borderColor: "#2563EB" }}
+                    className="p-8 border border-dashed border-border rounded-[8px] text-center space-y-2 hover:bg-blue-50/20 cursor-pointer transition-colors group"
                   >
-                    <p className="text-xs font-semibold text-text-primary group-hover:text-indigo-600 transition-colors">
+                    <p className="text-xs font-semibold text-text-primary group-hover:text-blue-600 transition-colors">
                       Pilih dokumen atau seret ke sini
                     </p>
                     <p className="text-[11px] text-text-secondary">Maksimal ukuran berkas 10 MB</p>
@@ -657,7 +657,7 @@ export default function PublicFormPage() {
           )}
 
           {currentSection < maxSection ? (
-            <Button onClick={handleNextSection} className="gap-2 shadow-md hover:shadow-indigo-500/25">
+            <Button onClick={handleNextSection} className="gap-2 shadow-md hover:shadow-blue-500/25">
               Selanjutnya
               <ChevronRight className="w-4 h-4" />
             </Button>

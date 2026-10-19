@@ -73,14 +73,14 @@ export function Sidebar({ workspaceName = "Tanggap" }: SidebarProps) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-all duration-200 relative group overflow-hidden",
                     isActive
-                      ? "text-indigo-600 dark:text-indigo-400 font-semibold shadow-xs"
-                      : "text-text-secondary hover:text-indigo-600 hover:translate-x-1.5 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30"
+                      ? "text-blue-600 dark:text-blue-400 font-semibold shadow-xs"
+                      : "text-text-secondary hover:text-blue-600 hover:translate-x-1.5 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
                   )}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="sidebar-active-indicator"
-                      className="absolute inset-0 bg-indigo-50/80 dark:bg-indigo-950/60 border-l-[3px] border-indigo-600 rounded-[8px] -z-10"
+                      className="absolute inset-0 bg-blue-50/80 dark:bg-blue-950/60 border-l-[3px] border-blue-600 rounded-[8px] -z-10"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -88,8 +88,8 @@ export function Sidebar({ workspaceName = "Tanggap" }: SidebarProps) {
                     className={cn(
                       "w-4 h-4 stroke-[1.75] shrink-0 transition-transform duration-200 group-hover:scale-125 group-hover:rotate-3",
                       isActive
-                        ? "text-indigo-600 dark:text-indigo-400"
-                        : "text-text-secondary group-hover:text-indigo-600"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-text-secondary group-hover:text-blue-600"
                     )}
                   />
                   <span>{item.name}</span>
@@ -105,12 +105,12 @@ export function Sidebar({ workspaceName = "Tanggap" }: SidebarProps) {
         <div className="flex items-center justify-between">
           <div className="truncate pr-2">
             <p className="text-xs font-semibold text-text-primary truncate">{workspaceName}</p>
-            <p className="text-[11px] text-indigo-600 font-mono font-medium">v3.0 Production</p>
+            <p className="text-[11px] text-blue-600 font-mono font-medium">v3.0 Production</p>
           </div>
           <Link
             href="/forms"
             title="Daftar Formulir"
-            className="text-text-secondary hover:text-indigo-600 hover:scale-110 p-1.5 rounded-md hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 transition-all"
+            className="text-text-secondary hover:text-blue-600 hover:scale-110 p-1.5 rounded-md hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition-all"
           >
             <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
           </Link>

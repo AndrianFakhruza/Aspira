@@ -75,11 +75,25 @@ export default function AuditLogsPage() {
               </thead>
               <tbody className="divide-y divide-border font-mono text-xs">
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-text-secondary font-sans">
-                      Memuat riwayat aktivitas...
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="h-12 animate-pulse">
+                      <td className="py-3 px-4">
+                        <div className="w-28 h-3.5 bg-muted/60 rounded" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-24 h-4 bg-muted/80 rounded" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-16 h-5 bg-muted/70 rounded-full" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-16 h-3.5 bg-muted/60 rounded" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-48 h-3.5 bg-muted/50 rounded" />
+                      </td>
+                    </tr>
+                  ))
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-text-secondary font-sans">
@@ -97,7 +111,7 @@ export default function AuditLogsPage() {
                         if (a.includes("delete") || a.includes("remove")) {
                           return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400";
                         }
-                        return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-400";
+                        return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400";
                       };
 
                       return (
@@ -106,13 +120,12 @@ export default function AuditLogsPage() {
                           variants={rowVariants}
                           initial="hidden"
                           animate="show"
-                          className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-12 group"
-                          whileHover={{ x: 4, transition: { duration: 0.15 } }}
+                          className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all h-12 group"
                         >
                           <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
                             {formatDate(log.created_at)}
                           </td>
-                          <td className="py-3 px-4 text-text-primary font-semibold group-hover:text-indigo-600 transition-colors">
+                          <td className="py-3 px-4 text-text-primary font-semibold group-hover:text-blue-600 transition-colors">
                             {log.actor_name || "Admin"}
                           </td>
                           <td className="py-3 px-4 uppercase text-text-primary">

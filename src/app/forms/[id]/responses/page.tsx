@@ -142,7 +142,7 @@ export default function ResponsesPage() {
 
             <div className="flex items-center gap-2">
               <Link href={`/forms/${formId}/analytics`}>
-                <Button variant="outline" size="sm" className="hover:border-violet-400 hover:text-violet-600">
+                <Button variant="outline" size="sm" className="hover:border-sky-400 hover:text-sky-600">
                   Lihat Analisis
                 </Button>
               </Link>
@@ -160,7 +160,7 @@ export default function ResponsesPage() {
                 size="sm"
                 onClick={handleExportXlsx}
                 disabled={responses.length === 0}
-                className="gap-1.5 shadow-sm hover:shadow-indigo-500/25"
+                className="gap-1.5 shadow-sm hover:shadow-blue-500/25"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 Ekspor XLSX
@@ -176,7 +176,7 @@ export default function ResponsesPage() {
             transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="relative w-full sm:w-80 group">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-indigo-600 transition-colors stroke-[1.5]" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-blue-600 transition-colors stroke-[1.5]" />
               <input
                 type="text"
                 placeholder="Cari respons..."
@@ -185,11 +185,11 @@ export default function ResponsesPage() {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
             <p className="text-xs font-mono text-text-secondary">
-              Menampilkan <span className="font-semibold text-indigo-600">{paginatedResponses.length}</span> dari {filteredResponses.length} respons
+              Menampilkan <span className="font-semibold text-blue-600">{paginatedResponses.length}</span> dari {filteredResponses.length} respons
             </p>
           </motion.div>
 
@@ -222,14 +222,34 @@ export default function ResponsesPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    <tr>
-                      <td colSpan={5 + fields.length} className="py-12 text-center text-xs text-text-secondary">
-                        <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
-                          <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
-                          Memuat data respons...
-                        </div>
-                      </td>
-                    </tr>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="h-11 animate-pulse">
+                        <td className="py-2.5 px-4">
+                          <div className="w-6 h-3.5 bg-muted/70 rounded" />
+                        </td>
+                        <td className="py-2.5 px-4">
+                          <div className="w-24 h-3.5 bg-muted/60 rounded" />
+                        </td>
+                        {!form?.settings.is_anonymous && (
+                          <>
+                            <td className="py-2.5 px-4">
+                              <div className="w-28 h-4 bg-muted/80 rounded" />
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <div className="w-36 h-3.5 bg-muted/60 rounded" />
+                            </td>
+                          </>
+                        )}
+                        {fields.map((f) => (
+                          <td key={f.id} className="py-2.5 px-4">
+                            <div className="w-32 h-3.5 bg-muted/60 rounded" />
+                          </td>
+                        ))}
+                        <td className="py-2.5 px-4 text-right">
+                          <div className="w-6 h-6 bg-muted/50 rounded ml-auto" />
+                        </td>
+                      </tr>
+                    ))
                   ) : paginatedResponses.length === 0 ? (
                     <tr>
                       <td colSpan={5 + fields.length} className="py-12 text-center text-xs text-text-secondary">
@@ -237,76 +257,65 @@ export default function ResponsesPage() {
                       </td>
                     </tr>
                   ) : (
-                    <AnimatePresence mode="popLayout">
-                      <motion.tbody
-                        key={currentPage + search}
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="divide-y divide-border"
+                    paginatedResponses.map((resp, idx) => (
+                      <motion.tr
+                        key={resp.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: Math.min(idx * 0.02, 0.3) }}
+                        className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-colors h-11 text-xs group"
                       >
-                        {paginatedResponses.map((resp, idx) => (
-                          <motion.tr
-                            key={resp.id}
-                            variants={rowVariants}
-                            exit="exit"
-                            layout
-                            className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-11 text-xs group"
-                            whileHover={{ x: 4, transition: { duration: 0.15 } }}
-                          >
-                            <td className="py-2.5 px-4 font-mono text-text-secondary">
-                              {(currentPage - 1) * pageSize + idx + 1}
+                        <td className="py-2.5 px-4 font-mono text-text-secondary">
+                          {(currentPage - 1) * pageSize + idx + 1}
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-text-secondary whitespace-nowrap">
+                          {formatDate(resp.submitted_at)}
+                        </td>
+                        {!form?.settings.is_anonymous && (
+                          <>
+                            <td className="py-2.5 px-4 font-semibold text-text-primary group-hover:text-blue-600 transition-colors whitespace-nowrap">
+                              {resp.respondent_name || "(Anonim)"}
                             </td>
-                            <td className="py-2.5 px-4 font-mono text-text-secondary whitespace-nowrap">
-                              {formatDate(resp.submitted_at)}
+                            <td className="py-2.5 px-4 text-text-secondary font-mono whitespace-nowrap">
+                              {resp.respondent_email || "-"}
                             </td>
-                            {!form?.settings.is_anonymous && (
-                              <>
-                                <td className="py-2.5 px-4 font-semibold text-text-primary group-hover:text-indigo-600 transition-colors whitespace-nowrap">
-                                  {resp.respondent_name || "(Anonim)"}
-                                </td>
-                                <td className="py-2.5 px-4 text-text-secondary font-mono whitespace-nowrap">
-                                  {resp.respondent_email || "-"}
-                                </td>
-                              </>
-                            )}
-                            {fields.map((f) => {
-                              const val = resp.answers[f.id];
-                              const displayVal = Array.isArray(val)
-                                ? val.join(", ")
-                                : typeof val === "object" && val !== null
-                                ? JSON.stringify(val)
-                                : val !== undefined && val !== null
-                                ? String(val)
-                                : "-";
-                              return (
-                                <td key={f.id} className="py-2.5 px-4 truncate max-w-[260px]" title={displayVal}>
-                                  {displayVal}
-                                </td>
-                              );
-                            })}
-                            <td className="py-2.5 px-4 text-right sticky right-0 bg-surface">
-                              <div className="flex items-center justify-end gap-1">
-                                <button
-                                  onClick={() => setSelectedResponse(resp)}
-                                  className="p-1.5 text-text-secondary hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all hover:scale-115"
-                                  title="Lihat Detail Jawaban"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteResponse(resp.id)}
-                                  className="p-1.5 text-text-secondary hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all hover:scale-115"
-                                  title="Hapus Respons"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
+                          </>
+                        )}
+                        {fields.map((f) => {
+                          const val = resp.answers[f.id];
+                          const displayVal = Array.isArray(val)
+                            ? val.join(", ")
+                            : typeof val === "object" && val !== null
+                            ? JSON.stringify(val)
+                            : val !== undefined && val !== null
+                            ? String(val)
+                            : "-";
+                          return (
+                            <td key={f.id} className="py-2.5 px-4 truncate max-w-[260px]" title={displayVal}>
+                              {displayVal}
                             </td>
-                          </motion.tr>
-                        ))}
-                      </motion.tbody>
-                    </AnimatePresence>
+                          );
+                        })}
+                        <td className="py-2.5 px-4 text-right sticky right-0 bg-surface">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setSelectedResponse(resp)}
+                              className="p-1.5 text-text-secondary hover:text-blue-600 rounded-md hover:bg-blue-50 transition-all hover:scale-115"
+                              title="Lihat Detail Jawaban"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteResponse(resp.id)}
+                              className="p-1.5 text-text-secondary hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all hover:scale-115"
+                              title="Hapus Respons"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
                   )}
                 </tbody>
               </table>

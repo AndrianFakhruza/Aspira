@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="tanggapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <!-- App Icon Background -->
+  <rect width="32" height="32" rx="8" fill="url(#tanggapGrad)" />
+  <!-- Monogram T -->
+  <path
+    d="M7 9H25M16 9V24"
+    stroke="#ffffff"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Cyan/Blue Accent Dot -->
+  <circle cx="23.5" cy="22.5" r="2.2" fill="#60a5fa" />
+</svg>
+

@@ -58,25 +58,25 @@ export function Topbar({ breadcrumb = [], userName = "Admin Utama", userRole = "
         {/* Dark mode toggle with rotation & scale */}
         <button
           onClick={toggleDarkMode}
-          className="p-1.5 text-text-secondary hover:text-indigo-600 rounded-[8px] border border-border hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 transition-all hover:scale-110 active:scale-95 cursor-pointer"
+          className="p-1.5 text-text-secondary hover:text-blue-600 rounded-[8px] border border-border hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition-all hover:scale-110 active:scale-95 cursor-pointer"
           title={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
           aria-label="Toggle dark mode"
         >
           {isDark ? (
             <Sun className="w-4 h-4 stroke-[1.75] text-amber-500" />
           ) : (
-            <Moon className="w-4 h-4 stroke-[1.75] text-indigo-600" />
+            <Moon className="w-4 h-4 stroke-[1.75] text-blue-600" />
           )}
         </button>
 
         {/* User Profile Pill */}
         <div className="flex items-center gap-2.5 pl-3 border-l border-border cursor-pointer group">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-500 text-white font-bold text-xs flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="text-left hidden sm:block">
-            <p className="text-xs font-semibold text-text-primary group-hover:text-indigo-600 transition-colors leading-tight">{userName}</p>
-            <p className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold leading-tight">{userRole}</p>
+            <p className="text-xs font-semibold text-text-primary group-hover:text-blue-600 transition-colors leading-tight">{userName}</p>
+            <p className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-semibold leading-tight">{userRole}</p>
           </div>
         </div>
       </div>

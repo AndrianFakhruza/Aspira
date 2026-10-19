@@ -49,14 +49,14 @@ const itemVariants: Variants = {
 };
 
 const CHART_COLORS = [
-  "#6366F1", // Indigo
+  "#2563EB", // Blue
   "#10B981", // Emerald
   "#F59E0B", // Amber
-  "#EC4899", // Pink
-  "#8B5CF6", // Violet
+  "#0284C7", // Sky
   "#06B6D4", // Cyan
+  "#EC4899", // Pink
   "#F97316", // Orange
-  "#3B82F6", // Blue
+  "#3B82F6", // Bright Blue
 ];
 
 export default function AnalyticsPage() {
@@ -88,18 +88,67 @@ export default function AnalyticsPage() {
     loadData();
   }, [formId]);
 
+  if (!loading && !form) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background text-text-secondary text-sm flex-col gap-4">
+        <p className="text-base font-semibold text-text-primary">Data analisis tidak ditemukan</p>
+        <Link href="/forms">
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Daftar Formulir
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   if (loading || !form) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-text-secondary text-sm">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="flex items-center gap-2.5 text-indigo-600 font-medium"
-        >
-          <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
-          Memuat analisis data survei...
-        </motion.div>
+      <div className="flex h-screen overflow-hidden bg-background">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          <Topbar breadcrumb={[{ label: "Formulir", href: "/forms" }, { label: "Analisis" }]} />
+          <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-8 animate-pulse">
+            {/* Header Skeleton */}
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <div className="space-y-2">
+                <div className="w-64 h-6 bg-muted/80 rounded" />
+                <div className="w-96 h-4 bg-muted/50 rounded" />
+              </div>
+              <div className="w-28 h-8 bg-muted/60 rounded" />
+            </div>
+
+            {/* KPI Cards Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 bg-surface border border-border rounded-[10px] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-24 h-4 bg-muted/70 rounded" />
+                    <div className="w-8 h-8 bg-muted/60 rounded-lg" />
+                  </div>
+                  <div className="w-16 h-8 bg-muted/80 rounded" />
+                  <div className="w-32 h-3 bg-muted/50 rounded" />
+                </div>
+              ))}
+            </div>
+
+            {/* Narrative Skeleton */}
+            <div className="p-6 bg-surface border border-border rounded-[10px] space-y-4">
+              <div className="w-48 h-5 bg-muted/80 rounded" />
+              <div className="w-full h-4 bg-muted/60 rounded" />
+              <div className="space-y-2 pt-2">
+                <div className="w-full h-12 bg-muted/40 rounded-[8px]" />
+                <div className="w-full h-12 bg-muted/40 rounded-[8px]" />
+              </div>
+            </div>
+
+            {/* Chart Skeleton */}
+            <div className="p-6 bg-surface border border-border rounded-[10px] space-y-4">
+              <div className="w-40 h-5 bg-muted/80 rounded" />
+              <div className="w-full h-64 bg-muted/30 rounded" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
@@ -130,14 +179,14 @@ export default function AnalyticsPage() {
             <div className="flex items-center gap-3">
               <Link
                 href="/forms"
-                className="p-1.5 rounded-[8px] border border-border text-text-secondary hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 no-print transition-all hover:-translate-x-0.5"
+                className="p-1.5 rounded-[8px] border border-border text-text-secondary hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/50 no-print transition-all hover:-translate-x-0.5"
               >
                 <ArrowLeft className="w-4 h-4 stroke-[2]" />
               </Link>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-text-primary flex items-center gap-2">
                   <span>Laporan &amp; Analisis: {form.title}</span>
-                  <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 border border-violet-200">
+                  <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200">
                     Live Data
                   </span>
                 </h1>
@@ -157,7 +206,7 @@ export default function AnalyticsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => window.print()}
-                className="gap-1.5 hover:border-indigo-400 hover:text-indigo-600"
+                className="gap-1.5 hover:border-blue-400 hover:text-blue-600"
               >
                 <Printer className="w-3.5 h-3.5" />
                 Cetak / Simpan PDF
@@ -173,12 +222,12 @@ export default function AnalyticsPage() {
             animate="show"
           >
             <motion.div variants={itemVariants} whileHover={{ y: -5, scale: 1.015 }} transition={{ duration: 0.2 }} className="cursor-pointer">
-              <Card className="hover:border-indigo-400/80 hover:shadow-indigo-500/10">
+              <Card className="hover:border-blue-400/80 hover:shadow-blue-500/10">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary font-semibold">
                     Total Responden
                   </CardTitle>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
                     <Users className="w-4 h-4 stroke-[2]" />
                   </div>
                 </CardHeader>
@@ -192,12 +241,12 @@ export default function AnalyticsPage() {
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover={{ y: -5, scale: 1.015 }} transition={{ duration: 0.2 }} className="cursor-pointer">
-              <Card className="hover:border-violet-400/80 hover:shadow-violet-500/10">
+              <Card className="hover:border-sky-400/80 hover:shadow-sky-500/10">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary font-semibold">
                     Pertanyaan Teranalisis
                   </CardTitle>
-                  <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
                     <FileText className="w-4 h-4 stroke-[2]" />
                   </div>
                 </CardHeader>
@@ -240,7 +289,7 @@ export default function AnalyticsPage() {
             transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex items-center gap-2 pb-2 border-b border-border">
-              <Sparkles className="w-4 h-4 text-violet-600" />
+              <Sparkles className="w-4 h-4 text-blue-600" />
               <h2 className="text-sm font-bold text-text-primary uppercase font-mono tracking-wider">
                 Ringkasan Naratif Otomatis
               </h2>
@@ -261,19 +310,19 @@ export default function AnalyticsPage() {
                 analytics.narrativePoints.map((point, idx) => (
                   <motion.div
                     key={idx}
-                    className="p-3.5 bg-indigo-50/30 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-[8px] space-y-1 hover:border-indigo-300 transition-colors"
+                    className="p-3.5 bg-blue-50/30 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-[8px] space-y-1 hover:border-blue-300 transition-colors"
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.25 + idx * 0.05 }}
                     whileHover={{ x: 4 }}
                   >
-                    <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                       {point.title}
                     </p>
                     <p className="text-xs text-text-secondary leading-relaxed pl-3">{point.summary}</p>
                     {point.detail && (
-                      <p className="text-[11px] font-mono text-indigo-600/80 dark:text-indigo-400/80 pl-3">{point.detail}</p>
+                      <p className="text-[11px] font-mono text-blue-600/80 dark:text-blue-400/80 pl-3">{point.detail}</p>
                     )}
                   </motion.div>
                 ))
@@ -290,7 +339,7 @@ export default function AnalyticsPage() {
               transition={{ duration: 0.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-indigo-600" />
+                <TrendingUp className="w-4 h-4 text-blue-600" />
                 <h3 className="text-sm font-bold text-text-primary">Tren Respons Harian</h3>
               </div>
               <div className="h-64 w-full">
@@ -301,21 +350,21 @@ export default function AnalyticsPage() {
                     <YAxis allowDecimals={false} stroke="#6B7280" fontSize={11} fontFamily="Inter, sans-serif" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#1E1B4B",
+                        backgroundColor: "#0F172A",
                         color: "#FFFFFF",
                         borderRadius: "8px",
                         fontSize: "12px",
-                        border: "1px solid #4338CA",
+                        border: "1px solid #2563EB",
                       }}
                     />
                     <Line
                       type="monotone"
                       dataKey="count"
                       name="Jumlah Respons"
-                      stroke="#4F46E5"
+                      stroke="#2563EB"
                       strokeWidth={3}
-                      dot={{ r: 5, fill: "#4F46E5", stroke: "#FFFFFF", strokeWidth: 2 }}
-                      activeDot={{ r: 7, fill: "#4338CA" }}
+                      dot={{ r: 5, fill: "#2563EB", stroke: "#FFFFFF", strokeWidth: 2 }}
+                      activeDot={{ r: 7, fill: "#1D4ED8" }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -326,7 +375,7 @@ export default function AnalyticsPage() {
           {/* Breakdown Per Question */}
           <div className="space-y-6">
             <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
-              <BarChart2 className="w-4 h-4 text-violet-600" />
+              <BarChart2 className="w-4 h-4 text-sky-600" />
               <span>Analisis Per Pertanyaan</span>
             </h3>
 
@@ -342,11 +391,11 @@ export default function AnalyticsPage() {
                   variants={itemVariants}
                   whileHover={{ y: -4, scale: 1.01 }}
                   transition={{ duration: 0.2 }}
-                  className="p-5 bg-surface border border-border rounded-[10px] space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-md transition-all shadow-xs"
+                  className="p-5 bg-surface border border-border rounded-[10px] space-y-4 hover:border-blue-300 dark:hover:border-blue-700/60 hover:shadow-md transition-all shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-mono uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                      <span className="text-[10px] font-mono uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                         {q.field.type} • {q.totalAnswered} Menjawab
                       </span>
                       <h4 className="text-sm font-semibold text-text-primary pt-1">{q.field.label}</h4>
@@ -380,11 +429,11 @@ export default function AnalyticsPage() {
                           />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: "#1E1B4B",
+                              backgroundColor: "#0F172A",
                               color: "#FFFFFF",
                               borderRadius: "8px",
                               fontSize: "11px",
-                              border: "1px solid #4338CA",
+                              border: "1px solid #2563EB",
                             }}
                           />
                           <Bar dataKey="count" radius={[0, 6, 6, 0]}>
@@ -406,7 +455,7 @@ export default function AnalyticsPage() {
                       {q.sampleTextAnswers.map((txt, ti) => (
                         <div
                           key={ti}
-                          className="p-2.5 bg-indigo-50/20 dark:bg-indigo-950/10 border border-border rounded-[6px] text-xs text-text-primary hover:border-indigo-300 transition-colors"
+                          className="p-2.5 bg-blue-50/20 dark:bg-blue-950/10 border border-border rounded-[6px] text-xs text-text-primary hover:border-blue-300 transition-colors"
                         >
                           &ldquo;{txt}&rdquo;
                         </div>

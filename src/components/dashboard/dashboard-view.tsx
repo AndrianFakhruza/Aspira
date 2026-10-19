@@ -62,7 +62,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center gap-2">
             <span>Dashboard</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200">
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200">
               v3.0 Active
             </span>
           </h1>
@@ -72,7 +72,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/forms/new">
-            <Button className="gap-2 shadow-md hover:shadow-indigo-500/25">
+            <Button className="gap-2 shadow-md hover:shadow-blue-500/25">
               <Plus className="w-4 h-4 stroke-[2]" />
               Buat Form Baru
             </Button>
@@ -87,12 +87,12 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
           transition={{ duration: 0.2 }}
           className="cursor-pointer"
         >
-          <Card className="hover:border-indigo-400/80 hover:shadow-indigo-500/10">
+          <Card className="hover:border-blue-400/80 hover:shadow-blue-500/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                 Total Formulir
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
                 <FileText className="w-4 h-4 stroke-[2]" />
               </div>
             </CardHeader>
@@ -131,12 +131,12 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
           transition={{ duration: 0.2 }}
           className="cursor-pointer"
         >
-          <Card className="hover:border-violet-400/80 hover:shadow-violet-500/10">
+          <Card className="hover:border-sky-400/80 hover:shadow-sky-500/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                 Tingkat Form Aktif
               </CardTitle>
-              <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
                 <TrendingUp className="w-4 h-4 stroke-[2]" />
               </div>
             </CardHeader>
@@ -161,7 +161,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
             </div>
             <Link
               href="/forms"
-              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 group"
+              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 group"
             >
               Lihat Semua
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
@@ -174,14 +174,14 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                 key={form.id}
                 whileHover={{ x: 6, scale: 1.005 }}
                 transition={{ duration: 0.18 }}
-                className="p-4 bg-surface border border-border rounded-[10px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-md transition-all shadow-xs group"
+                className="p-4 bg-surface border border-border rounded-[10px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-300 dark:hover:border-blue-700/60 hover:shadow-md transition-all shadow-xs group"
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2.5">
                     <StatusBadge status={form.status} />
                     <Link
                       href={`/forms/${form.id}/edit`}
-                      className="font-semibold text-sm text-text-primary hover:text-indigo-600 dark:hover:text-indigo-400 truncate transition-colors"
+                      className="font-semibold text-sm text-text-primary hover:text-blue-600 dark:hover:text-blue-400 truncate transition-colors"
                     >
                       {form.title}
                     </Link>
@@ -190,7 +190,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                     {form.description || "Tidak ada deskripsi"}
                   </p>
                   <div className="flex items-center gap-3 text-xs text-text-secondary pt-1 font-mono">
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">{form.responses_count || 0} respons</span>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">{form.responses_count || 0} respons</span>
                     <span>•</span>
                     <span>{formatDate(form.created_at)}</span>
                   </div>
@@ -199,7 +199,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                 <div className="flex items-center gap-2 shrink-0">
                   {form.status === "published" && (
                     <Link href={`/f/${form.slug}`} target="_blank">
-                      <Button variant="outline" size="sm" title="Buka Form Publik" className="hover:border-indigo-400 hover:text-indigo-600">
+                      <Button variant="outline" size="sm" title="Buka Form Publik" className="hover:border-blue-400 hover:text-blue-600">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
@@ -211,7 +211,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                     </Button>
                   </Link>
                   <Link href={`/forms/${form.id}/analytics`}>
-                    <Button variant="outline" size="sm" className="gap-1.5 hover:border-violet-400 hover:text-violet-600">
+                    <Button variant="outline" size="sm" className="gap-1.5 hover:border-blue-400 hover:text-blue-600">
                       <BarChart3 className="w-3.5 h-3.5" />
                       Analisis
                     </Button>
@@ -242,7 +242,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     whileHover={{ x: 4 }}
-                    className="py-3 first:pt-0 last:pb-0 space-y-1 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 px-2.5 rounded-[6px] transition-all cursor-pointer"
+                    className="py-3 first:pt-0 last:pb-0 space-y-1 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 px-2.5 rounded-[6px] transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-text-primary truncate">
@@ -252,7 +252,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                         {formatDate(resp.submitted_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 truncate font-medium">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate font-medium">
                       {relatedForm?.title || "Formulir"}
                     </p>
                   </motion.div>

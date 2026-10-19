@@ -47,6 +47,8 @@ export default function FormBuilderPage() {
   const [activeTab, setActiveTab] = useState<"builder" | "settings" | "preview">("builder");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving">("saved");
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -69,9 +71,14 @@ export default function FormBuilderPage() {
           if (data.form.fields?.length > 0) {
             setSelectedFieldId(data.form.fields[0].id);
           }
+        } else {
+          setNotFound(true);
         }
       } catch (err) {
         console.error("Failed to load form", err);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
       }
     }
     loadForm();
@@ -204,10 +211,81 @@ export default function FormBuilderPage() {
     }
   };
 
-  if (!form) {
+  if (notFound) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-text-secondary text-sm">
-        Memuat builder formulir...
+      <div className="flex h-screen flex-col items-center justify-center bg-background text-text-secondary text-sm space-y-4">
+        <p className="font-semibold text-text-primary text-base">Formulir tidak ditemukan</p>
+        <p className="text-xs">Formulir yang Anda tuju mungkin telah dihapus atau URL tidak valid.</p>
+        <Link href="/forms">
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Daftar Formulir
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (loading || !form) {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden bg-background">
+        {/* Skeleton Top Builder Bar */}
+        <header className="h-14 px-4 md:px-6 border-b border-border bg-surface flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/forms"
+              className="p-1.5 rounded-[6px] border border-border text-text-secondary hover:text-text-primary hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
+            </Link>
+            <div className="w-48 h-6 bg-muted/80 rounded animate-pulse" />
+            <div className="w-16 h-5 bg-muted/60 rounded-full animate-pulse" />
+          </div>
+          <div className="w-48 h-8 bg-muted/60 rounded-[6px] animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="w-20 h-8 bg-muted/60 rounded-[6px] animate-pulse" />
+            <div className="w-24 h-8 bg-blue-500/30 rounded-[6px] animate-pulse" />
+          </div>
+        </header>
+
+        {/* Skeleton Body */}
+        <div className="flex-1 flex overflow-hidden">
+          <main className="flex-1 overflow-y-auto p-4 md:p-8">
+            <div className="max-w-3xl mx-auto space-y-4">
+              {/* Form title card skeleton */}
+              <div className="p-6 bg-surface border border-border rounded-[10px] space-y-3 animate-pulse">
+                <div className="w-3/4 h-7 bg-muted/80 rounded" />
+                <div className="w-full h-4 bg-muted/50 rounded" />
+              </div>
+
+              {/* Field cards skeleton */}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 bg-surface border border-border rounded-[10px] space-y-3 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="w-28 h-5 bg-muted/70 rounded" />
+                    <div className="w-16 h-5 bg-muted/50 rounded" />
+                  </div>
+                  <div className="w-3/5 h-4 bg-muted/80 rounded" />
+                  <div className="w-full h-8 bg-muted/40 rounded border border-border/50" />
+                </div>
+              ))}
+            </div>
+          </main>
+
+          {/* Properties Panel Skeleton */}
+          <aside className="w-80 bg-surface border-l border-border p-5 space-y-4 hidden lg:block animate-pulse shrink-0">
+            <div className="w-32 h-5 bg-muted/80 rounded" />
+            <div className="space-y-2 pt-2">
+              <div className="w-20 h-3 bg-muted/60 rounded" />
+              <div className="w-full h-8 bg-muted/50 rounded" />
+            </div>
+            <div className="space-y-2 pt-2">
+              <div className="w-24 h-3 bg-muted/60 rounded" />
+              <div className="w-full h-16 bg-muted/40 rounded" />
+            </div>
+            <div className="w-full h-10 bg-muted/50 rounded mt-6" />
+          </aside>
+        </div>
       </div>
     );
   }
@@ -376,14 +454,14 @@ export default function FormBuilderPage() {
 
                   {/* Quick Add Questions Toolbar */}
                   <div className="p-5 bg-surface border border-border rounded-[10px] space-y-3 shadow-xs">
-                    <p className="text-xs font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1.5">
+                    <p className="text-xs font-mono uppercase tracking-wider text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1.5">
                       <Plus className="w-3.5 h-3.5" />
                       Tambah Pertanyaan Baru
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {[
-                        { type: "text", label: "Teks Pendek", dot: "bg-indigo-500", hover: "hover:border-indigo-400 hover:bg-indigo-50/50" },
-                        { type: "textarea", label: "Teks Panjang", dot: "bg-indigo-500", hover: "hover:border-indigo-400 hover:bg-indigo-50/50" },
+                        { type: "text", label: "Teks Pendek", dot: "bg-blue-500", hover: "hover:border-blue-400 hover:bg-blue-50/50" },
+                        { type: "textarea", label: "Teks Panjang", dot: "bg-blue-500", hover: "hover:border-blue-400 hover:bg-blue-50/50" },
                         { type: "number", label: "Angka", dot: "bg-cyan-500", hover: "hover:border-cyan-400 hover:bg-cyan-50/50" },
                         { type: "email", label: "Email", dot: "bg-sky-500", hover: "hover:border-sky-400 hover:bg-sky-50/50" },
                         { type: "phone", label: "Telepon", dot: "bg-blue-500", hover: "hover:border-blue-400 hover:bg-blue-50/50" },
@@ -392,7 +470,7 @@ export default function FormBuilderPage() {
                         { type: "select", label: "Dropdown", dot: "bg-emerald-500", hover: "hover:border-emerald-400 hover:bg-emerald-50/50" },
                         { type: "checkbox", label: "Pilihan Ganda", dot: "bg-emerald-500", hover: "hover:border-emerald-400 hover:bg-emerald-50/50" },
                         { type: "rating", label: "Rating (1-5)", dot: "bg-amber-500", hover: "hover:border-amber-400 hover:bg-amber-50/50" },
-                        { type: "linear_scale", label: "Skala Linear (NPS)", dot: "bg-violet-500", hover: "hover:border-violet-400 hover:bg-violet-50/50" },
+                        { type: "linear_scale", label: "Skala Linear (NPS)", dot: "bg-sky-500", hover: "hover:border-sky-400 hover:bg-sky-50/50" },
                         { type: "file_upload", label: "Upload File", dot: "bg-rose-500", hover: "hover:border-rose-400 hover:bg-rose-50/50" },
                       ].map((item) => (
                         <motion.button
@@ -407,7 +485,7 @@ export default function FormBuilderPage() {
                             <span className={`w-2 h-2 rounded-full ${item.dot} group-hover:scale-125 transition-transform`} />
                             {item.label}
                           </span>
-                          <Plus className="w-3.5 h-3.5 text-text-secondary group-hover:text-indigo-600 transition-colors" />
+                          <Plus className="w-3.5 h-3.5 text-text-secondary group-hover:text-blue-600 transition-colors" />
                         </motion.button>
                       ))}
                     </div>

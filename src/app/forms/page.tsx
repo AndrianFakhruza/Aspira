@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
@@ -12,6 +13,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Form, FormStatus } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { formTemplates } from "@/lib/storage/mock-data";
+import { triggerNavigationProgress } from "@/components/ui/navigation-progress";
 import {
   Plus,
   Search,
@@ -38,12 +40,14 @@ const rowVariants: Variants = {
 };
 
 export default function FormsPage() {
+  const router = useRouter();
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [creatingBlank, setCreatingBlank] = useState(false);
 
   const fetchForms = async () => {
     try {
@@ -62,6 +66,41 @@ export default function FormsPage() {
   useEffect(() => {
     fetchForms();
   }, []);
+
+  const handleCreateBlankForm = async () => {
+    if (creatingBlank) return;
+    setCreatingBlank(true);
+    triggerNavigationProgress();
+    try {
+      const res = await fetch("/api/forms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Formulir Baru",
+          description: "Silakan lengkapi formulir ini dengan informasi yang sesuai.",
+          status: "draft",
+          fields: [
+            {
+              position: 1,
+              type: "text",
+              label: "Pertanyaan Pertama",
+              required: true,
+              section: 1,
+            },
+          ],
+        }),
+      });
+      const data = await res.json();
+      if (data.form?.id) {
+        router.push(`/forms/${data.form.id}/edit`);
+      } else {
+        setCreatingBlank(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setCreatingBlank(false);
+    }
+  };
 
   const handleDuplicate = async (id: string) => {
     if (confirm("Duplikasi formulir ini?")) {
@@ -83,19 +122,25 @@ export default function FormsPage() {
 
   const handleCreateFromTemplate = async (template: typeof formTemplates[0]) => {
     setActionLoading(true);
-    const res = await fetch("/api/forms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...template.form,
-        fields: template.fields,
-      }),
-    });
-    const data = await res.json();
-    setTemplateDialogOpen(false);
-    setActionLoading(false);
-    if (data.form?.id) {
-      window.location.href = `/forms/${data.form.id}/edit`;
+    triggerNavigationProgress();
+    try {
+      const res = await fetch("/api/forms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...template.form,
+          fields: template.fields,
+        }),
+      });
+      const data = await res.json();
+      setTemplateDialogOpen(false);
+      setActionLoading(false);
+      if (data.form?.id) {
+        router.push(`/forms/${data.form.id}/edit`);
+      }
+    } catch (e) {
+      console.error(e);
+      setActionLoading(false);
     }
   };
 
@@ -110,7 +155,7 @@ export default function FormsPage() {
   const getStatusButtonClass = (st: string) => {
     const isActive = statusFilter === st;
     if (!isActive) {
-      return "bg-surface text-text-secondary border-border hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5 hover:shadow-xs";
+      return "bg-surface text-text-secondary border-border hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-xs";
     }
     switch (st) {
       case "published":
@@ -120,7 +165,7 @@ export default function FormsPage() {
       case "closed":
         return "bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-500/25";
       default:
-        return "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/25";
+        return "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/25";
     }
   };
 
@@ -148,18 +193,29 @@ export default function FormsPage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="gap-2 border-indigo-200 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
+                className="gap-2 border-blue-200 text-blue-700 dark:border-blue-800 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50"
                 onClick={() => setTemplateDialogOpen(true)}
               >
-                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 stroke-[2] animate-pulse" />
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 stroke-[2] animate-pulse" />
                 Template Siap Pakai
               </Button>
-              <Link href="/forms/new">
-                <Button className="gap-2 shadow-md hover:shadow-indigo-500/25">
-                  <Plus className="w-4 h-4 stroke-[2]" />
-                  Form Kosong
-                </Button>
-              </Link>
+              <Button
+                onClick={handleCreateBlankForm}
+                disabled={creatingBlank}
+                className="gap-2 shadow-md hover:shadow-blue-500/25 min-w-[140px]"
+              >
+                {creatingBlank ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span>Membuat...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 stroke-[2]" />
+                    <span>Form Kosong</span>
+                  </>
+                )}
+              </Button>
             </div>
           </motion.div>
 
@@ -171,13 +227,13 @@ export default function FormsPage() {
             transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="relative w-full sm:w-80 group">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-indigo-600 transition-colors stroke-[1.5]" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-blue-600 transition-colors stroke-[1.5]" />
               <input
                 type="text"
                 placeholder="Cari berdasarkan judul form..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
 
@@ -209,26 +265,42 @@ export default function FormsPage() {
             transition={{ duration: 0.4, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="w-full text-left text-sm border-collapse min-w-[880px]">
                 <thead className="bg-muted/70 border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0">
                   <tr>
-                    <th className="py-3 px-4 font-semibold">Formulir</th>
-                    <th className="py-3 px-4 font-semibold w-32">Status</th>
-                    <th className="py-3 px-4 font-semibold w-28">Respons</th>
-                    <th className="py-3 px-4 font-semibold w-36">Dibuat</th>
-                    <th className="py-3 px-4 font-semibold text-right w-64">Aksi</th>
+                    <th className="py-3 px-4 font-semibold min-w-[240px]">Formulir</th>
+                    <th className="py-3 px-4 font-semibold w-28 whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 font-semibold w-24 whitespace-nowrap">Respons</th>
+                    <th className="py-3 px-4 font-semibold w-36 whitespace-nowrap">Dibuat</th>
+                    <th className="py-3 px-4 font-semibold text-right min-w-[300px] w-80 whitespace-nowrap">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
-                        <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
-                          <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
-                          Memuat daftar formulir...
-                        </div>
-                      </td>
-                    </tr>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="h-16 animate-pulse">
+                        <td className="py-3 px-4">
+                          <div className="w-48 h-4 bg-muted/80 rounded" />
+                          <div className="w-24 h-3 bg-muted/50 rounded mt-2" />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="w-16 h-6 bg-muted/70 rounded-full" />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="w-10 h-4 bg-muted/70 rounded" />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="w-24 h-3.5 bg-muted/60 rounded" />
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <div className="w-7 h-7 bg-muted/60 rounded-[6px]" />
+                            <div className="w-16 h-7 bg-muted/60 rounded-[6px]" />
+                            <div className="w-7 h-7 bg-muted/60 rounded-[6px]" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   ) : filteredForms.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
@@ -236,111 +308,100 @@ export default function FormsPage() {
                       </td>
                     </tr>
                   ) : (
-                    <AnimatePresence mode="popLayout">
-                      <motion.tbody
-                        key={statusFilter + search}
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="divide-y divide-border"
+                    filteredForms.map((form, idx) => (
+                      <motion.tr
+                        key={form.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.22, delay: Math.min(idx * 0.035, 0.35) }}
+                        className="hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors h-14 group"
                       >
-                        {filteredForms.map((form) => (
-                          <motion.tr
-                            key={form.id}
-                            variants={rowVariants}
-                            exit="exit"
-                            layout
-                            className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-14 group"
-                            whileHover={{ x: 5, transition: { duration: 0.15 } }}
-                          >
-                            <td className="py-3 px-4">
-                              <div className="font-semibold text-text-primary group-hover:text-indigo-600 transition-colors">
-                                <Link href={`/forms/${form.id}/edit`} className="hover:underline">
-                                  {form.title}
-                                </Link>
-                              </div>
-                              <div className="text-xs text-text-secondary line-clamp-1 font-mono">
-                                /{form.slug}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <StatusBadge status={form.status} />
-                            </td>
-                            <td className="py-3 px-4 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                              {form.responses_count || 0}
-                            </td>
-                            <td className="py-3 px-4 font-mono text-xs text-text-secondary">
-                              {formatDate(form.created_at)}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {form.status === "published" && (
-                                  <Link href={`/f/${form.slug}`} target="_blank">
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      title="Lihat Form Publik"
-                                      className="hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
-                                    >
-                                      <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
-                                    </Button>
-                                  </Link>
-                                )}
-                                <Link href={`/forms/${form.id}/responses`}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    title="Tabel Respons"
-                                    className="hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50"
-                                  >
-                                    <TableIcon className="w-3.5 h-3.5 mr-1" />
-                                    Respons
-                                  </Button>
-                                </Link>
-                                <Link href={`/forms/${form.id}/analytics`}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    title="Laporan Analisis"
-                                    className="hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/50"
-                                  >
-                                    <BarChart3 className="w-3.5 h-3.5 mr-1" />
-                                    Analisis
-                                  </Button>
-                                </Link>
-                                <Link href={`/forms/${form.id}/edit`}>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    title="Edit Builder"
-                                    className="hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50"
-                                  >
-                                    <Edit className="w-3.5 h-3.5 stroke-[1.5]" />
-                                  </Button>
-                                </Link>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-text-primary group-hover:text-blue-600 transition-colors">
+                            <Link href={`/forms/${form.id}/edit`} className="hover:underline line-clamp-1">
+                              {form.title}
+                            </Link>
+                          </div>
+                          <div className="text-xs text-text-secondary line-clamp-1 font-mono">
+                            /{form.slug}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <StatusBadge status={form.status} />
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                          {form.responses_count || 0}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs text-text-secondary whitespace-nowrap">
+                          {formatDate(form.created_at)}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {form.status === "published" && (
+                              <Link href={`/f/${form.slug}`} target="_blank">
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  title="Duplikasi"
-                                  onClick={() => handleDuplicate(form.id)}
-                                  className="hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50"
+                                  title="Lihat Form Publik"
+                                  className="hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
                                 >
-                                  <Copy className="w-3.5 h-3.5 stroke-[1.5]" />
+                                  <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
                                 </Button>
-                                <Button
-                                  variant="danger"
-                                  size="icon"
-                                  title="Hapus"
-                                  onClick={() => handleDelete(form.id, form.title)}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
-                                </Button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </motion.tbody>
-                    </AnimatePresence>
+                              </Link>
+                            )}
+                            <Link href={`/forms/${form.id}/responses`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                title="Tabel Respons"
+                                className="hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50"
+                              >
+                                <TableIcon className="w-3.5 h-3.5 mr-1" />
+                                Respons
+                              </Button>
+                            </Link>
+                            <Link href={`/forms/${form.id}/analytics`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                title="Laporan Analisis"
+                                className="hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50/50"
+                              >
+                                <BarChart3 className="w-3.5 h-3.5 mr-1" />
+                                Analisis
+                              </Button>
+                            </Link>
+                            <Link href={`/forms/${form.id}/edit`}>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                title="Edit Builder"
+                                className="hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50"
+                              >
+                                <Edit className="w-3.5 h-3.5 stroke-[1.5]" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              title="Duplikasi"
+                              onClick={() => handleDuplicate(form.id)}
+                              className="hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
+                            >
+                              <Copy className="w-3.5 h-3.5 stroke-[1.5]" />
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="icon"
+                              title="Hapus"
+                              onClick={() => handleDelete(form.id, form.title)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                            </Button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -356,27 +417,33 @@ export default function FormsPage() {
         title="Pilih Template Formulir"
         description="Gunakan struktur siap pakai untuk membuat kuesioner dengan cepat."
       >
-        <motion.div
-          className="space-y-4 py-2"
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-        >
+        {actionLoading ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3 text-sm text-blue-600 font-medium">
+            <span className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <span>Membuat formulir dari template...</span>
+          </div>
+        ) : (
+          <motion.div
+            className="space-y-4 py-2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
           {formTemplates.map((template, idx) => (
             <motion.div
               key={idx}
               variants={rowVariants}
-              className="p-4 border border-border rounded-[10px] hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer space-y-2 bg-surface group"
+              className="p-4 border border-border rounded-[10px] hover:border-blue-500 hover:shadow-md transition-all cursor-pointer space-y-2 bg-surface group"
               onClick={() => handleCreateFromTemplate(template)}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-text-primary group-hover:text-indigo-600 transition-colors flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h4 className="text-sm font-semibold text-text-primary group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                   {template.name}
                 </h4>
-                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                   {template.fields.length} pertanyaan
                 </span>
               </div>
@@ -384,6 +451,7 @@ export default function FormsPage() {
             </motion.div>
           ))}
         </motion.div>
+        )}
       </Dialog>
     </div>
   );

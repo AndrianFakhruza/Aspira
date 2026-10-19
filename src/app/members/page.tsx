@@ -137,16 +137,30 @@ export default function MembersPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
-                      <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
-                        <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
-                        Memuat daftar anggota...
-                      </div>
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <tr key={idx} className="h-14 animate-pulse">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-muted/80 shrink-0" />
+                          <div className="w-32 h-4 bg-muted/80 rounded" />
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-40 h-3.5 bg-muted/60 rounded" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-28 h-8 bg-muted/70 rounded-[6px]" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-20 h-3.5 bg-muted/60 rounded" />
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="w-7 h-7 bg-muted/50 rounded-[6px] ml-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : (
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence>
                     {members.map((member) => (
                       <motion.tr
                         key={member.id}
@@ -154,15 +168,15 @@ export default function MembersPage() {
                         initial="hidden"
                         animate="show"
                         exit="exit"
-                        layout
-                        className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-14 group"
-                        whileHover={{ x: 4, transition: { duration: 0.15 } }}
+                        className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all h-14 group"
                       >
-                        <td className="py-3 px-4 font-semibold text-text-primary group-hover:text-indigo-600 transition-colors flex items-center gap-2.5 mt-2.5">
-                          <span className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                            {member.full_name.charAt(0).toUpperCase()}
-                          </span>
-                          <span>{member.full_name}</span>
+                        <td className="py-3 px-4 font-semibold text-text-primary group-hover:text-blue-600 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                              {member.full_name.charAt(0).toUpperCase()}
+                            </span>
+                            <span>{member.full_name}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-text-secondary font-mono text-xs">
                           {member.email || "-"}
@@ -173,7 +187,7 @@ export default function MembersPage() {
                             onChange={(e) =>
                               handleRoleChange(member.id, e.target.value as UserRole)
                             }
-                            className="h-8 text-xs py-1 border-indigo-200/80 focus:border-indigo-500"
+                            className="h-8 text-xs py-1 border-blue-200/80 focus:border-blue-500"
                           >
                             <option value="owner">Owner (Pemilik)</option>
                             <option value="editor">Editor (Pengelola)</option>

@@ -59,13 +59,13 @@ export function RoleBadge({ role, className }: { role: string; className?: strin
   const configs: Record<string, { label: string; styles: string; icon: React.ReactNode }> = {
     owner: {
       label: "Owner",
-      styles: "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-      icon: <Shield className="w-3 h-3 text-purple-600" />,
+      styles: "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-semibold",
+      icon: <Shield className="w-3 h-3 text-blue-600" />,
     },
     editor: {
       label: "Editor",
-      styles: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-      icon: <UserCheck className="w-3 h-3 text-blue-600" />,
+      styles: "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border-sky-200 dark:border-sky-800",
+      icon: <UserCheck className="w-3 h-3 text-sky-600" />,
     },
     viewer: {
       label: "Viewer",
