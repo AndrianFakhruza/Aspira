@@ -75,7 +75,7 @@ create table if not exists public.form_fields (
     required boolean not null default false,
     options jsonb default '[]'::jsonb,
     validation jsonb default '{}'::jsonb,
-    logic jsonb default '{}'::jsonb,
+    logic jsonb default '[]'::jsonb,
     section integer not null default 1,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

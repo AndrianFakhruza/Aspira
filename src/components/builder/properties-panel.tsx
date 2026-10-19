@@ -277,56 +277,62 @@ export function PropertiesPanel({ field, allFields, onUpdate, onClose }: Propert
             Perlu minimal 2 pertanyaan untuk membuat aturan logika kondisional.
           </p>
         ) : (
-          <div className="space-y-2">
-            <p className="text-[11px] text-text-secondary">
-              Tampilkan pertanyaan ini hanya jika:
-            </p>
-            <Select
-              value={field.logic?.[0]?.target_field_id || ""}
-              onChange={(e) => {
-                const targetId = e.target.value;
-                if (!targetId) {
-                  onUpdate({ logic: [] });
-                } else {
-                  onUpdate({
-                    logic: [
-                      {
-                        target_field_id: targetId,
-                        operator: "equals",
-                        value: "",
-                        action: "show",
-                      },
-                    ],
-                  });
-                }
-              }}
-            >
-              <option value="">Selalu Tampilkan (Tanpa Logika)</option>
-              {otherFields.map((of) => (
-                <option key={of.id} value={of.id}>
-                  {of.label}
-                </option>
-              ))}
-            </Select>
+          (() => {
+            const logicList = Array.isArray(field.logic) ? field.logic : [];
+            const firstRule = logicList[0];
+            return (
+              <div className="space-y-2">
+                <p className="text-[11px] text-text-secondary">
+                  Tampilkan pertanyaan ini hanya jika:
+                </p>
+                <Select
+                  value={firstRule?.target_field_id || ""}
+                  onChange={(e) => {
+                    const targetId = e.target.value;
+                    if (!targetId) {
+                      onUpdate({ logic: [] });
+                    } else {
+                      onUpdate({
+                        logic: [
+                          {
+                            target_field_id: targetId,
+                            operator: "equals",
+                            value: "",
+                            action: "show",
+                          },
+                        ],
+                      });
+                    }
+                  }}
+                >
+                  <option value="">Selalu Tampilkan (Tanpa Logika)</option>
+                  {otherFields.map((of) => (
+                    <option key={of.id} value={of.id}>
+                      {of.label}
+                    </option>
+                  ))}
+                </Select>
 
-            {field.logic?.[0]?.target_field_id && (
-              <Input
-                label="Bernilai sama dengan"
-                placeholder="Jawaban pemicu..."
-                value={String(field.logic[0].value || "")}
-                onChange={(e) =>
-                  onUpdate({
-                    logic: [
-                      {
-                        ...field.logic![0],
-                        value: e.target.value,
-                      },
-                    ],
-                  })
-                }
-              />
-            )}
-          </div>
+                {firstRule?.target_field_id && (
+                  <Input
+                    label="Bernilai sama dengan"
+                    placeholder="Jawaban pemicu..."
+                    value={String(firstRule.value || "")}
+                    onChange={(e) =>
+                      onUpdate({
+                        logic: [
+                          {
+                            ...firstRule,
+                            value: e.target.value,
+                          },
+                        ],
+                      })
+                    }
+                  />
+                )}
+              </div>
+            );
+          })()
         )}
       </div>
     </aside>

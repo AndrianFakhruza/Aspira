@@ -13,6 +13,17 @@ let memoryAuditLogs: AuditLog[] = [...initialAuditLogs];
 const isUUID = (str?: string): boolean =>
   typeof str === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
+function normalizeFields(rawFields?: any[]): FormField[] {
+  return (rawFields || [])
+    .map((f: any) => ({
+      ...f,
+      options: Array.isArray(f.options) ? f.options : [],
+      logic: Array.isArray(f.logic) ? f.logic : [],
+      validation: typeof f.validation === "object" && f.validation !== null ? f.validation : {},
+    }))
+    .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+}
+
 export const db = {
   // --- WORKSPACE ---
   async getWorkspace(): Promise<Workspace> {
@@ -68,7 +79,7 @@ export const db = {
         if (!error && data && data.length > 0) {
           return data.map((f: any) => ({
             ...f,
-            fields: (f.form_fields || []).sort((a: any, b: any) => a.position - b.position),
+            fields: normalizeFields(f.form_fields),
             responses_count: memoryResponses.filter((r) => r.form_id === f.id).length,
           }));
         }
@@ -78,6 +89,7 @@ export const db = {
     }
     return memoryForms.map((f) => ({
       ...f,
+      fields: normalizeFields(f.fields),
       responses_count: memoryResponses.filter((r) => r.form_id === f.id).length,
     }));
   },
@@ -94,7 +106,7 @@ export const db = {
         if (!error && data) {
           return {
             ...data,
-            fields: (data.form_fields || []).sort((a: any, b: any) => a.position - b.position),
+            fields: normalizeFields(data.form_fields),
             responses_count: memoryResponses.filter((r) => r.form_id === data.id).length,
           };
         }
@@ -106,6 +118,7 @@ export const db = {
     if (!form) return null;
     return {
       ...form,
+      fields: normalizeFields(form.fields),
       responses_count: memoryResponses.filter((r) => r.form_id === form.id).length,
     };
   },
@@ -122,14 +135,19 @@ export const db = {
         if (!error && data) {
           return {
             ...data,
-            fields: (data.form_fields || []).sort((a: any, b: any) => a.position - b.position),
+            fields: normalizeFields(data.form_fields),
           };
         }
       } catch (e) {
         console.error("Supabase getFormBySlug error:", e);
       }
     }
-    return memoryForms.find((f) => f.slug === slug) || null;
+    const form = memoryForms.find((f) => f.slug === slug);
+    if (!form) return null;
+    return {
+      ...form,
+      fields: normalizeFields(form.fields),
+    };
   },
 
   async createForm(formData: Partial<Form>): Promise<Form> {

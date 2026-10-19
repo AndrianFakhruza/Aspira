@@ -24,8 +24,9 @@ export function PreviewTab({ form }: PreviewTabProps) {
 
   // Conditional logic check
   const isFieldVisible = (field: FormField) => {
-    if (!field.logic || field.logic.length === 0) return true;
+    if (!field.logic || !Array.isArray(field.logic) || field.logic.length === 0) return true;
     for (const rule of field.logic) {
+      if (!rule || !rule.target_field_id) continue;
       const targetVal = answers[rule.target_field_id];
       if (rule.operator === "equals") {
         if (String(targetVal || "").toLowerCase() !== String(rule.value || "").toLowerCase()) {
