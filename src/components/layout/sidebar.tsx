@@ -105,7 +105,6 @@ export function Sidebar({ workspaceName = "Tanggap" }: SidebarProps) {
         <div className="flex items-center justify-between">
           <div className="truncate pr-2">
             <p className="text-xs font-semibold text-text-primary truncate">{workspaceName}</p>
-            <p className="text-[11px] text-blue-600 font-mono font-medium">v3.0 Production</p>
           </div>
           <Link
             href="/forms"
