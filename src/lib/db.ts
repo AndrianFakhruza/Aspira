@@ -17,6 +17,14 @@ export const db = {
     if (supabase) {
       const { data, error } = await supabase.from("workspaces").select("*").limit(1).single();
       if (!error && data) return data as Workspace;
+
+      // Seed initial default workspace if empty
+      const { data: created } = await supabase
+        .from("workspaces")
+        .insert({ name: "Organisasi Tanggap" })
+        .select()
+        .single();
+      if (created) return created as Workspace;
     }
     return memoryWorkspace;
   },
