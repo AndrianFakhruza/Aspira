@@ -60,11 +60,8 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border"
       >
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center gap-2">
-            <span>Dashboard</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200">
-              v3.0 Active
-            </span>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+            Dashboard
           </h1>
           <p className="text-sm text-text-secondary mt-1">
             Kumpulkan respons, pahami hasilnya. Ringkasan seluruh aktivitas formulir dan survei.
