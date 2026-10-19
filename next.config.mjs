@@ -5,6 +5,12 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["exceljs"],
   },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
+  },
   async headers() {
     return [
       {
