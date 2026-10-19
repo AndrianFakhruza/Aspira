@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Logo } from "@/components/brand/logo";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,18 +24,39 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
+      <motion.div
+        className="w-full max-w-sm space-y-6"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <motion.div
+          className="text-center space-y-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="flex justify-center pb-2">
-            <Logo size="lg" />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.05, type: "spring", stiffness: 260, damping: 20 }}
+            >
+              <Logo size="lg" />
+            </motion.div>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-text-primary">Masuk ke Tanggap</h1>
           <p className="text-xs text-text-secondary">
             Kumpulkan respons, pahami hasilnya. Masuk untuk mengelola survei.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-surface border border-border rounded-[8px] p-6 shadow-none">
+        <motion.div
+          className="bg-surface border border-border rounded-[8px] p-6 shadow-none"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
               label="Alamat Email"
@@ -75,13 +97,17 @@ export default function LoginPage() {
               {loading ? "Memproses Masuk..." : "Masuk"}
             </Button>
           </form>
-        </div>
+        </motion.div>
 
-        <p className="text-center text-[11px] font-mono text-text-secondary">
-          Platform Form Builder & Analisis Respons v3.0
-        </p>
-      </div>
+        <motion.p
+          className="text-center text-[11px] font-mono text-text-secondary"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          Platform Form Builder &amp; Analisis Respons v3.0
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
-

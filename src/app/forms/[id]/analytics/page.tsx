@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { motion, Variants } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
@@ -13,12 +14,9 @@ import { formatDate } from "@/lib/utils";
 import {
   ArrowLeft,
   Printer,
-  TrendingUp,
-  Star,
   Users,
   FileText,
   BarChart2,
-  CheckCircle2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -31,6 +29,20 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { ease: "easeOut", duration: 0.4 } },
+};
 
 export default function AnalyticsPage() {
   const params = useParams();
@@ -64,7 +76,13 @@ export default function AnalyticsPage() {
   if (loading || !form) {
     return (
       <div className="flex h-screen items-center justify-center bg-background text-text-secondary text-sm">
-        Memuat analisis data survei...
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          Memuat analisis data survei...
+        </motion.div>
       </div>
     );
   }
@@ -86,17 +104,22 @@ export default function AnalyticsPage() {
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <motion.div
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="flex items-center gap-3">
               <Link
                 href="/forms"
-                className="p-1.5 rounded-[6px] border border-border text-text-secondary hover:text-text-primary hover:bg-muted no-print"
+                className="p-1.5 rounded-[6px] border border-border text-text-secondary hover:text-text-primary hover:bg-muted no-print transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
               </Link>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-text-primary">
-                  Laporan & Analisis: {form.title}
+                  Laporan &amp; Analisis: {form.title}
                 </h1>
                 <p className="text-xs text-text-secondary mt-0.5">
                   Laporan komprehensif berbasis data kuantitatif dan naratif otomatis
@@ -120,60 +143,76 @@ export default function AnalyticsPage() {
                 Cetak / Simpan PDF
               </Button>
             </div>
-          </div>
+          </motion.div>
 
           {/* KPI Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
-                  Total Responden
-                </CardTitle>
-                <Users className="w-4 h-4 text-text-secondary stroke-[1.5]" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-mono font-bold text-text-primary">
-                  {analytics.totalResponses}
-                </div>
-                <p className="text-xs text-text-secondary mt-1">Partisipasi responden aktif</p>
-              </CardContent>
-            </Card>
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-5"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div variants={itemVariants} whileHover={{ y: -2, transition: { duration: 0.2 } }}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
+                    Total Responden
+                  </CardTitle>
+                  <Users className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-mono font-bold text-text-primary">
+                    {analytics.totalResponses}
+                  </div>
+                  <p className="text-xs text-text-secondary mt-1">Partisipasi responden aktif</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
-                  Pertanyaan Teranalisis
-                </CardTitle>
-                <FileText className="w-4 h-4 text-text-secondary stroke-[1.5]" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-mono font-bold text-text-primary">
-                  {analytics.questions.length}
-                </div>
-                <p className="text-xs text-text-secondary mt-1">Variabel pertanyaan survei</p>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants} whileHover={{ y: -2, transition: { duration: 0.2 } }}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
+                    Pertanyaan Teranalisis
+                  </CardTitle>
+                  <FileText className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-mono font-bold text-text-primary">
+                    {analytics.questions.length}
+                  </div>
+                  <p className="text-xs text-text-secondary mt-1">Variabel pertanyaan survei</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
-                  Status Formulir
-                </CardTitle>
-                <BarChart2 className="w-4 h-4 text-text-secondary stroke-[1.5]" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-mono font-bold text-text-primary uppercase">
-                  {form.status}
-                </div>
-                <p className="text-xs text-text-secondary mt-1 font-mono">
-                  Slug: /{form.slug}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+            <motion.div variants={itemVariants} whileHover={{ y: -2, transition: { duration: 0.2 } }}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-xs font-mono uppercase tracking-wider text-text-secondary">
+                    Status Formulir
+                  </CardTitle>
+                  <BarChart2 className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl font-mono font-bold text-text-primary uppercase">
+                    {form.status}
+                  </div>
+                  <p className="text-xs text-text-secondary mt-1 font-mono">
+                    Slug: /{form.slug}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
 
           {/* Rule-Based Narrative Summary (PRD Section 6.4) */}
-          <div className="p-6 bg-surface border border-border rounded-[8px] space-y-4">
+          <motion.div
+            className="p-6 bg-surface border border-border rounded-[8px] space-y-4"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="flex items-center gap-2 pb-2 border-b border-border">
               <h2 className="text-sm font-bold text-text-primary uppercase font-mono tracking-wider">
                 Ringkasan Naratif Otomatis
@@ -193,21 +232,32 @@ export default function AnalyticsPage() {
                 </p>
               ) : (
                 analytics.narrativePoints.map((point, idx) => (
-                  <div key={idx} className="p-3 bg-muted/40 border border-border rounded-[6px] space-y-1">
+                  <motion.div
+                    key={idx}
+                    className="p-3 bg-muted/40 border border-border rounded-[6px] space-y-1"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.25 + idx * 0.05 }}
+                  >
                     <p className="text-xs font-semibold text-text-primary">{point.title}</p>
                     <p className="text-xs text-text-secondary">{point.summary}</p>
                     {point.detail && (
                       <p className="text-[11px] font-mono text-text-secondary/80">{point.detail}</p>
                     )}
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Response Submission Trend (Monochrome Recharts) */}
           {analytics.dailyTrends.length > 0 && (
-            <div className="p-6 bg-surface border border-border rounded-[8px] space-y-4">
+            <motion.div
+              className="p-6 bg-surface border border-border rounded-[8px] space-y-4"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            >
               <h3 className="text-sm font-bold text-text-primary">Tren Respons Harian</h3>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -234,16 +284,26 @@ export default function AnalyticsPage() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Breakdown Per Question */}
           <div className="space-y-6">
             <h3 className="text-base font-bold text-text-primary">Analisis Per Pertanyaan</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
               {analytics.questions.map((q, idx) => (
-                <div key={idx} className="p-5 bg-surface border border-border rounded-[8px] space-y-4">
+                <motion.div
+                  key={idx}
+                  variants={itemVariants}
+                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                  className="p-5 bg-surface border border-border rounded-[8px] space-y-4"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <span className="text-[10px] font-mono uppercase text-text-secondary">
@@ -305,13 +365,12 @@ export default function AnalyticsPage() {
                       ))}
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </main>
       </div>
     </div>
   );
 }
-

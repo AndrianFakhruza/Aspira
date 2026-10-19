@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,17 @@ import {
   Table as TableIcon,
   Sparkles,
 } from "lucide-react";
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.055 } },
+};
+
+const rowVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { ease: "easeOut", duration: 0.35 } },
+  exit: { opacity: 0, x: -16, transition: { duration: 0.2 } },
+};
 
 export default function FormsPage() {
   const [forms, setForms] = useState<Form[]>([]);
@@ -102,7 +114,12 @@ export default function FormsPage() {
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <motion.div
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-text-primary">Daftar Formulir</h1>
               <p className="text-sm text-text-secondary mt-1">
@@ -125,10 +142,15 @@ export default function FormsPage() {
                 </Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           {/* Filter & Search Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <motion.div
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary stroke-[1.5]" />
               <input
@@ -155,10 +177,15 @@ export default function FormsPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Forms Table */}
-          <div className="bg-surface border border-border rounded-[8px] overflow-hidden">
+          <motion.div
+            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0">
@@ -184,78 +211,95 @@ export default function FormsPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredForms.map((form) => (
-                      <tr key={form.id} className="hover:bg-muted/50 transition-colors h-14">
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-text-primary">
-                            <Link href={`/forms/${form.id}/edit`} className="hover:underline">
-                              {form.title}
-                            </Link>
-                          </div>
-                          <div className="text-xs text-text-secondary line-clamp-1 font-mono">
-                            /{form.slug}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <StatusBadge status={form.status} />
-                        </td>
-                        <td className="py-3 px-4 font-mono text-xs">
-                          {form.responses_count || 0}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-xs text-text-secondary">
-                          {formatDate(form.created_at)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {form.status === "published" && (
-                              <Link href={`/f/${form.slug}`} target="_blank">
-                                <Button variant="outline" size="icon" title="Lihat Form Publik">
-                                  <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
+                    <AnimatePresence mode="popLayout">
+                      <motion.tbody
+                        key={statusFilter + search}
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="divide-y divide-border"
+                      >
+                        {filteredForms.map((form) => (
+                          <motion.tr
+                            key={form.id}
+                            variants={rowVariants}
+                            exit="exit"
+                            layout
+                            className="hover:bg-muted/50 transition-colors h-14"
+                            whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                          >
+                            <td className="py-3 px-4">
+                              <div className="font-semibold text-text-primary">
+                                <Link href={`/forms/${form.id}/edit`} className="hover:underline">
+                                  {form.title}
+                                </Link>
+                              </div>
+                              <div className="text-xs text-text-secondary line-clamp-1 font-mono">
+                                /{form.slug}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <StatusBadge status={form.status} />
+                            </td>
+                            <td className="py-3 px-4 font-mono text-xs">
+                              {form.responses_count || 0}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-xs text-text-secondary">
+                              {formatDate(form.created_at)}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {form.status === "published" && (
+                                  <Link href={`/f/${form.slug}`} target="_blank">
+                                    <Button variant="outline" size="icon" title="Lihat Form Publik">
+                                      <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
+                                    </Button>
+                                  </Link>
+                                )}
+                                <Link href={`/forms/${form.id}/responses`}>
+                                  <Button variant="outline" size="sm" title="Tabel Respons">
+                                    <TableIcon className="w-3.5 h-3.5 mr-1" />
+                                    Respons
+                                  </Button>
+                                </Link>
+                                <Link href={`/forms/${form.id}/analytics`}>
+                                  <Button variant="outline" size="sm" title="Laporan Analisis">
+                                    <BarChart3 className="w-3.5 h-3.5 mr-1" />
+                                    Analisis
+                                  </Button>
+                                </Link>
+                                <Link href={`/forms/${form.id}/edit`}>
+                                  <Button variant="outline" size="icon" title="Edit Builder">
+                                    <Edit className="w-3.5 h-3.5 stroke-[1.5]" />
+                                  </Button>
+                                </Link>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  title="Duplikasi"
+                                  onClick={() => handleDuplicate(form.id)}
+                                >
+                                  <Copy className="w-3.5 h-3.5 stroke-[1.5]" />
                                 </Button>
-                              </Link>
-                            )}
-                            <Link href={`/forms/${form.id}/responses`}>
-                              <Button variant="outline" size="sm" title="Tabel Respons">
-                                <TableIcon className="w-3.5 h-3.5 mr-1" />
-                                Respons
-                              </Button>
-                            </Link>
-                            <Link href={`/forms/${form.id}/analytics`}>
-                              <Button variant="outline" size="sm" title="Laporan Analisis">
-                                <BarChart3 className="w-3.5 h-3.5 mr-1" />
-                                Analisis
-                              </Button>
-                            </Link>
-                            <Link href={`/forms/${form.id}/edit`}>
-                              <Button variant="outline" size="icon" title="Edit Builder">
-                                <Edit className="w-3.5 h-3.5 stroke-[1.5]" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              title="Duplikasi"
-                              onClick={() => handleDuplicate(form.id)}
-                            >
-                              <Copy className="w-3.5 h-3.5 stroke-[1.5]" />
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="icon"
-                              title="Hapus"
-                              onClick={() => handleDelete(form.id, form.title)}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                                <Button
+                                  variant="danger"
+                                  size="icon"
+                                  title="Hapus"
+                                  onClick={() => handleDelete(form.id, form.title)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                                </Button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </motion.tbody>
+                    </AnimatePresence>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </motion.div>
         </main>
       </div>
 
@@ -266,12 +310,20 @@ export default function FormsPage() {
         title="Pilih Template Formulir"
         description="Gunakan struktur siap pakai untuk membuat kuesioner dengan cepat."
       >
-        <div className="space-y-4 py-2">
+        <motion.div
+          className="space-y-4 py-2"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
           {formTemplates.map((template, idx) => (
-            <div
+            <motion.div
               key={idx}
+              variants={rowVariants}
               className="p-4 border border-border rounded-[8px] hover:border-text-primary transition-colors cursor-pointer space-y-2 bg-surface"
               onClick={() => handleCreateFromTemplate(template)}
+              whileHover={{ scale: 1.01, transition: { duration: 0.15 } }}
+              whileTap={{ scale: 0.99 }}
             >
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-text-primary">{template.name}</h4>
@@ -280,11 +332,10 @@ export default function FormsPage() {
                 </span>
               </div>
               <p className="text-xs text-text-secondary leading-relaxed">{template.description}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </Dialog>
     </div>
   );
 }
-

@@ -1,11 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { AuditLog } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { History, Shield } from "lucide-react";
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+
+const rowVariants: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { ease: "easeOut", duration: 0.3 } },
+};
 
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -34,14 +45,24 @@ export default function AuditLogsPage() {
         <Topbar breadcrumb={[{ label: "Log Audit" }]} />
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-          <div className="pb-4 border-b border-border">
+          <motion.div
+            className="pb-4 border-b border-border"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
             <h1 className="text-2xl font-bold tracking-tight text-text-primary">Log Audit Aktivitas</h1>
             <p className="text-sm text-text-secondary mt-1">
               Catatan jejak audit seluruh aktivitas pembuatan, perubahan, dan penghapusan data formulir.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bg-surface border border-border rounded-[8px] overflow-hidden">
+          <motion.div
+            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
             <table className="w-full text-left text-sm border-collapse">
               <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary">
                 <tr>
@@ -66,32 +87,40 @@ export default function AuditLogsPage() {
                     </td>
                   </tr>
                 ) : (
-                  logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-muted/40 transition-colors h-12">
-                      <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
-                        {formatDate(log.created_at)}
-                      </td>
-                      <td className="py-3 px-4 text-text-primary font-semibold">
-                        {log.actor_name || "Admin"}
-                      </td>
-                      <td className="py-3 px-4 uppercase text-text-primary">
-                        <span className="px-2 py-0.5 rounded bg-muted border border-border">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-text-secondary">{log.entity}</td>
-                      <td className="py-3 px-4 text-text-secondary truncate max-w-xs font-sans">
-                        {log.meta ? JSON.stringify(log.meta) : "-"}
-                      </td>
-                    </tr>
-                  ))
+                  <AnimatePresence>
+                    {logs.map((log) => (
+                      <motion.tr
+                        key={log.id}
+                        variants={rowVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="hover:bg-muted/40 transition-colors h-12"
+                        whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                      >
+                        <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
+                          {formatDate(log.created_at)}
+                        </td>
+                        <td className="py-3 px-4 text-text-primary font-semibold">
+                          {log.actor_name || "Admin"}
+                        </td>
+                        <td className="py-3 px-4 uppercase text-text-primary">
+                          <span className="px-2 py-0.5 rounded bg-muted border border-border">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary">{log.entity}</td>
+                        <td className="py-3 px-4 text-text-secondary truncate max-w-xs font-sans">
+                          {log.meta ? JSON.stringify(log.meta) : "-"}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
                 )}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>
   );
 }
-

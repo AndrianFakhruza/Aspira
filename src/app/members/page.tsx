@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,17 @@ import { RoleBadge } from "@/components/ui/badge";
 import { Profile, UserRole } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { Users, UserPlus, Trash2, Shield, Mail } from "lucide-react";
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+
+const rowVariants: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { ease: "easeOut", duration: 0.35 } },
+  exit: { opacity: 0, x: -16, transition: { duration: 0.2 } },
+};
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Profile[]>([]);
@@ -87,10 +99,15 @@ export default function MembersPage() {
         <Topbar breadcrumb={[{ label: "Anggota Workspace" }]} />
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <motion.div
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-                Anggota & Hak Akses
+                Anggota &amp; Hak Akses
               </h1>
               <p className="text-sm text-text-secondary mt-1">
                 Kelola kolaborator workspace dan kontrol izin akses (Owner, Editor, Viewer).
@@ -100,9 +117,14 @@ export default function MembersPage() {
               <UserPlus className="w-4 h-4 stroke-[1.5]" />
               Undang Anggota
             </Button>
-          </div>
+          </motion.div>
 
-          <div className="bg-surface border border-border rounded-[8px] overflow-hidden">
+          <motion.div
+            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
             <table className="w-full text-left text-sm border-collapse">
               <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary">
                 <tr>
@@ -121,47 +143,58 @@ export default function MembersPage() {
                     </td>
                   </tr>
                 ) : (
-                  members.map((member) => (
-                    <tr key={member.id} className="hover:bg-muted/40 transition-colors h-14">
-                      <td className="py-3 px-4 font-semibold text-text-primary">
-                        {member.full_name}
-                      </td>
-                      <td className="py-3 px-4 text-text-secondary font-mono text-xs">
-                        {member.email || "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Select
-                          value={member.role}
-                          onChange={(e) =>
-                            handleRoleChange(member.id, e.target.value as UserRole)
-                          }
-                          className="h-8 text-xs py-1"
-                        >
-                          <option value="owner">Owner</option>
-                          <option value="editor">Editor</option>
-                          <option value="viewer">Viewer</option>
-                        </Select>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-xs text-text-secondary">
-                        {formatDate(member.created_at)}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {member.role !== "owner" && (
-                          <button
-                            onClick={() => handleRemoveMember(member.id, member.full_name)}
-                            className="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-muted"
-                            title="Hapus Anggota"
+                  <AnimatePresence mode="popLayout">
+                    {members.map((member) => (
+                      <motion.tr
+                        key={member.id}
+                        variants={rowVariants}
+                        initial="hidden"
+                        animate="show"
+                        exit="exit"
+                        layout
+                        className="hover:bg-muted/40 transition-colors h-14"
+                        whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                      >
+                        <td className="py-3 px-4 font-semibold text-text-primary">
+                          {member.full_name}
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary font-mono text-xs">
+                          {member.email || "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Select
+                            value={member.role}
+                            onChange={(e) =>
+                              handleRoleChange(member.id, e.target.value as UserRole)
+                            }
+                            className="h-8 text-xs py-1"
                           >
-                            <Trash2 className="w-4 h-4 stroke-[1.5]" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                            <option value="owner">Owner</option>
+                            <option value="editor">Editor</option>
+                            <option value="viewer">Viewer</option>
+                          </Select>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs text-text-secondary">
+                          {formatDate(member.created_at)}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {member.role !== "owner" && (
+                            <button
+                              onClick={() => handleRemoveMember(member.id, member.full_name)}
+                              className="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-muted transition-colors"
+                              title="Hapus Anggota"
+                            >
+                              <Trash2 className="w-4 h-4 stroke-[1.5]" />
+                            </button>
+                          )}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
                 )}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         </main>
       </div>
 
@@ -219,4 +252,3 @@ export default function MembersPage() {
     </div>
   );
 }
-

@@ -4,7 +4,10 @@ import { cn } from "@/lib/utils";
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("bg-surface border border-border rounded-[8px] p-5 shadow-none", className)}
+      className={cn(
+        "bg-surface border border-border rounded-[8px] p-5 shadow-none transition-all duration-200 hover:border-text-secondary/40 hover:shadow-dropdown",
+        className
+      )}
       {...props}
     />
   );
@@ -34,4 +37,3 @@ export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDi
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("flex items-center pt-4 border-t border-border mt-4", className)} {...props} />;
 }
-
