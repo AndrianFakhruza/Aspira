@@ -274,25 +274,28 @@ export default function PublicFormPage() {
           initial={{ opacity: 0, scale: 0.9, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          className="max-w-md w-full bg-surface border border-border rounded-[8px] p-8 text-center space-y-5 shadow-dropdown"
+          className="max-w-md w-full bg-surface border border-border rounded-[12px] p-8 text-center space-y-5 shadow-lg"
         >
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.15, type: "spring", damping: 15, stiffness: 350 }}
-            className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto"
+            className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center mx-auto shadow-md shadow-emerald-500/30"
           >
-            <Check className="w-7 h-7 stroke-[2]" />
+            <Check className="w-8 h-8 stroke-[2.5]" />
           </motion.div>
           <h2 className="text-xl font-bold text-text-primary tracking-tight">
-            Respons Berhasil Dikirim
+            Respons Berhasil Terkirim!
           </h2>
           <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap">
             {successMessage}
           </p>
           {form.settings.show_branding && (
             <div className="pt-6 border-t border-border">
-              <p className="text-[11px] text-text-secondary">Dibuat dengan Tanggap</p>
+              <p className="text-[11px] text-text-secondary flex items-center justify-center gap-1">
+                <span>Dibuat dengan</span>
+                <span className="font-semibold text-indigo-600">Tanggap</span>
+              </p>
             </div>
           )}
         </motion.div>
@@ -307,7 +310,7 @@ export default function PublicFormPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-surface border border-border rounded-[8px] p-6 md:p-8 space-y-3 shadow-xs"
+          className="bg-surface border border-border rounded-[10px] p-6 md:p-8 space-y-3 shadow-xs"
         >
           <h1 className="text-2xl font-bold tracking-tight text-text-primary">{form.title}</h1>
           {form.description && (
@@ -319,15 +322,15 @@ export default function PublicFormPage() {
           {/* Progress bar if multi-page */}
           {maxSection > 1 && (
             <div className="pt-4 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-text-secondary font-medium">
+              <div className="flex items-center justify-between text-[11px] text-text-secondary font-medium font-mono">
                 <span>
                   Bagian {currentSection} dari {maxSection}
                 </span>
-                <span>{Math.round((currentSection / maxSection) * 100)}%</span>
+                <span className="text-indigo-600 font-bold">{Math.round((currentSection / maxSection) * 100)}%</span>
               </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-primary"
+                  className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-500 rounded-full"
                   initial={false}
                   animate={{ width: `${(currentSection / maxSection) * 100}%` }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
@@ -472,13 +475,13 @@ export default function PublicFormPage() {
                       return (
                         <motion.label
                           key={i}
-                          whileHover={{ x: 2 }}
-                          whileTap={{ scale: 0.99 }}
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
                           className={cn(
-                            "flex items-center gap-3 p-3 rounded-[6px] border cursor-pointer transition-all",
+                            "flex items-center gap-3 p-3 rounded-[8px] border cursor-pointer transition-all",
                             isSelected
-                              ? "border-text-primary bg-muted/60 ring-1 ring-text-primary"
-                              : "border-border hover:bg-muted/40"
+                              ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 text-indigo-950 dark:text-indigo-200 font-semibold"
+                              : "border-border hover:border-indigo-300 hover:bg-indigo-50/20"
                           )}
                         >
                           <input
@@ -486,14 +489,14 @@ export default function PublicFormPage() {
                             name={field.id}
                             checked={isSelected}
                             onChange={() => setAnswers({ ...answers, [field.id]: opt })}
-                            className="w-4 h-4 text-primary accent-primary"
+                            className="w-4 h-4 text-indigo-600 accent-indigo-600"
                           />
-                          <span className="text-xs text-text-primary font-medium">{opt}</span>
+                          <span className="text-xs">{opt}</span>
                         </motion.label>
                       );
                     })}
                     {errors[field.id] && (
-                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-primary pt-1">
+                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 pt-1">
                         <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                         {errors[field.id]}
                       </p>
@@ -509,13 +512,13 @@ export default function PublicFormPage() {
                       return (
                         <motion.label
                           key={i}
-                          whileHover={{ x: 2 }}
-                          whileTap={{ scale: 0.99 }}
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
                           className={cn(
-                            "flex items-center gap-3 p-3 rounded-[6px] border cursor-pointer transition-all",
+                            "flex items-center gap-3 p-3 rounded-[8px] border cursor-pointer transition-all",
                             isChecked
-                              ? "border-text-primary bg-muted/60 ring-1 ring-text-primary"
-                              : "border-border hover:bg-muted/40"
+                              ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 text-indigo-950 dark:text-indigo-200 font-semibold"
+                              : "border-border hover:border-indigo-300 hover:bg-indigo-50/20"
                           )}
                         >
                           <input
@@ -534,14 +537,14 @@ export default function PublicFormPage() {
                                 });
                               }
                             }}
-                            className="w-4 h-4 rounded border-border accent-primary"
+                            className="w-4 h-4 rounded border-border text-indigo-600 accent-indigo-600"
                           />
-                          <span className="text-xs text-text-primary font-medium">{opt}</span>
+                          <span className="text-xs">{opt}</span>
                         </motion.label>
                       );
                     })}
                     {errors[field.id] && (
-                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-primary pt-1">
+                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 pt-1">
                         <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                         {errors[field.id]}
                       </p>
@@ -551,27 +554,30 @@ export default function PublicFormPage() {
 
                 {field.type === "rating" && (
                   <div className="space-y-2 pt-2">
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <motion.button
-                          type="button"
-                          key={star}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.94 }}
-                          onClick={() => setAnswers({ ...answers, [field.id]: star })}
-                          className={cn(
-                            "w-11 h-11 rounded-[6px] border text-sm font-bold flex items-center justify-center transition-colors cursor-pointer",
-                            answers[field.id] === star
-                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                              : "border-border hover:bg-muted text-text-primary"
-                          )}
-                        >
-                          {star}
-                        </motion.button>
-                      ))}
+                    <div className="flex items-center gap-2.5">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isChosen = (answers[field.id] || 0) >= star;
+                        return (
+                          <motion.button
+                            type="button"
+                            key={star}
+                            whileHover={{ scale: 1.18, y: -3 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setAnswers({ ...answers, [field.id]: star })}
+                            className={cn(
+                              "w-12 h-12 rounded-[8px] border text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs",
+                              isChosen
+                                ? "bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-400/25"
+                                : "border-border hover:border-amber-300 hover:bg-amber-50/40 text-text-primary"
+                            )}
+                          >
+                            ★ {star}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                     {errors[field.id] && (
-                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-primary pt-1">
+                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 pt-1">
                         <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                         {errors[field.id]}
                       </p>
@@ -585,30 +591,33 @@ export default function PublicFormPage() {
                       {Array.from(
                         { length: (field.linear_scale_max ?? 10) - (field.linear_scale_min ?? 0) + 1 },
                         (_, i) => (field.linear_scale_min ?? 0) + i
-                      ).map((val) => (
-                        <motion.button
-                          type="button"
-                          key={val}
-                          whileHover={{ scale: 1.06 }}
-                          whileTap={{ scale: 0.94 }}
-                          onClick={() => setAnswers({ ...answers, [field.id]: val })}
-                          className={cn(
-                            "w-9 h-9 rounded-[4px] border text-xs font-semibold flex items-center justify-center shrink-0 transition-colors cursor-pointer",
-                            answers[field.id] === val
-                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                              : "border-border hover:bg-muted text-text-primary"
-                          )}
-                        >
-                          {val}
-                        </motion.button>
-                      ))}
+                      ).map((val) => {
+                        const isValSelected = answers[field.id] === val;
+                        return (
+                          <motion.button
+                            type="button"
+                            key={val}
+                            whileHover={{ scale: 1.15, y: -2 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => setAnswers({ ...answers, [field.id]: val })}
+                            className={cn(
+                              "w-9 h-9 rounded-[6px] border text-xs font-bold flex items-center justify-center shrink-0 transition-all cursor-pointer font-mono",
+                              isValSelected
+                                ? "bg-gradient-to-tr from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30"
+                                : "border-border hover:border-indigo-300 hover:bg-indigo-50/50 text-text-primary"
+                            )}
+                          >
+                            {val}
+                          </motion.button>
+                        );
+                      })}
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-text-secondary pt-1">
+                    <div className="flex items-center justify-between text-[11px] text-text-secondary pt-1 font-medium">
                       <span>{field.linear_scale_min_label || "Terendah"}</span>
                       <span>{field.linear_scale_max_label || "Tertinggi"}</span>
                     </div>
                     {errors[field.id] && (
-                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-primary pt-1">
+                      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 pt-1">
                         <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                         {errors[field.id]}
                       </p>
@@ -618,10 +627,10 @@ export default function PublicFormPage() {
 
                 {field.type === "file_upload" && (
                   <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    className="p-8 border border-dashed border-border rounded-[6px] text-center space-y-2 hover:bg-muted/40 cursor-pointer transition-colors"
+                    whileHover={{ scale: 1.01, borderColor: "#6366F1" }}
+                    className="p-8 border border-dashed border-border rounded-[8px] text-center space-y-2 hover:bg-indigo-50/20 cursor-pointer transition-colors group"
                   >
-                    <p className="text-xs font-semibold text-text-primary">
+                    <p className="text-xs font-semibold text-text-primary group-hover:text-indigo-600 transition-colors">
                       Pilih dokumen atau seret ke sini
                     </p>
                     <p className="text-[11px] text-text-secondary">Maksimal ukuran berkas 10 MB</p>
@@ -648,12 +657,12 @@ export default function PublicFormPage() {
           )}
 
           {currentSection < maxSection ? (
-            <Button onClick={handleNextSection} className="gap-2">
+            <Button onClick={handleNextSection} className="gap-2 shadow-md hover:shadow-indigo-500/25">
               Selanjutnya
               <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2 shadow-sm">
+            <Button onClick={handleSubmit} disabled={isSubmitting} variant="success" className="gap-2 shadow-md hover:shadow-emerald-500/25">
               <Send className="w-4 h-4" />
               {isSubmitting ? "Mengirim Respons..." : "Kirim Jawaban"}
             </Button>

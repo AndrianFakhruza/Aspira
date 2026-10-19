@@ -49,36 +49,38 @@ export function FieldCard({
     transition,
   };
 
-  const getFieldIcon = () => {
+  const getFieldBadge = () => {
     switch (field.type) {
       case "text":
-        return <AlignLeft className="w-3.5 h-3.5" />;
+        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-indigo-50 text-indigo-600 border-indigo-200" };
       case "textarea":
-        return <AlignLeft className="w-3.5 h-3.5" />;
+        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-indigo-50 text-indigo-600 border-indigo-200" };
       case "number":
-        return <Hash className="w-3.5 h-3.5" />;
+        return { icon: <Hash className="w-3.5 h-3.5" />, color: "bg-cyan-50 text-cyan-600 border-cyan-200" };
       case "email":
-        return <Mail className="w-3.5 h-3.5" />;
+        return { icon: <Mail className="w-3.5 h-3.5" />, color: "bg-sky-50 text-sky-600 border-sky-200" };
       case "phone":
-        return <Phone className="w-3.5 h-3.5" />;
+        return { icon: <Phone className="w-3.5 h-3.5" />, color: "bg-blue-50 text-blue-600 border-blue-200" };
       case "date":
-        return <Calendar className="w-3.5 h-3.5" />;
+        return { icon: <Calendar className="w-3.5 h-3.5" />, color: "bg-teal-50 text-teal-600 border-teal-200" };
       case "radio":
-        return <Check className="w-3.5 h-3.5" />;
+        return { icon: <Check className="w-3.5 h-3.5" />, color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
       case "select":
-        return <ChevronDown className="w-3.5 h-3.5" />;
+        return { icon: <ChevronDown className="w-3.5 h-3.5" />, color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
       case "checkbox":
-        return <Layers className="w-3.5 h-3.5" />;
+        return { icon: <Layers className="w-3.5 h-3.5" />, color: "bg-emerald-50 text-emerald-600 border-emerald-200" };
       case "rating":
-        return <Star className="w-3.5 h-3.5" />;
+        return { icon: <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />, color: "bg-amber-50 text-amber-600 border-amber-200" };
       case "linear_scale":
-        return <ListFilter className="w-3.5 h-3.5" />;
+        return { icon: <ListFilter className="w-3.5 h-3.5" />, color: "bg-violet-50 text-violet-600 border-violet-200" };
       case "file_upload":
-        return <Upload className="w-3.5 h-3.5" />;
+        return { icon: <Upload className="w-3.5 h-3.5" />, color: "bg-rose-50 text-rose-600 border-rose-200" };
       default:
-        return <AlignLeft className="w-3.5 h-3.5" />;
+        return { icon: <AlignLeft className="w-3.5 h-3.5" />, color: "bg-muted text-text-secondary border-border" };
     }
   };
+
+  const badge = getFieldBadge();
 
   return (
     <div
@@ -86,10 +88,10 @@ export function FieldCard({
       style={style}
       onClick={onSelect}
       className={cn(
-        "p-4 bg-surface border rounded-[8px] transition-all cursor-pointer relative group",
+        "p-4 bg-surface border rounded-[10px] transition-all duration-200 cursor-pointer relative group",
         isSelected
-          ? "border-text-primary ring-1 ring-text-primary shadow-sm"
-          : "border-border hover:border-text-secondary/60",
+          ? "border-indigo-500 ring-2 ring-indigo-500/20 shadow-md bg-indigo-50/10"
+          : "border-border hover:border-indigo-300/80 hover:shadow-xs",
         isDragging && "opacity-40"
       )}
     >
@@ -98,7 +100,7 @@ export function FieldCard({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 text-text-secondary/50 hover:text-text-primary rounded mt-0.5"
+          className="cursor-grab active:cursor-grabbing p-1 text-text-secondary/50 hover:text-indigo-600 rounded mt-0.5 hover:bg-indigo-50/50 transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-4 h-4 stroke-[1.5]" />
@@ -108,10 +110,10 @@ export function FieldCard({
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="p-1 rounded bg-muted text-text-secondary border border-border">
-                {getFieldIcon()}
+              <span className={cn("p-1.5 rounded-md border flex items-center justify-center transition-transform group-hover:scale-105", badge.color)}>
+                {badge.icon}
               </span>
-              <span className="text-[11px] font-mono text-text-secondary uppercase">
+              <span className="text-[11px] font-mono text-text-secondary uppercase font-medium">
                 {field.type} • Bagian {field.section}
               </span>
             </div>
@@ -123,7 +125,7 @@ export function FieldCard({
                   e.stopPropagation();
                   onDuplicate();
                 }}
-                className="p-1 text-text-secondary hover:text-text-primary rounded hover:bg-muted"
+                className="p-1.5 text-text-secondary hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all hover:scale-110"
                 title="Duplikasi Pertanyaan"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -134,7 +136,7 @@ export function FieldCard({
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="p-1 text-text-secondary hover:text-text-primary rounded hover:bg-muted"
+                className="p-1.5 text-text-secondary hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all hover:scale-110"
                 title="Hapus Pertanyaan"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -147,7 +149,7 @@ export function FieldCard({
             type="text"
             value={field.label}
             onChange={(e) => onUpdate({ label: e.target.value })}
-            className="w-full font-semibold text-sm bg-transparent border-b border-transparent hover:border-border focus:border-primary focus:outline-none py-1 text-text-primary placeholder:text-text-secondary/40"
+            className="w-full font-semibold text-sm bg-transparent border-b border-transparent hover:border-border focus:border-indigo-500 focus:outline-none py-1 text-text-primary placeholder:text-text-secondary/40 transition-colors"
             placeholder="Ketik pertanyaan di sini..."
           />
 
@@ -156,7 +158,7 @@ export function FieldCard({
             type="text"
             value={field.help_text || ""}
             onChange={(e) => onUpdate({ help_text: e.target.value })}
-            className="w-full text-xs text-text-secondary bg-transparent border-b border-transparent hover:border-border focus:border-primary focus:outline-none py-0.5 placeholder:text-text-secondary/30"
+            className="w-full text-xs text-text-secondary bg-transparent border-b border-transparent hover:border-border focus:border-indigo-500 focus:outline-none py-0.5 placeholder:text-text-secondary/30 transition-colors"
             placeholder="Petunjuk pengisian atau deskripsi tambahan (opsional)..."
           />
 
@@ -167,7 +169,7 @@ export function FieldCard({
                 <div key={i} className="flex items-center gap-2 text-xs text-text-secondary">
                   <div
                     className={cn(
-                      "w-3.5 h-3.5 border border-border shrink-0",
+                      "w-3.5 h-3.5 border border-indigo-300 shrink-0 bg-indigo-50/50",
                       field.type === "radio" ? "rounded-full" : "rounded-[3px]"
                     )}
                   />
@@ -178,27 +180,27 @@ export function FieldCard({
           )}
 
           {field.type === "rating" && (
-            <div className="pt-2 flex items-center gap-2 text-text-secondary">
+            <div className="pt-2 flex items-center gap-2 text-amber-500">
               {[1, 2, 3, 4, 5].map((star) => (
                 <div
                   key={star}
-                  className="w-7 h-7 border border-border rounded flex items-center justify-center text-xs font-mono"
+                  className="w-7 h-7 border border-amber-200 bg-amber-50/50 rounded flex items-center justify-center text-xs font-mono font-bold hover:scale-110 transition-transform"
                 >
-                  {star}
+                  ★ {star}
                 </div>
               ))}
             </div>
           )}
 
           {field.type === "linear_scale" && (
-            <div className="pt-2 flex items-center gap-1.5 overflow-x-auto text-text-secondary">
+            <div className="pt-2 flex items-center gap-1.5 overflow-x-auto text-violet-600">
               {Array.from(
                 { length: (field.linear_scale_max ?? 10) - (field.linear_scale_min ?? 0) + 1 },
                 (_, i) => (field.linear_scale_min ?? 0) + i
               ).map((val) => (
                 <div
                   key={val}
-                  className="w-6 h-6 border border-border rounded flex items-center justify-center text-[10px] font-mono shrink-0"
+                  className="w-6 h-6 border border-violet-200 bg-violet-50/50 rounded flex items-center justify-center text-[10px] font-mono font-bold shrink-0 hover:scale-110 transition-transform"
                 >
                   {val}
                 </div>
@@ -210,4 +212,3 @@ export function FieldCard({
     </div>
   );
 }
-

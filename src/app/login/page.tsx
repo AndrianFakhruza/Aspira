@@ -52,7 +52,7 @@ export default function LoginPage() {
         </motion.div>
 
         <motion.div
-          className="bg-surface border border-border rounded-[8px] p-6 shadow-none"
+          className="bg-surface border border-border rounded-[12px] p-6 shadow-sm hover:border-indigo-300/80 hover:shadow-md transition-all duration-300"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -77,24 +77,24 @@ export default function LoginPage() {
             />
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-text-secondary">
+              <label className="flex items-center gap-2 cursor-pointer text-text-secondary hover:text-text-primary transition-colors">
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="rounded border-border accent-primary cursor-pointer"
+                  className="rounded border-border accent-indigo-600 cursor-pointer"
                 />
                 <span>Ingat saya</span>
               </label>
               <Link
                 href="/reset-password"
-                className="font-medium text-text-primary hover:underline"
+                className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
               >
                 Lupa sandi?
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Memproses Masuk..." : "Masuk"}
+            <Button type="submit" className="w-full shadow-md hover:shadow-indigo-500/25" disabled={loading}>
+              {loading ? "Memproses Masuk..." : "Masuk ke Workspace"}
             </Button>
           </form>
         </motion.div>

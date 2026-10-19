@@ -4,26 +4,28 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success";
   size?: "sm" | "md" | "lg" | "icon";
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", disabled, ...props }, ref) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-[6px] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none select-none text-sm active:scale-[0.98] cursor-pointer";
+      "inline-flex items-center justify-center font-medium rounded-[7px] transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none select-none text-sm cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.96] group";
 
     const variants = {
       primary:
-        "bg-primary text-primary-foreground hover:bg-neutral-800 dark:hover:bg-neutral-200 border border-primary shadow-xs hover:shadow-sm",
+        "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-sm hover:shadow-indigo-500/25 hover:shadow-md border border-indigo-500/30",
       secondary:
-        "bg-muted text-text-primary hover:bg-neutral-200 dark:hover:bg-neutral-800 border border-transparent",
+        "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/60 shadow-xs hover:shadow-sm",
       outline:
-        "border border-border bg-transparent text-text-primary hover:bg-muted hover:border-text-secondary/50",
+        "border border-border bg-surface text-text-primary hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 hover:shadow-xs",
       ghost:
-        "text-text-primary hover:bg-muted border border-transparent",
+        "text-text-primary hover:text-indigo-600 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 border border-transparent",
       danger:
-        "border border-neutral-900 bg-transparent text-neutral-900 dark:border-neutral-100 dark:text-neutral-100 font-semibold hover:bg-muted",
+        "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 hover:shadow-rose-500/20 hover:shadow-sm",
+      success:
+        "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm hover:shadow-emerald-500/25 hover:shadow-md border border-emerald-500/30",
     };
 
     const sizes = {

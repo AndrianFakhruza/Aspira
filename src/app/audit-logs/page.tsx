@@ -87,33 +87,46 @@ export default function AuditLogsPage() {
                     </td>
                   </tr>
                 ) : (
-                  <AnimatePresence>
-                    {logs.map((log) => (
-                      <motion.tr
-                        key={log.id}
-                        variants={rowVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="hover:bg-muted/40 transition-colors h-12"
-                        whileHover={{ x: 2, transition: { duration: 0.15 } }}
-                      >
-                        <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
-                          {formatDate(log.created_at)}
-                        </td>
-                        <td className="py-3 px-4 text-text-primary font-semibold">
-                          {log.actor_name || "Admin"}
-                        </td>
-                        <td className="py-3 px-4 uppercase text-text-primary">
-                          <span className="px-2 py-0.5 rounded bg-muted border border-border">
-                            {log.action}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-text-secondary">{log.entity}</td>
-                        <td className="py-3 px-4 text-text-secondary truncate max-w-xs font-sans">
-                          {log.meta ? JSON.stringify(log.meta) : "-"}
-                        </td>
-                      </motion.tr>
-                    ))}
+                    <AnimatePresence>
+                    {logs.map((log) => {
+                      const getActionBadge = (act: string) => {
+                        const a = act.toLowerCase();
+                        if (a.includes("create") || a.includes("insert") || a.includes("publish")) {
+                          return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400";
+                        }
+                        if (a.includes("delete") || a.includes("remove")) {
+                          return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400";
+                        }
+                        return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-400";
+                      };
+
+                      return (
+                        <motion.tr
+                          key={log.id}
+                          variants={rowVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-12 group"
+                          whileHover={{ x: 4, transition: { duration: 0.15 } }}
+                        >
+                          <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
+                            {formatDate(log.created_at)}
+                          </td>
+                          <td className="py-3 px-4 text-text-primary font-semibold group-hover:text-indigo-600 transition-colors">
+                            {log.actor_name || "Admin"}
+                          </td>
+                          <td className="py-3 px-4 uppercase text-text-primary">
+                            <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${getActionBadge(log.action)}`}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-text-secondary font-medium">{log.entity}</td>
+                          <td className="py-3 px-4 text-text-secondary truncate max-w-xs font-sans text-xs">
+                            {log.meta ? JSON.stringify(log.meta) : "-"}
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
                   </AnimatePresence>
                 )}
               </tbody>

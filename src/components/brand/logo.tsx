@@ -8,9 +8,9 @@ interface LogoProps {
 
 export function Logo({ size = "md", showWordmark = true, className = "" }: LogoProps) {
   const iconSizes = {
-    sm: "w-5 h-5",
-    md: "w-6 h-6",
-    lg: "w-8 h-8",
+    sm: "w-6 h-6",
+    md: "w-7 h-7",
+    lg: "w-9 h-9",
   };
 
   const textSizes = {
@@ -20,33 +20,33 @@ export function Logo({ size = "md", showWordmark = true, className = "" }: LogoP
   };
 
   return (
-    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Geometrical Monochrome Monogram "T" */}
+    <div className={`inline-flex items-center gap-2.5 select-none group cursor-pointer ${className}`}>
+      {/* Dynamic Gradient Monogram "T" with hover scale/rotation */}
       <div
-        className={`${iconSizes[size]} bg-primary flex items-center justify-center rounded-[6px] shrink-0 border border-primary`}
+        className={`${iconSizes[size]} bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 flex items-center justify-center rounded-[8px] shrink-0 shadow-sm shadow-indigo-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300 ease-out`}
       >
         <svg
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-4 h-4 text-primary-foreground stroke-current"
+          className="w-4 h-4 text-white stroke-current group-hover:scale-110 transition-transform duration-200"
         >
           <path
             d="M4 6H20M12 6V19"
             stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="square"
-            strokeLinejoin="miter"
+            strokeWidth="2.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </div>
 
       {showWordmark && (
-        <span className={`${textSizes[size]} text-text-primary font-semibold tracking-tight`}>
-          Tanggap
+        <span className={`${textSizes[size]} text-text-primary font-bold tracking-tight flex items-center gap-1`}>
+          <span>Tanggap</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse inline-block"></span>
         </span>
       )}
     </div>
   );
 }
-

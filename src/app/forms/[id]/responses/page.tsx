@@ -142,7 +142,7 @@ export default function ResponsesPage() {
 
             <div className="flex items-center gap-2">
               <Link href={`/forms/${formId}/analytics`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="hover:border-violet-400 hover:text-violet-600">
                   Lihat Analisis
                 </Button>
               </Link>
@@ -151,16 +151,16 @@ export default function ResponsesPage() {
                 size="sm"
                 onClick={handleExportCsv}
                 disabled={responses.length === 0}
-                className="gap-1.5"
+                className="gap-1.5 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
                 CSV
               </Button>
               <Button
                 size="sm"
                 onClick={handleExportXlsx}
                 disabled={responses.length === 0}
-                className="gap-1.5"
+                className="gap-1.5 shadow-sm hover:shadow-indigo-500/25"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 Ekspor XLSX
@@ -175,8 +175,8 @@ export default function ResponsesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary stroke-[1.5]" />
+            <div className="relative w-full sm:w-80 group">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-indigo-600 transition-colors stroke-[1.5]" />
               <input
                 type="text"
                 placeholder="Cari respons..."
@@ -185,24 +185,24 @@ export default function ResponsesPage() {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[6px] focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               />
             </div>
             <p className="text-xs font-mono text-text-secondary">
-              Menampilkan {paginatedResponses.length} dari {filteredResponses.length} respons
+              Menampilkan <span className="font-semibold text-indigo-600">{paginatedResponses.length}</span> dari {filteredResponses.length} respons
             </p>
           </motion.div>
 
           {/* Responses Data Table */}
           <motion.div
-            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            className="bg-surface border border-border rounded-[10px] overflow-hidden shadow-xs"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="overflow-x-auto max-h-[600px]">
               <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0 z-10">
+                <thead className="bg-muted/70 border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0 z-10">
                   <tr>
                     <th className="py-2.5 px-4 font-semibold w-12">No</th>
                     <th className="py-2.5 px-4 font-semibold w-36">Waktu Submit</th>
@@ -224,7 +224,10 @@ export default function ResponsesPage() {
                   {loading ? (
                     <tr>
                       <td colSpan={5 + fields.length} className="py-12 text-center text-xs text-text-secondary">
-                        Memuat data respons...
+                        <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
+                          <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
+                          Memuat data respons...
+                        </div>
                       </td>
                     </tr>
                   ) : paginatedResponses.length === 0 ? (
@@ -248,8 +251,8 @@ export default function ResponsesPage() {
                             variants={rowVariants}
                             exit="exit"
                             layout
-                            className="hover:bg-muted/40 transition-colors h-11 text-xs"
-                            whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                            className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-11 text-xs group"
+                            whileHover={{ x: 4, transition: { duration: 0.15 } }}
                           >
                             <td className="py-2.5 px-4 font-mono text-text-secondary">
                               {(currentPage - 1) * pageSize + idx + 1}
@@ -259,7 +262,7 @@ export default function ResponsesPage() {
                             </td>
                             {!form?.settings.is_anonymous && (
                               <>
-                                <td className="py-2.5 px-4 font-medium text-text-primary whitespace-nowrap">
+                                <td className="py-2.5 px-4 font-semibold text-text-primary group-hover:text-indigo-600 transition-colors whitespace-nowrap">
                                   {resp.respondent_name || "(Anonim)"}
                                 </td>
                                 <td className="py-2.5 px-4 text-text-secondary font-mono whitespace-nowrap">
@@ -286,14 +289,14 @@ export default function ResponsesPage() {
                               <div className="flex items-center justify-end gap-1">
                                 <button
                                   onClick={() => setSelectedResponse(resp)}
-                                  className="p-1 text-text-secondary hover:text-text-primary rounded hover:bg-muted transition-colors"
+                                  className="p-1.5 text-text-secondary hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-all hover:scale-115"
                                   title="Lihat Detail Jawaban"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteResponse(resp.id)}
-                                  className="p-1 text-text-secondary hover:text-text-primary rounded hover:bg-muted transition-colors"
+                                  className="p-1.5 text-text-secondary hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all hover:scale-115"
                                   title="Hapus Respons"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />

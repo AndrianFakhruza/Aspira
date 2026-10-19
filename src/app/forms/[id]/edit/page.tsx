@@ -375,35 +375,39 @@ export default function FormBuilderPage() {
                   </DndContext>
 
                   {/* Quick Add Questions Toolbar */}
-                  <div className="p-4 bg-surface border border-border rounded-[8px] space-y-3">
-                    <p className="text-xs font-mono uppercase tracking-wider text-text-secondary font-semibold">
-                      Tambah Pertanyaan
+                  <div className="p-5 bg-surface border border-border rounded-[10px] space-y-3 shadow-xs">
+                    <p className="text-xs font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5" />
+                      Tambah Pertanyaan Baru
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {[
-                        { type: "text", label: "Teks Pendek" },
-                        { type: "textarea", label: "Teks Panjang" },
-                        { type: "number", label: "Angka" },
-                        { type: "email", label: "Email" },
-                        { type: "phone", label: "Telepon" },
-                        { type: "date", label: "Tanggal" },
-                        { type: "radio", label: "Pilihan Tunggal" },
-                        { type: "select", label: "Dropdown" },
-                        { type: "checkbox", label: "Pilihan Ganda" },
-                        { type: "rating", label: "Rating (1-5)" },
-                        { type: "linear_scale", label: "Skala Linear (NPS)" },
-                        { type: "file_upload", label: "Upload File" },
+                        { type: "text", label: "Teks Pendek", dot: "bg-indigo-500", hover: "hover:border-indigo-400 hover:bg-indigo-50/50" },
+                        { type: "textarea", label: "Teks Panjang", dot: "bg-indigo-500", hover: "hover:border-indigo-400 hover:bg-indigo-50/50" },
+                        { type: "number", label: "Angka", dot: "bg-cyan-500", hover: "hover:border-cyan-400 hover:bg-cyan-50/50" },
+                        { type: "email", label: "Email", dot: "bg-sky-500", hover: "hover:border-sky-400 hover:bg-sky-50/50" },
+                        { type: "phone", label: "Telepon", dot: "bg-blue-500", hover: "hover:border-blue-400 hover:bg-blue-50/50" },
+                        { type: "date", label: "Tanggal", dot: "bg-teal-500", hover: "hover:border-teal-400 hover:bg-teal-50/50" },
+                        { type: "radio", label: "Pilihan Tunggal", dot: "bg-emerald-500", hover: "hover:border-emerald-400 hover:bg-emerald-50/50" },
+                        { type: "select", label: "Dropdown", dot: "bg-emerald-500", hover: "hover:border-emerald-400 hover:bg-emerald-50/50" },
+                        { type: "checkbox", label: "Pilihan Ganda", dot: "bg-emerald-500", hover: "hover:border-emerald-400 hover:bg-emerald-50/50" },
+                        { type: "rating", label: "Rating (1-5)", dot: "bg-amber-500", hover: "hover:border-amber-400 hover:bg-amber-50/50" },
+                        { type: "linear_scale", label: "Skala Linear (NPS)", dot: "bg-violet-500", hover: "hover:border-violet-400 hover:bg-violet-50/50" },
+                        { type: "file_upload", label: "Upload File", dot: "bg-rose-500", hover: "hover:border-rose-400 hover:bg-rose-50/50" },
                       ].map((item) => (
                         <motion.button
                           key={item.type}
                           type="button"
                           onClick={() => handleAddField(item.type as FieldType)}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          className="px-2.5 py-2 text-xs font-medium text-text-primary border border-border rounded-[6px] hover:bg-muted text-left transition-colors flex items-center justify-between"
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          className={`px-3 py-2 text-xs font-semibold text-text-primary border border-border rounded-[8px] text-left transition-all flex items-center justify-between group bg-surface shadow-2xs ${item.hover}`}
                         >
-                          <span>{item.label}</span>
-                          <Plus className="w-3 h-3 text-text-secondary" />
+                          <span className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${item.dot} group-hover:scale-125 transition-transform`} />
+                            {item.label}
+                          </span>
+                          <Plus className="w-3.5 h-3.5 text-text-secondary group-hover:text-indigo-600 transition-colors" />
                         </motion.button>
                       ))}
                     </div>

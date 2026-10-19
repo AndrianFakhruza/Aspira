@@ -18,6 +18,7 @@ import {
   BarChart3,
   Clock,
   Sparkles,
+  Table,
 } from "lucide-react";
 
 interface DashboardViewProps {
@@ -59,65 +60,88 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border"
       >
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center gap-2">
+            <span>Dashboard</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200">
+              v3.0 Active
+            </span>
+          </h1>
           <p className="text-sm text-text-secondary mt-1">
             Kumpulkan respons, pahami hasilnya. Ringkasan seluruh aktivitas formulir dan survei.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/forms/new">
-            <Button className="gap-2 shadow-sm">
-              <Plus className="w-4 h-4 stroke-[1.5]" />
+            <Button className="gap-2 shadow-md hover:shadow-indigo-500/25">
+              <Plus className="w-4 h-4 stroke-[2]" />
               Buat Form Baru
             </Button>
           </Link>
         </div>
       </motion.div>
 
-      {/* Metric KPI Cards */}
+      {/* Metric KPI Cards with Vibrant Colorful Badges */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
-          <Card className="hover:border-text-primary/40 transition-colors">
+        <motion.div
+          whileHover={{ y: -5, scale: 1.015 }}
+          transition={{ duration: 0.2 }}
+          className="cursor-pointer"
+        >
+          <Card className="hover:border-indigo-400/80 hover:shadow-indigo-500/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                 Total Formulir
               </CardTitle>
-              <FileText className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                <FileText className="w-4 h-4 stroke-[2]" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-text-primary tracking-tight">{totalForms}</div>
+              <div className="text-3xl font-bold text-text-primary tracking-tight font-mono">{totalForms}</div>
               <p className="text-xs text-text-secondary mt-1">
-                {publishedForms} form berstatus aktif (published)
+                <span className="font-semibold text-emerald-600">{publishedForms}</span> form berstatus aktif (published)
               </p>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
-          <Card className="hover:border-text-primary/40 transition-colors">
+        <motion.div
+          whileHover={{ y: -5, scale: 1.015 }}
+          transition={{ duration: 0.2 }}
+          className="cursor-pointer"
+        >
+          <Card className="hover:border-emerald-400/80 hover:shadow-emerald-500/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                 Total Respons Terkumpul
               </CardTitle>
-              <MessageSquare className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                <MessageSquare className="w-4 h-4 stroke-[2]" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-text-primary tracking-tight">{totalResponses}</div>
+              <div className="text-3xl font-bold text-text-primary tracking-tight font-mono">{totalResponses}</div>
               <p className="text-xs text-text-secondary mt-1">Akumulasi respons seluruh survei</p>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
-          <Card className="hover:border-text-primary/40 transition-colors">
+        <motion.div
+          whileHover={{ y: -5, scale: 1.015 }}
+          transition={{ duration: 0.2 }}
+          className="cursor-pointer"
+        >
+          <Card className="hover:border-violet-400/80 hover:shadow-violet-500/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
                 Tingkat Form Aktif
               </CardTitle>
-              <TrendingUp className="w-4 h-4 text-text-secondary stroke-[1.5]" />
+              <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                <TrendingUp className="w-4 h-4 stroke-[2]" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-text-primary tracking-tight">
+              <div className="text-3xl font-bold text-text-primary tracking-tight font-mono">
                 {totalForms > 0 ? Math.round((publishedForms / totalForms) * 100) : 0}%
               </div>
               <p className="text-xs text-text-secondary mt-1">Form siap menerima responden publik</p>
@@ -137,10 +161,10 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
             </div>
             <Link
               href="/forms"
-              className="text-xs font-semibold text-text-primary hover:underline flex items-center gap-1 group"
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 group"
             >
               Lihat Semua
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
             </Link>
           </div>
 
@@ -148,16 +172,16 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
             {forms.map((form) => (
               <motion.div
                 key={form.id}
-                whileHover={{ x: 3 }}
-                transition={{ duration: 0.15 }}
-                className="p-4 bg-surface border border-border rounded-[8px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-text-primary/40 transition-colors shadow-xs"
+                whileHover={{ x: 6, scale: 1.005 }}
+                transition={{ duration: 0.18 }}
+                className="p-4 bg-surface border border-border rounded-[10px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-md transition-all shadow-xs group"
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2.5">
                     <StatusBadge status={form.status} />
                     <Link
                       href={`/forms/${form.id}/edit`}
-                      className="font-semibold text-sm text-text-primary hover:underline truncate"
+                      className="font-semibold text-sm text-text-primary hover:text-indigo-600 dark:hover:text-indigo-400 truncate transition-colors"
                     >
                       {form.title}
                     </Link>
@@ -165,8 +189,8 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                   <p className="text-xs text-text-secondary line-clamp-1">
                     {form.description || "Tidak ada deskripsi"}
                   </p>
-                  <div className="flex items-center gap-4 text-xs text-text-secondary pt-1">
-                    <span>{form.responses_count || 0} respons</span>
+                  <div className="flex items-center gap-3 text-xs text-text-secondary pt-1 font-mono">
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">{form.responses_count || 0} respons</span>
                     <span>•</span>
                     <span>{formatDate(form.created_at)}</span>
                   </div>
@@ -175,18 +199,19 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                 <div className="flex items-center gap-2 shrink-0">
                   {form.status === "published" && (
                     <Link href={`/f/${form.slug}`} target="_blank">
-                      <Button variant="outline" size="sm" title="Buka Form Publik">
+                      <Button variant="outline" size="sm" title="Buka Form Publik" className="hover:border-indigo-400 hover:text-indigo-600">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
                   )}
                   <Link href={`/forms/${form.id}/responses`}>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="hover:border-emerald-400 hover:text-emerald-600">
+                      <Table className="w-3.5 h-3.5 mr-1" />
                       Respons
                     </Button>
                   </Link>
                   <Link href={`/forms/${form.id}/analytics`}>
-                    <Button variant="outline" size="sm" className="gap-1.5">
+                    <Button variant="outline" size="sm" className="gap-1.5 hover:border-violet-400 hover:text-violet-600">
                       <BarChart3 className="w-3.5 h-3.5" />
                       Analisis
                     </Button>
@@ -204,7 +229,7 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
             <p className="text-xs text-text-secondary">Umpan data kiriman responden terbaru</p>
           </div>
 
-          <div className="p-4 bg-surface border border-border rounded-[8px] divide-y divide-border shadow-xs">
+          <div className="p-4 bg-surface border border-border rounded-[10px] divide-y divide-border shadow-xs">
             {recentResponses.length === 0 ? (
               <p className="text-xs text-text-secondary py-6 text-center">Belum ada respons yang masuk.</p>
             ) : (
@@ -216,17 +241,18 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
                     initial={{ opacity: 0, x: -6 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="py-3 first:pt-0 last:pb-0 space-y-1 hover:bg-muted/30 px-2 rounded-[4px] transition-colors"
+                    whileHover={{ x: 4 }}
+                    className="py-3 first:pt-0 last:pb-0 space-y-1 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 px-2.5 rounded-[6px] transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-text-primary truncate">
                         {resp.respondent_name || "Responden Anonim"}
                       </span>
-                      <span className="text-[10px] text-text-secondary">
+                      <span className="text-[10px] text-text-secondary font-mono">
                         {formatDate(resp.submitted_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-text-secondary truncate">
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400 truncate font-medium">
                       {relatedForm?.title || "Formulir"}
                     </p>
                   </motion.div>
@@ -239,4 +265,3 @@ export function DashboardView({ forms, allResponses }: DashboardViewProps) {
     </motion.div>
   );
 }
-

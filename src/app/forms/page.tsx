@@ -22,6 +22,8 @@ import {
   Trash2,
   Table as TableIcon,
   Sparkles,
+  CheckCircle2,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const containerVariants: Variants = {
@@ -105,6 +107,23 @@ export default function FormsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const getStatusButtonClass = (st: string) => {
+    const isActive = statusFilter === st;
+    if (!isActive) {
+      return "bg-surface text-text-secondary border-border hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5 hover:shadow-xs";
+    }
+    switch (st) {
+      case "published":
+        return "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/25";
+      case "draft":
+        return "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/25";
+      case "closed":
+        return "bg-rose-600 text-white border-rose-600 shadow-sm shadow-rose-500/25";
+      default:
+        return "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/25";
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
@@ -129,15 +148,15 @@ export default function FormsPage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-indigo-200 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
                 onClick={() => setTemplateDialogOpen(true)}
               >
-                <Sparkles className="w-4 h-4 stroke-[1.5]" />
+                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 stroke-[2] animate-pulse" />
                 Template Siap Pakai
               </Button>
               <Link href="/forms/new">
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4 stroke-[1.5]" />
+                <Button className="gap-2 shadow-md hover:shadow-indigo-500/25">
+                  <Plus className="w-4 h-4 stroke-[2]" />
                   Form Kosong
                 </Button>
               </Link>
@@ -151,29 +170,32 @@ export default function FormsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary stroke-[1.5]" />
+            <div className="relative w-full sm:w-80 group">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary group-focus-within:text-indigo-600 transition-colors stroke-[1.5]" />
               <input
                 type="text"
                 placeholder="Cari berdasarkan judul form..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[6px] focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-9 pl-9 pr-3 text-sm bg-surface text-text-primary border border-border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               />
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {["all", "published", "draft", "closed"].map((st) => (
+              {[
+                { id: "all", label: "Semua Status" },
+                { id: "published", label: "Aktif" },
+                { id: "draft", label: "Draft" },
+                { id: "closed", label: "Ditutup" },
+              ].map((st) => (
                 <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-[6px] text-xs font-medium border transition-colors capitalize ${
-                    statusFilter === st
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface text-text-secondary border-border hover:text-text-primary"
-                  }`}
+                  key={st.id}
+                  onClick={() => setStatusFilter(st.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 cursor-pointer ${getStatusButtonClass(
+                    st.id
+                  )}`}
                 >
-                  {st === "all" ? "Semua Status" : st === "published" ? "Aktif" : st}
+                  {st.label}
                 </button>
               ))}
             </div>
@@ -181,17 +203,17 @@ export default function FormsPage() {
 
           {/* Forms Table */}
           <motion.div
-            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            className="bg-surface border border-border rounded-[10px] overflow-hidden shadow-xs"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0">
+                <thead className="bg-muted/70 border-b border-border text-xs uppercase font-mono text-text-secondary sticky top-0">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Formulir</th>
-                    <th className="py-3 px-4 font-semibold w-28">Status</th>
+                    <th className="py-3 px-4 font-semibold w-32">Status</th>
                     <th className="py-3 px-4 font-semibold w-28">Respons</th>
                     <th className="py-3 px-4 font-semibold w-36">Dibuat</th>
                     <th className="py-3 px-4 font-semibold text-right w-64">Aksi</th>
@@ -200,13 +222,16 @@ export default function FormsPage() {
                 <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-xs text-text-secondary">
-                        Memuat daftar formulir...
+                      <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
+                        <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
+                          <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
+                          Memuat daftar formulir...
+                        </div>
                       </td>
                     </tr>
                   ) : filteredForms.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-xs text-text-secondary">
+                      <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
                         Tidak ada formulir yang ditemukan.
                       </td>
                     </tr>
@@ -225,11 +250,11 @@ export default function FormsPage() {
                             variants={rowVariants}
                             exit="exit"
                             layout
-                            className="hover:bg-muted/50 transition-colors h-14"
-                            whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                            className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-14 group"
+                            whileHover={{ x: 5, transition: { duration: 0.15 } }}
                           >
                             <td className="py-3 px-4">
-                              <div className="font-semibold text-text-primary">
+                              <div className="font-semibold text-text-primary group-hover:text-indigo-600 transition-colors">
                                 <Link href={`/forms/${form.id}/edit`} className="hover:underline">
                                   {form.title}
                                 </Link>
@@ -241,7 +266,7 @@ export default function FormsPage() {
                             <td className="py-3 px-4">
                               <StatusBadge status={form.status} />
                             </td>
-                            <td className="py-3 px-4 font-mono text-xs">
+                            <td className="py-3 px-4 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                               {form.responses_count || 0}
                             </td>
                             <td className="py-3 px-4 font-mono text-xs text-text-secondary">
@@ -251,25 +276,45 @@ export default function FormsPage() {
                               <div className="flex items-center justify-end gap-1.5">
                                 {form.status === "published" && (
                                   <Link href={`/f/${form.slug}`} target="_blank">
-                                    <Button variant="outline" size="icon" title="Lihat Form Publik">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      title="Lihat Form Publik"
+                                      className="hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
+                                    >
                                       <ExternalLink className="w-3.5 h-3.5 stroke-[1.5]" />
                                     </Button>
                                   </Link>
                                 )}
                                 <Link href={`/forms/${form.id}/responses`}>
-                                  <Button variant="outline" size="sm" title="Tabel Respons">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Tabel Respons"
+                                    className="hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50"
+                                  >
                                     <TableIcon className="w-3.5 h-3.5 mr-1" />
                                     Respons
                                   </Button>
                                 </Link>
                                 <Link href={`/forms/${form.id}/analytics`}>
-                                  <Button variant="outline" size="sm" title="Laporan Analisis">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Laporan Analisis"
+                                    className="hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/50"
+                                  >
                                     <BarChart3 className="w-3.5 h-3.5 mr-1" />
                                     Analisis
                                   </Button>
                                 </Link>
                                 <Link href={`/forms/${form.id}/edit`}>
-                                  <Button variant="outline" size="icon" title="Edit Builder">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    title="Edit Builder"
+                                    className="hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50"
+                                  >
                                     <Edit className="w-3.5 h-3.5 stroke-[1.5]" />
                                   </Button>
                                 </Link>
@@ -278,6 +323,7 @@ export default function FormsPage() {
                                   size="icon"
                                   title="Duplikasi"
                                   onClick={() => handleDuplicate(form.id)}
+                                  className="hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50"
                                 >
                                   <Copy className="w-3.5 h-3.5 stroke-[1.5]" />
                                 </Button>
@@ -320,18 +366,21 @@ export default function FormsPage() {
             <motion.div
               key={idx}
               variants={rowVariants}
-              className="p-4 border border-border rounded-[8px] hover:border-text-primary transition-colors cursor-pointer space-y-2 bg-surface"
+              className="p-4 border border-border rounded-[10px] hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer space-y-2 bg-surface group"
               onClick={() => handleCreateFromTemplate(template)}
-              whileHover={{ scale: 1.01, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-text-primary">{template.name}</h4>
-                <span className="text-xs font-mono text-text-secondary">
+                <h4 className="text-sm font-semibold text-text-primary group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                  {template.name}
+                </h4>
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
                   {template.fields.length} pertanyaan
                 </span>
               </div>
-              <p className="text-xs text-text-secondary leading-relaxed">{template.description}</p>
+              <p className="text-xs text-text-secondary leading-relaxed pl-4">{template.description}</p>
             </motion.div>
           ))}
         </motion.div>

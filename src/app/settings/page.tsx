@@ -109,28 +109,34 @@ export default function SettingsPage() {
                   <CardTitle className="text-sm font-semibold">Infrastruktur &amp; Keamanan</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-xs text-text-secondary">
-                  <div className="flex items-center justify-between p-3 bg-muted/40 rounded-[6px] border border-border">
+                  <div className="flex items-center justify-between p-3.5 bg-emerald-50/30 dark:bg-emerald-950/20 rounded-[8px] border border-emerald-200/60 dark:border-emerald-900/40 hover:border-emerald-400 transition-all hover:translate-x-1">
                     <div className="flex items-center gap-2.5">
-                      <Database className="w-4 h-4 text-text-primary" />
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+                        <Database className="w-4 h-4" />
+                      </div>
                       <div>
                         <p className="font-semibold text-text-primary">Database Supabase Postgres</p>
-                        <p className="font-mono text-[11px]">Skema &amp; RLS Terisolasi</p>
+                        <p className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">Skema &amp; RLS Terisolasi</p>
                       </div>
                     </div>
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-surface border border-border text-text-primary">
+                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 font-semibold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                       Siap Produksi
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-muted/40 rounded-[6px] border border-border">
+                  <div className="flex items-center justify-between p-3.5 bg-blue-50/30 dark:bg-blue-950/20 rounded-[8px] border border-blue-200/60 dark:border-blue-900/40 hover:border-blue-400 transition-all hover:translate-x-1">
                     <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-text-primary" />
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
                       <div>
                         <p className="font-semibold text-text-primary">Keamanan Cookie Sesi Server</p>
-                        <p className="font-mono text-[11px]">httpOnly, Secure, Lax</p>
+                        <p className="font-mono text-[11px] text-blue-600 dark:text-blue-400">httpOnly, Secure, Lax</p>
                       </div>
                     </div>
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-surface border border-border text-text-primary">
+                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 font-semibold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                       Aktif
                     </span>
                   </div>

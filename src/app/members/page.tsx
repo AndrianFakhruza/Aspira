@@ -120,13 +120,13 @@ export default function MembersPage() {
           </motion.div>
 
           <motion.div
-            className="bg-surface border border-border rounded-[8px] overflow-hidden"
+            className="bg-surface border border-border rounded-[10px] overflow-hidden shadow-xs"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           >
             <table className="w-full text-left text-sm border-collapse">
-              <thead className="bg-muted border-b border-border text-xs uppercase font-mono text-text-secondary">
+              <thead className="bg-muted/70 border-b border-border text-xs uppercase font-mono text-text-secondary">
                 <tr>
                   <th className="py-3 px-4 font-semibold">Nama Lengkap</th>
                   <th className="py-3 px-4 font-semibold">Email</th>
@@ -138,8 +138,11 @@ export default function MembersPage() {
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-xs text-text-secondary">
-                      Memuat daftar anggota...
+                    <td colSpan={5} className="py-12 text-center text-xs text-text-secondary">
+                      <div className="inline-flex items-center gap-2 text-indigo-600 font-medium">
+                        <span className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
+                        Memuat daftar anggota...
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -152,11 +155,14 @@ export default function MembersPage() {
                         animate="show"
                         exit="exit"
                         layout
-                        className="hover:bg-muted/40 transition-colors h-14"
-                        whileHover={{ x: 2, transition: { duration: 0.15 } }}
+                        className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all h-14 group"
+                        whileHover={{ x: 4, transition: { duration: 0.15 } }}
                       >
-                        <td className="py-3 px-4 font-semibold text-text-primary">
-                          {member.full_name}
+                        <td className="py-3 px-4 font-semibold text-text-primary group-hover:text-indigo-600 transition-colors flex items-center gap-2.5 mt-2.5">
+                          <span className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                            {member.full_name.charAt(0).toUpperCase()}
+                          </span>
+                          <span>{member.full_name}</span>
                         </td>
                         <td className="py-3 px-4 text-text-secondary font-mono text-xs">
                           {member.email || "-"}
@@ -167,11 +173,11 @@ export default function MembersPage() {
                             onChange={(e) =>
                               handleRoleChange(member.id, e.target.value as UserRole)
                             }
-                            className="h-8 text-xs py-1"
+                            className="h-8 text-xs py-1 border-indigo-200/80 focus:border-indigo-500"
                           >
-                            <option value="owner">Owner</option>
-                            <option value="editor">Editor</option>
-                            <option value="viewer">Viewer</option>
+                            <option value="owner">Owner (Pemilik)</option>
+                            <option value="editor">Editor (Pengelola)</option>
+                            <option value="viewer">Viewer (Peninjau)</option>
                           </Select>
                         </td>
                         <td className="py-3 px-4 font-mono text-xs text-text-secondary">
@@ -181,7 +187,7 @@ export default function MembersPage() {
                           {member.role !== "owner" && (
                             <button
                               onClick={() => handleRemoveMember(member.id, member.full_name)}
-                              className="p-1.5 text-text-secondary hover:text-text-primary rounded hover:bg-muted transition-colors"
+                              className="p-1.5 text-text-secondary hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all hover:scale-115"
                               title="Hapus Anggota"
                             >
                               <Trash2 className="w-4 h-4 stroke-[1.5]" />
