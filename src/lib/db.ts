@@ -413,8 +413,12 @@ export const db = {
   async getMembers(): Promise<Profile[]> {
     const supabase = createAdminClient();
     if (supabase) {
-      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: true });
-      if (!error && data) return data as Profile[];
+      try {
+        const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: true });
+        if (!error && data && data.length > 0) return data as Profile[];
+      } catch (e) {
+        console.error("Supabase getMembers error:", e);
+      }
     }
     return memoryProfiles;
   },
